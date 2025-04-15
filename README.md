@@ -1,2 +1,3 @@
-# data-droits
-Gestion des droits des uilisateurs des outils du pôle DATA
+# D-roles
+
+Gestion des droits des utilisateurs des outils du pôle DATA

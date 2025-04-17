@@ -1,0 +1,12 @@
+services:
+  postgres-dev:
+    image: "postgres:14"
+    volumes:
+      - ./db/initdb/:/docker-entrypoint-initdb.d/
+      - ./db/sample.csv:/tmp/sample.csv
+    environment:
+      - POSTGRES_DB=d-roles
+      - POSTGRES_USER=d-roles
+      - POSTGRES_PASSWORD=d-roles
+    ports:
+      - "5432:5432"

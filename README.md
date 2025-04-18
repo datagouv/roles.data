@@ -10,7 +10,7 @@ Le projet s’appuie sur [uv](https://docs.astral.sh/uv) pour la gestion des dé
 
 ```
 uv sync
-uv run fastapi dev
+uv run fastapi dev src/main.py
 ```
 
 Pour build le container applicatif

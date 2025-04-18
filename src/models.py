@@ -14,7 +14,7 @@ class TeamBase(BaseModel):
     name: str
 
 
-class MemberBase(BaseModel):
+class UserBase(BaseModel):
     email: EmailStr
     sub_pro_connect: Optional[str] = None
     is_email_confirmed: bool = False
@@ -55,7 +55,7 @@ class ParentChildCreate(BaseModel):
     inherit_scopes: bool = False
 
 
-class MemberCreate(MemberBase):
+class UserCreate(UserBase):
     pass
 
 
@@ -63,9 +63,9 @@ class RoleCreate(RoleBase):
     pass
 
 
-class TeamMemberCreate(BaseModel):
+class TeamUserCreate(BaseModel):
     team_id: int
-    member_id: int
+    user_id: int
     role_id: int
 
 
@@ -115,7 +115,7 @@ class ParentChildResponse(BaseModel):
         orm_mode = True
 
 
-class MemberResponse(MemberBase):
+class UserResponse(UserBase):
     id: int
     is_email_confirmed: bool
 
@@ -130,9 +130,9 @@ class RoleResponse(RoleBase):
         orm_mode = True
 
 
-class TeamMemberResponse(BaseModel):
+class TeamUserResponse(BaseModel):
     team_id: int
-    member_id: int
+    user_id: int
     role_id: int
 
     class Config:
@@ -173,13 +173,13 @@ class ServiceAccountProviderResponse(BaseModel):
 # --- Enhanced response models with relationships ---
 
 
-class TeamWithMembersResponse(TeamResponse):
-    members: List[TeamMemberResponse] = []
+class TeamWithUsersResponse(TeamResponse):
+    users: List[TeamUserResponse] = []
 
 
 class OrganizationWithTeamsResponse(OrganizationResponse):
     teams: List[TeamResponse] = []
 
 
-class MemberWithTeamsResponse(MemberResponse):
-    teams: List[TeamMemberResponse] = []
+class UserWithTeamsResponse(UserResponse):
+    teams: List[TeamUserResponse] = []

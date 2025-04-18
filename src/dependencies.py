@@ -2,19 +2,19 @@ from databases import Database
 from fastapi import Depends
 
 from .database import get_db
-from .repositories.members import MemberRepository
-from .services.member import MemberService
+from .repositories.users import UserRepository
+from .services.user import UserService
 
 
-async def get_member_service(db: Database = Depends(get_db)) -> MemberService:
+async def get_user_service(db: Database = Depends(get_db)) -> UserService:
     """
-    Dependency function that provides a MemberService instance.
+    Dependency function that provides a UserService instance.
 
     Args:
         db: Database connection provided by get_db dependency
 
     Returns:
-        An initialized MemberService
+        An initialized UserService
     """
-    member_repository = MemberRepository(db)
-    return MemberService(member_repository)
+    user_repository = UserRepository(db)
+    return UserService(user_repository)

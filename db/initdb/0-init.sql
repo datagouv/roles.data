@@ -17,7 +17,7 @@ CREATE TABLE  IF NOT EXISTS d_roles.teams (
     name VARCHAR(255) NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_team_orga FOREIGN KEY (orga_id) REFERENCES d_roles.organisations (id) ON DELETE CASCADE,
+    CONSTRAINT fk_team_orga FOREIGN KEY (orga_id) REFERENCES d_roles.organisations (id) ON DELETE CASCADE
 );
 
 -- Parent-Child relationship table
@@ -28,8 +28,8 @@ CREATE TABLE IF NOT EXISTS d_roles.parent_child_relations (
     PRIMARY KEY (parent_team_id, child_team_id),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_parent_child_parent FOREIGN KEY (parent_team_id) REFERENCES d_roles.team (id) ON DELETE CASCADE,
-    CONSTRAINT fk_parent_child_child FOREIGN KEY (child_team_id) REFERENCES d_roles.team (id) ON DELETE CASCADE
+    CONSTRAINT fk_parent_child_parent FOREIGN KEY (parent_team_id) REFERENCES d_roles.teams (id) ON DELETE CASCADE,
+    CONSTRAINT fk_parent_child_child FOREIGN KEY (child_team_id) REFERENCES d_roles.teams (id) ON DELETE CASCADE
 );
 
 -- Users table
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS d_roles.users (
     sub_pro_connect VARCHAR(255),
     is_email_confirmed BOOLEAN NOT NULL DEFAULT false,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Roles table
@@ -56,10 +56,10 @@ CREATE TABLE IF NOT EXISTS d_roles.team_user_relations (
     team_id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
     role_id INTEGER NOT NULL,
-    PRIMARY KEY (team_id, user_id, role_id),
+    PRIMARY KEY (team_id, user_id),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT team_user_fk_relation_team FOREIGN KEY (team_id) REFERENCES d_roles.team (id) ON DELETE CASCADE,
+    CONSTRAINT team_user_fk_relation_team FOREIGN KEY (team_id) REFERENCES d_roles.teams (id) ON DELETE CASCADE,
     CONSTRAINT team_user_fk_relation_user FOREIGN KEY (user_id) REFERENCES d_roles.users (id) ON DELETE CASCADE,
     CONSTRAINT team_user_fk_relation_role FOREIGN KEY (role_id) REFERENCES d_roles.roles (id) ON DELETE CASCADE
 );
@@ -80,19 +80,8 @@ CREATE TABLE  IF NOT EXISTS d_roles.team_service_provider_relations (
     scopes TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_scopes_team FOREIGN KEY (team_id) REFERENCES d_roles.team (id) ON DELETE CASCADE,
-    CONSTRAINT fk_scopes_project FOREIGN KEY (service_provider_id) REFERENCES d_roles.service_provider (id) ON DELETE CASCADE
-);
-
--- Service account to service provider relationship
-CREATE TABLE  IF NOT EXISTS d_roles.sa_sp_relations (
-    sa_id INTEGER NOT NULL,
-    sp_id INTEGER NOT NULL,
-    PRIMARY KEY (sa_id, sp_id),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT fk_sa_sp_account FOREIGN KEY (sa_id) REFERENCES d_roles.service_account (id) ON DELETE CASCADE,
-    CONSTRAINT fk_sa_sp_project FOREIGN KEY (sp_id) REFERENCES d_roles.service_provider (id) ON DELETE CASCADE
+    CONSTRAINT fk_scopes_team FOREIGN KEY (team_id) REFERENCES d_roles.teams (id) ON DELETE CASCADE,
+    CONSTRAINT fk_scopes_project FOREIGN KEY (service_provider_id) REFERENCES d_roles.service_providers (id) ON DELETE CASCADE
 );
 
 -- Service Account table
@@ -102,4 +91,15 @@ CREATE TABLE  IF NOT EXISTS d_roles.service_accounts (
     token TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Service account to service provider relationship
+CREATE TABLE  IF NOT EXISTS d_roles.sa_sp_relations (
+    sa_id INTEGER NOT NULL,
+    sp_id INTEGER NOT NULL,
+    PRIMARY KEY (sa_id, sp_id),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_sa_sp_account FOREIGN KEY (sa_id) REFERENCES d_roles.service_accounts (id) ON DELETE CASCADE,
+    CONSTRAINT fk_sa_sp_project FOREIGN KEY (sp_id) REFERENCES d_roles.service_providers (id) ON DELETE CASCADE
 );

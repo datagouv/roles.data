@@ -1,7 +1,7 @@
 # ------- USER ROUTER FILE -------
 from fastapi import APIRouter, Depends
 
-from ..dependencies import get_user_service
+from ..dependencies import get_users_service
 from ..models import UserBase, UserCreate
 from ..services.users import UsersService
 
@@ -15,6 +15,6 @@ router = APIRouter(
 
 @router.post("/", response_model=UserBase)
 async def create_user(
-    user: UserCreate, users_service: UsersService = Depends(get_user_service)
+    user: UserCreate, users_service: UsersService = Depends(get_users_service)
 ):
     return await users_service.create_user(user)

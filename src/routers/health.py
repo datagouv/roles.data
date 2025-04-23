@@ -4,7 +4,7 @@ from datetime import datetime
 from databases import Database
 from fastapi import APIRouter, Depends
 
-from src.database import get_db
+from ..database import get_db
 
 router = APIRouter(
     prefix="/health",
@@ -17,7 +17,7 @@ router = APIRouter(
 async def health_check(db: Database = Depends(get_db)):
     try:
         # Test database connection with a simple query
-        query = "SELECT 1 as is_alive"
+        query = "SELECT R.is_admin as is_alive from d_roles.roles as R WHERE R.role_name = 'admin'"
         result = await db.fetch_one(query)
 
         if result and result["is_alive"] == 1:

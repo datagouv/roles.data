@@ -1,6 +1,6 @@
 services:
   postgres-dev:
-    image: "postgres:14"
+    image: "postgres:15.7"
     volumes:
       - ./db/initdb/:/docker-entrypoint-initdb.d/
       - ./db/sample.csv:/tmp/sample.csv

@@ -2,11 +2,11 @@ from databases import Database
 from fastapi import Depends
 
 from .database import get_db
+from .repositories.groups import GroupsRepository
 from .repositories.organisations import OrganisationsRepository
-from .repositories.teams import TeamsRepository
 from .repositories.users import UsersRepository
+from .services.groups import GroupsService
 from .services.organisations import OrganisationsService
-from .services.teams import TeamsService
 from .services.users import UsersService
 
 
@@ -24,19 +24,19 @@ async def get_users_service(db: Database = Depends(get_db)) -> UsersService:
     return UsersService(user_repository)
 
 
-async def get_teams_service(db: Database = Depends(get_db)) -> TeamsService:
+async def get_groups_service(db: Database = Depends(get_db)) -> GroupsService:
     """
-    Dependency function that provides a TeamsService instance.
+    Dependency function that provides a GroupsService instance.
 
     Args:
         db: Database connection provided by get_db dependency
 
     Returns:
-        An initialized TeamsService
+        An initialized GroupsService
     """
-    teams_repository = TeamsRepository(db)
-    return TeamsService(
-        teams_repository,
+    groups_repository = GroupsRepository(db)
+    return GroupsService(
+        groups_repository,
         await get_users_service(db),
         await get_organisations_service(db),
     )

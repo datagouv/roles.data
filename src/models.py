@@ -20,7 +20,7 @@ SirenType = Annotated[str, field_validator("validate_siren")]
 # --- Organisation ---
 class OrganisationBase(BaseModel):
     name: str | None = None
-    siren: Siren  # type: ignore # Optional for team creation
+    siren: Siren  # type: ignore # Optional for group creation
 
 
 class OrganisationCreate(OrganisationBase):
@@ -78,39 +78,39 @@ class UserWithRoleResponse(UserBase):
         from_attributes = True
 
 
-# --- Team ---
+# --- Group ---
 
 
-class TeamBase(BaseModel):
+class GroupBase(BaseModel):
     name: str
 
 
-class TeamCreate(TeamBase):
-    organisation_siren: Siren  # type: ignore # Optional for team creation
+class GroupCreate(GroupBase):
+    organisation_siren: Siren  # type: ignore # Optional for group creation
     admin_email: EmailStr
 
 
-class TeamResponse(TeamBase):
+class GroupResponse(GroupBase):
     id: int
 
     class Config:
         from_attributes = True
 
 
-class TeamWithUsersResponse(TeamResponse):
+class GroupWithUsersResponse(GroupResponse):
     organisation_siren: int
     users: list[UserWithRoleResponse] = []
 
 
 class ParentChildCreate(BaseModel):
-    parent_team_id: int
-    child_team_id: int
+    parent_group_id: int
+    child_group_id: int
     inherit_scopes: bool = False
 
 
 class ParentChildResponse(BaseModel):
-    parent_team_id: int
-    child_team_id: int
+    parent_group_id: int
+    child_group_id: int
     inherit_scopes: bool
 
     class Config:
@@ -143,7 +143,7 @@ class ScopeBase(BaseModel):
 
 class ScopeResponse(ScopeBase):
     service_provider_id: int
-    team_id: int
+    group_id: int
 
     class Config:
         from_attributes = True
@@ -151,7 +151,7 @@ class ScopeResponse(ScopeBase):
 
 class ScopeCreate(ScopeBase):
     service_provider_id: int
-    team_id: int
+    group_id: int
 
 
 class ServiceAccountProviderCreate(BaseModel):

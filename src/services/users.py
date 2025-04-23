@@ -17,11 +17,17 @@ class UsersService:
         """
         return await self.user_repository.get_user_by_email(email)
 
-    async def get_users_by_team_id(self, team_id: int) -> list[UserWithRoleResponse]:
+    async def get_user_by_id(self, user_id: int) -> UserResponse:
         """
-        Retrieve users by team ID
+        Retrieve user by ID
         """
-        return await self.user_repository.get_users_by_team_id(team_id)
+        return await self.user_repository.get_user_by_id(user_id)
+
+    async def get_users_by_group_id(self, group_id: int) -> list[UserWithRoleResponse]:
+        """
+        Retrieve all user for a given group ID
+        """
+        return await self.user_repository.get_users_by_group_id(group_id)
 
     async def check_user_exists(self, email: str) -> bool:
         existing_user = await self.user_repository.get_user_by_email(email)
@@ -41,6 +47,12 @@ class UsersService:
         if user:
             if fail_if_already_exist:
                 raise ValueError("User already exists.")
+            return user
         else:
-            user = await self.user_repository.add_user(user_data)
-        return user
+            return await self.user_repository.add_user(user_data)
+
+    async def delete_user(self, user_id: int) -> None:
+        """
+        Retrieve user by ID
+        """
+        return await self.user_repository.delete_user(user_id)

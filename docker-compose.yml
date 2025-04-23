@@ -8,5 +8,6 @@ services:
       - POSTGRES_DB=d-roles
       - POSTGRES_USER=d-roles
       - POSTGRES_PASSWORD=d-roles
+      - POSTGRES_SCHEMA=d_roles
     ports:
       - "5432:5432"

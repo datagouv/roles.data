@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
 from . import database
-from .routers import users
+from .routers import health, users
 
 app = FastAPI()
 
@@ -10,6 +10,7 @@ app.add_event_handler("startup", database.startup)
 app.add_event_handler("shutdown", database.shutdown)
 
 app.include_router(users.router)
+app.include_router(health.router)
 
 
 @app.get("/")

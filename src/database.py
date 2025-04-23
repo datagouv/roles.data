@@ -5,7 +5,7 @@ import databases
 from .config import settings
 
 # Create database instance
-database = databases.Database(settings.DATABASE_URL)
+database = databases.Database(settings.DATABASE_URL)  # type: ignore
 
 
 # Dependency to get DB connection

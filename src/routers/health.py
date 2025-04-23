@@ -29,11 +29,10 @@ async def health_check(db: Database = Depends(get_db)):
         else:
             raise Exception("Database query returned unexpected result")
 
-    except Exception as e:
+    except Exception:
         # Log the exception here if needed
         return {
             "status": "unhealthy",
             "database": "disconnected",
-            "error": str(e),
             "timestamp": datetime.now().isoformat(),
         }, 503  # Service Unavailable status code

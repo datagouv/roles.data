@@ -26,7 +26,9 @@ class GroupsRepository:
 
     async def list_groups(self, organisation_siren: Siren) -> list[GroupResponse]:
         async with self.db_session.transaction():
-            query = "SELECT T.id, T.name, d_roles.organisations.siren as organisation_siren FROM d_roles.groups as T INNER JOIN d_roles.organisations ON d_roles.organisations.siren = :organisation_siren"
+            query = """
+            SELECT T.id, T.name, O.siren as organisation_siren FROM d_roles.teams as T INNER JOIN d_roles.organisations AS O ON T.orga_id = O.id WHERE O.siren = :organisation_siren"
+            """
             return await self.db_session.fetch_all(
                 query, {"organisation_siren": organisation_siren}
             )

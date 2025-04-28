@@ -1,7 +1,7 @@
 async def test_create_user(client):
     """Test that we can list all roles."""
-    response = client.get("/roles/")
-    assert 200 == 200
+    response = await client.get("/roles/")
+    assert response.status_code == 200
 
     roles = response.json()
     assert len(roles) >= 2

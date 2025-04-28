@@ -27,8 +27,9 @@ class UsersRepository:
             query = """
                 SELECT U.email, U.sub_pro_connect, U.created_at, R.role_name, R.is_admin
                 FROM d_roles.users as U
-                INNER JOIN d_roles.group_user_relations as TUR ON TUR.group_id = :group_id
+                INNER JOIN d_roles.group_user_relations as TUR ON TUR.user_id = U.id
                 INNER JOIN d_roles.roles as R ON TUR.role_id = R.id
+                WHERE TUR.group_id = :group_id
                 """
             return await self.db_session.fetch_all(query, {"group_id": group_id})
 

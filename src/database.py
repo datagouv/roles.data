@@ -23,7 +23,9 @@ async def get_db() -> AsyncGenerator[databases.Database, None]:
 async def startup():
     await database.connect()
     # Set search path for the entire pool
-    await database.execute("ALTER ROLE current_user SET search_path TO d_roles")
+    await database.execute(
+        f"ALTER ROLE current_user SET search_path TO {settings.DB_SCHEMA}"
+    )
 
 
 async def shutdown():

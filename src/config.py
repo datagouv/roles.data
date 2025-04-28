@@ -17,7 +17,7 @@ class Settings(BaseSettings):
 
     @property
     def DATABASE_URL(self) -> PostgresDsn:
-        return f"postgresql://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}?options=--search_path%3D{self.DB_SCHEMA}"  # type: ignore
+        return f"postgresql://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"  # type: ignore
 
     # Add other settings as needed
     DEBUG: bool = False

@@ -1,5 +1,5 @@
 # ------- SERVICE FILE -------
-from ..models import UserBase, UserCreate
+from ..models import UserCreate, UserResponse, UserWithRoleResponse
 from ..repositories.users import UsersRepository
 
 
@@ -11,16 +11,48 @@ class UsersService:
         if not user_data.email:
             raise ValueError("Email is required.")
 
-    async def check_user_exists(self, email: str) -> None:
-        existing_user = await self.user_repository.get_user_by_email(email)
-        if existing_user:
-            raise ValueError("user already exists.")
+    async def get_user_by_email(self, email: str) -> UserResponse:
+        """
+        Retrieve user by email
+        """
+        return await self.user_repository.get_user_by_email(email)
 
-    async def create_user(self, user_data: UserCreate) -> UserBase:
+    async def get_user_by_id(self, user_id: int) -> UserResponse:
+        """
+        Retrieve user by ID
+        """
+        return await self.user_repository.get_user_by_id(user_id)
+
+    async def get_users_by_group_id(self, group_id: int) -> list[UserWithRoleResponse]:
+        """
+        Retrieve all user for a given group ID
+        """
+        return await self.user_repository.get_users_by_group_id(group_id)
+
+    async def check_user_exists(self, email: str) -> bool:
+        existing_user = await self.user_repository.get_user_by_email(email)
+
+        if existing_user:
+            return True
+        return False
+
+    async def create_user(
+        self, user_data: UserCreate, fail_if_already_exist=True
+    ) -> UserResponse:
         # Business Logic Validation
         await self.validate_user_data(user_data)
-        await self.check_user_exists(user_data.email)
 
-        new_user_id = await self.user_repository.add_user(user_data)
+        user = await self.get_user_by_email(user_data.email)
 
-        return await self.user_repository.get_user_by_id(new_user_id)
+        if user:
+            if fail_if_already_exist:
+                raise ValueError("User already exists.")
+            return user
+        else:
+            return await self.user_repository.add_user(user_data)
+
+    async def delete_user(self, user_id: int) -> None:
+        """
+        Retrieve user by ID
+        """
+        return await self.user_repository.delete_user(user_id)

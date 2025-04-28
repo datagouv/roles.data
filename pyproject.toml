@@ -14,4 +14,5 @@ dependencies = [
     "ruff>=0.11.5",
     "sqlmodel>=0.0.24",
     "pydantic-settings>=2.8.1",
+    "pydantic>=2.11.3",
 ]

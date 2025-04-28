@@ -43,24 +43,8 @@ class UserBase(BaseModel):
     is_email_confirmed: bool = False
 
 
-class RoleBase(BaseModel):
-    role_name: str
-    is_admin: bool = False
-
-
 class UserCreate(UserBase):
     pass
-
-
-class RoleCreate(RoleBase):
-    pass
-
-
-class RoleResponse(RoleBase):
-    id: int
-
-    class Config:
-        from_attributes = True
 
 
 class UserResponse(UserBase):
@@ -73,6 +57,19 @@ class UserResponse(UserBase):
 class UserWithRoleResponse(UserBase):
     role_name: str
     is_admin: bool
+
+    class Config:
+        from_attributes = True
+
+
+# --- Role ---
+class RoleBase(BaseModel):
+    role_name: str
+    is_admin: bool
+
+
+class RoleResponse(RoleBase):
+    id: int
 
     class Config:
         from_attributes = True

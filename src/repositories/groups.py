@@ -46,13 +46,27 @@ class GroupsRepository:
             return await self.db_session.fetch_one(query, values)
 
     async def add_user_to_group(
-        self, group_id: int, user_id: int, is_admin: bool
+        self, group_id: int, user_id: int, role_id: int
     ) -> None:
         async with self.db_session.transaction():
             query = "INSERT INTO d_roles.group_user_relations (group_id, user_id, role_id) VALUES (:group_id, :user_id, :role_id)"
             values = {
                 "group_id": group_id,
                 "user_id": user_id,
-                "role_id": 1 if is_admin else 0,
+                "role_id": role_id,
             }
+            await self.db_session.execute(query, values)
+
+    async def remove_user_from_group(self, group_id: int, user_id: int) -> None:
+        async with self.db_session.transaction():
+            query = "DELETE FROM d_roles.group_user_relations WHERE group_id = :group_id AND user_id = :user_id"
+            values = {"group_id": group_id, "user_id": user_id}
+            await self.db_session.execute(query, values)
+
+    async def update_user_role_in_group(
+        self, group_id: int, user_id: int, role_id: int
+    ) -> None:
+        async with self.db_session.transaction():
+            query = "UPDATE d_roles.group_user_relations SET role_id = :role_id WHERE group_id = :group_id AND user_id = :user_id"
+            values = {"role_id": role_id, "group_id": group_id, "user_id": user_id}
             await self.db_session.execute(query, values)

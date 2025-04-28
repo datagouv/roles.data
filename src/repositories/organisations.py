@@ -10,7 +10,7 @@ class OrganisationsRepository:
         self, organisation_data: OrganisationCreate
     ) -> OrganisationResponse | None:
         async with self.db_session.transaction():
-            query = "SELECT * FROM d_roles.organisations WHERE siren = :siren"
+            query = "SELECT * FROM organisations WHERE siren = :siren"
             return await self.db_session.fetch_one(
                 query, {"siren": organisation_data.siren}
             )
@@ -19,6 +19,6 @@ class OrganisationsRepository:
         self, organisation_data: OrganisationCreate
     ) -> OrganisationResponse:
         async with self.db_session.transaction():
-            query = "INSERT INTO d_roles.organisations (name, siren) VALUES (:name, :siren) RETURNING *"
+            query = "INSERT INTO organisations (name, siren) VALUES (:name, :siren) RETURNING *"
             values = {"name": "Non renseigné", "siren": organisation_data.siren}
             return await self.db_session.fetch_one(query, values)

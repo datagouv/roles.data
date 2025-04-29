@@ -9,7 +9,7 @@ class RolesRepository:
     async def create_role(self, role_data) -> RoleResponse:
         async with self.db_session.transaction():
             query = """
-            INSERT INTO d_roles.roles (role_name, is_admin)
+            INSERT INTO roles (role_name, is_admin)
             VALUES (:role_name, :is_admin)
             RETURNING *
             """
@@ -23,8 +23,8 @@ class RolesRepository:
         async with self.db_session.transaction():
             query = """
             SELECT R.id, R.role_name, R.is_admin
-            FROM d_roles.group_user_relations AS GUR
-            INNER JOIN d_roles.roles AS R ON GUR.role_id = R.id
+            FROM group_user_relations AS GUR
+            INNER JOIN roles AS R ON GUR.role_id = R.id
             WHERE GUR.group_id = :group_id
             """
             return await self.db_session.fetch_all(query, {"group_id": group_id})
@@ -33,7 +33,7 @@ class RolesRepository:
         async with self.db_session.transaction():
             query = """
             SELECT R.id, R.role_name, R.is_admin
-            FROM d_roles.roles AS R
+            FROM roles AS R
             WHERE R.id = :role_id
             """
             return await self.db_session.fetch_one(query, {"role_id": role_id})
@@ -42,6 +42,6 @@ class RolesRepository:
         async with self.db_session.transaction():
             query = """
             SELECT R.id, R.role_name, R.is_admin
-            FROM d_roles.roles AS R
+            FROM roles AS R
             """
             return await self.db_session.fetch_all(query)

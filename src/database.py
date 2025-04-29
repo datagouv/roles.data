@@ -22,6 +22,10 @@ async def get_db() -> AsyncGenerator[databases.Database, None]:
 # For use in app startup/shutdown
 async def startup():
     await database.connect()
+    # Set search path for the entire pool
+    await database.execute(
+        f"ALTER ROLE current_user SET search_path TO {settings.DB_SCHEMA}"
+    )
 
 
 async def shutdown():

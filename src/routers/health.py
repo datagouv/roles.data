@@ -16,8 +16,13 @@ router = APIRouter(
 @router.get("/")
 async def health_check(db: Database = Depends(get_db)):
     try:
-        # Test database connection with a simple query
-        query = "SELECT R.is_admin as is_alive from d_roles.roles as R WHERE R.role_name = 'admin'"
+        query = "SHOW search_path"
+        result = await db.execute(query)
+        print(f"Current search_path: {result}")
+
+        query = (
+            "SELECT R.is_admin as is_alive from roles as R WHERE R.role_name = 'admin'"
+        )
         result = await db.fetch_one(query)
 
         if result and result["is_alive"] == 1:

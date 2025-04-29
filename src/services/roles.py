@@ -8,7 +8,7 @@ class RolesService:
         self.roles_repository = roles_repository
 
     async def validate_role_data(self, role_data):
-        if not role_data.name:
+        if not role_data.role_name:
             raise HTTPException(status_code=400, detail="Role name is required.")
 
         if not isinstance(role_data.is_admin, bool):
@@ -19,7 +19,7 @@ class RolesService:
         Create a new role
         """
         await self.validate_role_data(role_data)
-        return self.roles_repository.create_role(role_data)
+        return await self.roles_repository.create_role(role_data)
 
     async def get_all_roles(self):
         """

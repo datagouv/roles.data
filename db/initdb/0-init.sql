@@ -107,7 +107,3 @@ CREATE TABLE  IF NOT EXISTS d_roles.sa_sp_relations (
     CONSTRAINT fk_sa_sp_account FOREIGN KEY (sa_id) REFERENCES d_roles.service_accounts (id) ON DELETE CASCADE,
     CONSTRAINT fk_sa_sp_project FOREIGN KEY (sp_id) REFERENCES d_roles.service_providers (id) ON DELETE CASCADE
 );
-
-INSERT INTO d_roles.roles (id, role_name, is_admin) VALUES
-(1, 'admin', true),
-(2, 'user', false);

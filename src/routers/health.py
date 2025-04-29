@@ -35,4 +35,4 @@ async def health_check(db: Database = Depends(get_db)):
             "status": "unhealthy",
             "database": "disconnected",
             "timestamp": datetime.now().isoformat(),
-        }, 503  # Service Unavailable status code
+        }

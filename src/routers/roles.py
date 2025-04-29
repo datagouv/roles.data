@@ -13,7 +13,7 @@ router = APIRouter(
 )
 
 
-@router.post("/", response_model=RoleResponse)
+@router.post("/", response_model=RoleResponse, status_code=201)
 async def create_a_new_role(
     role: RoleBase, roles_service: RolesService = Depends(get_roles_service)
 ):

@@ -181,3 +181,12 @@ class ServiceAccountProviderResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+
+class TokenData(BaseModel):
+    service_provider_id: int

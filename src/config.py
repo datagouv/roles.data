@@ -6,6 +6,8 @@ class Settings(BaseSettings):
     Application settings loaded from environment variables
     """
 
+    SECRET_KEY: str = "your-secret-key-here"
+
     # Database settings
     DB_HOST: str = "localhost"
     DB_PORT: str = "5432"
@@ -21,10 +23,6 @@ class Settings(BaseSettings):
     # TEST Database settings
     DB_NAME_TEST: str = "d-roles-test"
     DB_PORT_TEST: str = "5433"
-
-    @property
-    def TEST_DATABASE_URL(self) -> str:
-        return f"postgresql://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT_TEST}/{self.DB_NAME_TEST}"  # type: ignore
 
     # Add other settings as needed
     DEBUG: bool = False

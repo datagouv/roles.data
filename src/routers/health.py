@@ -16,10 +16,6 @@ router = APIRouter(
 @router.get("/")
 async def health_check(db: Database = Depends(get_db)):
     try:
-        query = "SHOW search_path"
-        result = await db.execute(query)
-        print(f"Current search_path: {result}")
-
         query = (
             "SELECT R.is_admin as is_alive from roles as R WHERE R.role_name = 'admin'"
         )

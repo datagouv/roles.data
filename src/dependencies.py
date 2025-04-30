@@ -1,6 +1,9 @@
 from databases import Database
 from fastapi import Depends
 
+from src.repositories.service_providers import ServiceProvidersRepository
+from src.services.services_provider import ServiceProvidersService
+
 from .database import get_db
 from .repositories.groups import GroupsRepository
 from .repositories.organisations import OrganisationsRepository
@@ -54,6 +57,22 @@ async def get_roles_service(db: Database = Depends(get_db)) -> RolesService:
     """
     roles_repository = RolesRepository(db)
     return RolesService(roles_repository)
+
+
+async def get_service_providers_service(
+    db: Database = Depends(get_db),
+) -> ServiceProvidersService:
+    """
+    Dependency function that provides a UsersService instance.
+
+    Args:
+        db: Database connection provided by get_db dependency
+
+    Returns:
+        An initialized UsersService
+    """
+    service_providers_repository = ServiceProvidersRepository(db)
+    return ServiceProvidersService(service_providers_repository)
 
 
 async def get_groups_service(

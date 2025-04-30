@@ -3,8 +3,9 @@ from ..models import GroupCreate, GroupResponse, GroupWithUsersResponse, Siren
 
 
 class GroupsRepository:
-    def __init__(self, db_session):
+    def __init__(self, db_session, authorized_service_providers: list[int]):
         self.db_session = db_session
+        self.authorized_service_providers = authorized_service_providers
 
     async def get_group_by_id(self, group_id: int) -> GroupWithUsersResponse | None:
         async with self.db_session.transaction():

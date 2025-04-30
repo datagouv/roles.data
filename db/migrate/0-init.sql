@@ -110,4 +110,4 @@ CREATE TABLE  IF NOT EXISTS d_roles.sa_sp_relations (
 
 INSERT INTO d_roles.roles (id, role_name, is_admin) VALUES
 (1, 'admin', true),
-(2, 'user', false);
+(2, 'user', false) ON CONFLICT DO NOTHING;

@@ -2,8 +2,7 @@ services:
   postgres-dev:
     image: "postgres:15.7"
     volumes:
-      - ./db/initdb/:/docker-entrypoint-initdb.d/
-      - ./db/sample.csv:/tmp/sample.csv
+      - ./db/migrate/:/docker-entrypoint-initdb.d/
     environment:
       - POSTGRES_DB=d-roles
       - POSTGRES_USER=d-roles

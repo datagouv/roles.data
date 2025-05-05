@@ -5,7 +5,7 @@ import databases
 from .config import settings
 
 # Create database instance
-database = databases.Database(settings.DATABASE_URL)  # type: ignore
+database = databases.Database(settings.DATABASE_URL)
 
 
 # Dependency to get DB connection
@@ -26,6 +26,9 @@ async def startup():
     await database.execute(
         f"ALTER ROLE current_user SET search_path TO {settings.DB_SCHEMA}"
     )
+    # Execute preflight query if provided
+    if settings.DATABASE_PREFLIGHT_QUERY:
+        await database.execute(settings.DATABASE_PREFLIGHT_QUERY)
 
 
 async def shutdown():

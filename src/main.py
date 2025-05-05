@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
 from . import database
-from .routers import auth, groups, health, roles, users
+from .routers import auth, groups, health, roles, service_providers, users
 
 app = FastAPI()
 
@@ -13,4 +13,5 @@ app.include_router(health.router)
 app.include_router(users.router)
 app.include_router(groups.router)
 app.include_router(roles.router)
+app.include_router(service_providers.router)
 app.include_router(auth.router)

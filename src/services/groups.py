@@ -19,11 +19,13 @@ class GroupsService:
         users_service: users.UsersService,
         roles_service: roles.RolesService,
         organisations_service: organisations.OrganisationsService,
+        service_provider_id: int,
     ):
         self.groups_repository = groups_repository
         self.users_service = users_service
         self.roles_service = roles_service
         self.organisations_service = organisations_service
+        self.service_provider_id = service_provider_id
 
     async def validate_group_data(self, group_data: GroupCreate) -> None:
         if not group_data.organisation_siren:
@@ -45,24 +47,32 @@ class GroupsService:
         return new_group
 
     async def list_groups(self, organisation_siren: Siren) -> list[GroupResponse]:
-        return await self.groups_repository.list_groups(organisation_siren)
+        return await self.groups_repository.list_groups(
+            organisation_siren, self.service_provider_id
+        )
 
     async def get_group_with_users(self, group_id: int) -> GroupWithUsersResponse:
-        group = await self.groups_repository.get_group_by_id(group_id)
+        group = await self.groups_repository.get_group_by_id(
+            group_id, self.service_provider_id
+        )
 
         if not group:
             raise HTTPException(
-                status_code=404, detail=f"Group with ID {group_id} not found"
+                status_code=404,
+                detail=f"Group with ID {group_id} not found, are you certain it exists and you can use it ?",
             )
 
         group.users = await self.users_service.get_users_by_group_id(group_id)
         return group
 
     async def update_group(self, group_id: int, group_name: str) -> GroupResponse:
-        group = await self.groups_repository.get_group_by_id(group_id)
+        group = await self.groups_repository.get_group_by_id(
+            group_id, self.service_provider_id
+        )
         if not group:
             raise HTTPException(
-                status_code=404, detail=f"Group with ID {group_id} not found"
+                status_code=404,
+                detail=f"Group with ID {group_id} not found, are you certain it exists and you can use it ?",
             )
 
         return await self.groups_repository.update_group(group_id, group_name)
@@ -84,10 +94,13 @@ class GroupsService:
                 status_code=404, detail=f"User with ID {user_id} not found"
             )
 
-        group = await self.groups_repository.get_group_by_id(group_id)
+        group = await self.groups_repository.get_group_by_id(
+            group_id, self.service_provider_id
+        )
         if not group:
             raise HTTPException(
-                status_code=404, detail=f"Group with ID {group_id} not found"
+                status_code=404,
+                detail=f"Group with ID {group_id} not found, are you certain it exists and you can use it ?",
             )
 
         return await self.groups_repository.add_user_to_group(
@@ -101,10 +114,13 @@ class GroupsService:
                 status_code=404, detail=f"User with ID {user_id} not found"
             )
 
-        group = await self.groups_repository.get_group_by_id(group_id)
+        group = await self.groups_repository.get_group_by_id(
+            group_id, self.service_provider_id
+        )
         if not group:
             raise HTTPException(
-                status_code=404, detail=f"Group with ID {group_id} not found"
+                status_code=404,
+                detail=f"Group with ID {group_id} not found, are you certain it exists and you can use it ?",
             )
 
         return await self.groups_repository.remove_user_from_group(group_id, user_id)
@@ -122,10 +138,13 @@ class GroupsService:
                 status_code=404, detail=f"User with ID {user_id} not found"
             )
 
-        group = await self.groups_repository.get_group_by_id(group_id)
+        group = await self.groups_repository.get_group_by_id(
+            group_id, self.service_provider_id
+        )
         if not group:
             raise HTTPException(
-                status_code=404, detail=f"Group with ID {group_id} not found"
+                status_code=404,
+                detail=f"Group with ID {group_id} not found, are you certain it exists and you can use it ?",
             )
 
         return await self.groups_repository.update_user_role_in_group(

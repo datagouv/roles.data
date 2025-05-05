@@ -11,8 +11,23 @@ def setup():
     settings.DB_PORT = settings.DB_PORT_TEST
 
 
+@pytest.fixture(autouse=True, scope="session")
+async def setup_test_data(db_connection):
+    """
+    Pre-fill test database with required data
+    """
+    await db_connection.execute(
+        """
+        INSERT INTO d_roles.users (email, sub_pro_connect, is_email_confirmed)
+        VALUES ('user@yopmail.com', '', false) ON CONFLICT DO NOTHING;
+        """
+    )
+
+    yield  # This fixture doesn't return anything, just sets up data
+
+
 @pytest.fixture(scope="session")
-def client():
+def client(setup_test_data):
     """
     Fixture to provide a test client for the FastAPI application.
     """

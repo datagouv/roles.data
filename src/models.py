@@ -1,4 +1,5 @@
 from typing import Annotated, NewType
+from xmlrpc.client import boolean
 
 from pydantic import BaseModel, EmailStr, field_validator
 
@@ -117,23 +118,6 @@ class ParentChildResponse(BaseModel):
 # --- Service Provider & scopes ---
 
 
-class ServiceProviderBase(BaseModel):
-    name: str
-
-
-class ServiceAccountBase(BaseModel):
-    name: str
-    service_provider_id: int
-
-
-class ServiceProviderCreate(ServiceProviderBase):
-    pass
-
-
-class ServiceAccountCreate(ServiceAccountBase):
-    pass
-
-
 class ScopeBase(BaseModel):
     scopes: str  # Consider using list[str] if representing multiple scopes
 
@@ -146,15 +130,8 @@ class ScopeResponse(ScopeBase):
         from_attributes = True
 
 
-class ScopeCreate(ScopeBase):
-    service_provider_id: int
-    group_id: int
-
-
-class ServiceAccountProviderCreate(BaseModel):
-    service_account_id: int
-    service_provider_id: int
-    token: str
+class ServiceProviderBase(BaseModel):
+    name: str
 
 
 class ServiceProviderResponse(ServiceProviderBase):
@@ -164,20 +141,20 @@ class ServiceProviderResponse(ServiceProviderBase):
         from_attributes = True
 
 
-class ServiceAccountResponse(ServiceAccountBase):
-    id: int
-
-    class Config:
-        from_attributes = True
-
-
-# --- Relationship ---
-
-
 class ServiceAccountProviderResponse(BaseModel):
     service_account_id: int
     service_provider_id: int
-    token: str
+
+
+class ServiceAccountBase(BaseModel):
+    name: str
+    deactivated: boolean
+    hashed_password: str
+
+
+class ServiceAccountResponse(ServiceAccountBase):
+    id: int
+    service_provider_id: int
 
     class Config:
         from_attributes = True
@@ -186,7 +163,3 @@ class ServiceAccountProviderResponse(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
-
-
-class TokenData(BaseModel):
-    service_provider_id: int

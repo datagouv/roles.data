@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     DB_PASSWORD: str = "d-roles"
     DB_SCHEMA: str = "d_roles"
 
+    SECRET_KEY: str = "dev-secret-key"
+
     @property
     def DATABASE_URL(self) -> PostgresDsn:
         return f"postgresql://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"  # type: ignore

@@ -15,7 +15,6 @@ services:
     image: "postgres:15.7"
     volumes:
       - ./db/initdb/:/docker-entrypoint-initdb.d/
-      - ./db/sample.csv:/tmp/sample.csv
     environment:
       - POSTGRES_DB=d-roles-test
       - POSTGRES_USER=d-roles

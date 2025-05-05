@@ -154,7 +154,7 @@ class ServiceAccountBase(BaseModel):
 
 class ServiceAccountResponse(ServiceAccountBase):
     id: int
-    authorized_service_providers: list[ServiceProviderResponse]
+    service_provider_id: int
 
     class Config:
         from_attributes = True

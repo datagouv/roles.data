@@ -37,12 +37,12 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     return encoded_jwt
 
 
-def extract_authorized_service_providers_from_token(
+def extract_service_provider_from_token(
     token: str = Depends(oauth2_scheme),
 ):
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
-        return payload.get("authorized_service_providers")
+        return payload.get("service_provider_id")
     except InvalidTokenError:
         raise HTTPException(
             status_code=401,

@@ -1,7 +1,7 @@
 from databases import Database
 from fastapi import Depends
 
-from src.auth import extract_authorized_service_providers_from_token
+from src.auth import extract_service_provider_from_token
 from src.repositories.auth import AuthRepository
 from src.services.auth import AuthService
 
@@ -57,14 +57,16 @@ async def get_groups_service(
     users_service: UsersService = Depends(get_users_service),
     roles_service: RolesService = Depends(get_roles_service),
     organisations_service: OrganisationsService = Depends(get_organisations_service),
-    authorized_service_providers: list[int] = Depends(
-        extract_authorized_service_providers_from_token
-    ),
+    service_provider_id: int = Depends(extract_service_provider_from_token),
 ) -> GroupsService:
     """
     Dependency function that provides a GroupsService instance.
     """
-    groups_repository = GroupsRepository(db, authorized_service_providers)
+    groups_repository = GroupsRepository(db)
     return GroupsService(
-        groups_repository, users_service, roles_service, organisations_service
+        groups_repository,
+        users_service,
+        roles_service,
+        organisations_service,
+        service_provider_id,
     )

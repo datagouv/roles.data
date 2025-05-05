@@ -3,19 +3,54 @@ from ..models import GroupCreate, GroupResponse, GroupWithUsersResponse, Siren
 
 
 class GroupsRepository:
-    def __init__(self, db_session, authorized_service_providers: list[int]):
+    def __init__(self, db_session):
         self.db_session = db_session
-        self.authorized_service_providers = authorized_service_providers
 
-    async def get_group_by_id(self, group_id: int) -> GroupWithUsersResponse | None:
+    async def get_rights_on_groups(self, group_id: int, service_provider_id: int):
         async with self.db_session.transaction():
             query = """
-            SELECT T.id, T.name, organisations.siren as organisation_siren
-            FROM groups as T
-            INNER JOIN organisations ON organisations.id = T.orga_id
-            WHERE T.id = :id
+            SELECT G.id, GSPR.scopes, G.name
+            FROM group as G
+            INNER JOIN group_service_provider_relations as GSPR ON GSPR.group_id = G.id AND GSPR.service_provider_id = :service_provider_id
+            WHERE G.id = :id
             """
-            return await self.db_session.fetch_one(query, {"id": group_id})
+            return await self.db_session.fetch_one(
+                query, {"id": group_id, "service_provider_id": service_provider_id}
+            )
+
+    async def get_group_by_id(
+        self, group_id: int, service_provider_id: int
+    ) -> GroupWithUsersResponse | None:
+        async with self.db_session.transaction():
+            query = """
+            SELECT G.id, G.name, organisations.siren as organisation_siren
+            FROM groups as G
+            INNER JOIN organisations ON organisations.id = G.orga_id
+            INNER JOIN group_service_provider_relations AS GSPR ON GSPR.group_id = G.id AND  GSPR.service_provider_id = :service_provider_id
+            WHERE G.id = :id
+            """
+            return await self.db_session.fetch_one(
+                query, {"id": group_id, "service_provider_id": service_provider_id}
+            )
+
+    async def list_groups(
+        self, organisation_siren: Siren, service_provider_id: int
+    ) -> list[GroupResponse]:
+        async with self.db_session.transaction():
+            query = """
+            SELECT G.id, G.name, O.siren as organisation_siren
+            FROM teams as G
+            INNER JOIN organisations AS O ON G.orga_id = O.id
+            INNER JOIN group_service_provider_relations AS GSPR ON GSPR.group_id = G.id AND  GSPR.service_provider_id = :service_provider_id
+            WHERE O.siren = :organisation_siren"
+            """
+            return await self.db_session.fetch_all(
+                query,
+                {
+                    "organisation_siren": organisation_siren,
+                    "service_provider_id": service_provider_id,
+                },
+            )
 
     async def create_group(
         self, group_data: GroupCreate, orga_id: int
@@ -24,15 +59,6 @@ class GroupsRepository:
             query = "INSERT INTO groups (name, orga_id) VALUES (:name, :orga_id) RETURNING *"
             values = {"name": group_data.name, "orga_id": orga_id}
             return await self.db_session.fetch_one(query, values)
-
-    async def list_groups(self, organisation_siren: Siren) -> list[GroupResponse]:
-        async with self.db_session.transaction():
-            query = """
-            SELECT T.id, T.name, O.siren as organisation_siren FROM teams as T INNER JOIN organisations AS O ON T.orga_id = O.id WHERE O.siren = :organisation_siren"
-            """
-            return await self.db_session.fetch_all(
-                query, {"organisation_siren": organisation_siren}
-            )
 
     async def delete_group(self, group_id: int) -> None:
         async with self.db_session.transaction():

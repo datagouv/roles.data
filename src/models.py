@@ -1,7 +1,7 @@
 from typing import Annotated, NewType
 from xmlrpc.client import boolean
 
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
 
 # Create a NewType for type hints
 Siren = NewType("Siren", str)
@@ -31,8 +31,7 @@ class OrganisationCreate(OrganisationBase):
 class OrganisationResponse(OrganisationBase):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # --- User ---
@@ -51,16 +50,14 @@ class UserCreate(UserBase):
 class UserResponse(UserBase):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserWithRoleResponse(UserBase):
     role_name: str
     is_admin: bool
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # --- Role ---
@@ -72,8 +69,7 @@ class RoleBase(BaseModel):
 class RoleResponse(RoleBase):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # --- Group ---
@@ -91,8 +87,7 @@ class GroupCreate(GroupBase):
 class GroupResponse(GroupBase):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class GroupWithUsersResponse(GroupResponse):
@@ -111,8 +106,7 @@ class ParentChildResponse(BaseModel):
     child_group_id: int
     inherit_scopes: bool
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # --- Service Provider & scopes ---
@@ -126,8 +120,7 @@ class ScopeResponse(ScopeBase):
     service_provider_id: int
     group_id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ServiceProviderBase(BaseModel):
@@ -137,8 +130,7 @@ class ServiceProviderBase(BaseModel):
 class ServiceProviderResponse(ServiceProviderBase):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ServiceAccountProviderResponse(BaseModel):
@@ -156,8 +148,7 @@ class ServiceAccountResponse(ServiceAccountBase):
     id: int
     service_provider_id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class Token(BaseModel):

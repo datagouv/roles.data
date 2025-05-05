@@ -26,12 +26,10 @@ class Settings(BaseSettings):
     DB_NAME_TEST: str = "d-roles-test"
     DB_PORT_TEST: str = "5433"
 
+    DATABASE_PREFLIGHT_QUERY: str = ""
+
     # Add other settings as needed
     DEBUG: bool = False
-
-    class Config:
-        env_file = ".env"  # Load from .env file
-        case_sensitive = True
 
 
 # Create global settings instance

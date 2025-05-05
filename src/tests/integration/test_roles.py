@@ -2,21 +2,21 @@ def test_add_roles(client):
     response = client.get("/roles/")
     assert response.status_code == 200
     roles = response.json()
-    assert len(roles) == 2
 
     response = client.post(
         "/roles/", json={"role_name": f"user_{len(roles)}", "is_admin": False}
     )
+
     assert response.status_code == 201
 
     response = client.get("/roles/")
     assert response.status_code == 200
-    roles = response.json()
-    assert len(roles) == 3
-    assert roles[-1]["role_name"] == "manager"
+    new_roles = response.json()
+    assert len(roles) == len(new_roles) - 1
+    assert new_roles[-1]["role_name"] == f"user_{len(new_roles) - 1}"
 
 
-async def test_get_roles_by_id(client):
+def test_get_roles_by_id(client):
     response = client.get("/roles/1")
     assert response.status_code == 200
     role = response.json()

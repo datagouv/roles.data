@@ -1,5 +1,5 @@
 # ------- REPOSITORY FILE -------
-from ..models import GroupCreate, GroupResponse, GroupWithUsersResponse, Siren
+from ..models import GroupCreate, GroupResponse, GroupWithUsersResponse
 
 
 class GroupsRepository:
@@ -33,38 +33,40 @@ class GroupsRepository:
                 query, {"id": group_id, "service_provider_id": service_provider_id}
             )
 
-    async def list_groups(
-        self, organisation_siren: Siren, service_provider_id: int
-    ) -> list[GroupResponse]:
+    async def list_groups(self, service_provider_id: int) -> list[GroupResponse]:
         async with self.db_session.transaction():
             query = """
             SELECT G.id, G.name, O.siren as organisation_siren
-            FROM teams as G
+            FROM groups as G
             INNER JOIN organisations AS O ON G.orga_id = O.id
-            INNER JOIN group_service_provider_relations AS GSPR ON GSPR.group_id = G.id AND  GSPR.service_provider_id = :service_provider_id
-            WHERE O.siren = :organisation_siren"
+            INNER JOIN group_service_provider_relations AS GSPR ON GSPR.group_id = G.id AND GSPR.service_provider_id = :service_provider_id
             """
             return await self.db_session.fetch_all(
                 query,
                 {
-                    "organisation_siren": organisation_siren,
                     "service_provider_id": service_provider_id,
                 },
             )
 
     async def create_group(
-        self, group_data: GroupCreate, orga_id: int
+        self, group_data: GroupCreate, orga_id: int, service_provider_id: int
     ) -> GroupResponse:
         async with self.db_session.transaction():
-            query = "INSERT INTO groups (name, orga_id) VALUES (:name, :orga_id) RETURNING *"
-            values = {"name": group_data.name, "orga_id": orga_id}
-            return await self.db_session.fetch_one(query, values)
+            query_create_group = "INSERT INTO groups (name, orga_id) VALUES (:name, :orga_id) RETURNING *"
+            new_group = await self.db_session.fetch_one(
+                query_create_group, {"name": group_data.name, "orga_id": orga_id}
+            )
 
-    async def delete_group(self, group_id: int) -> None:
-        async with self.db_session.transaction():
-            query = "DELETE FROM groups WHERE id = :group_id"
-            values = {"group_id": group_id}
-            return await self.db_session.execute(query, values)
+            query_create_access = "INSERT INTO group_service_provider_relations (service_provider_id, group_id, scopes) VALUES (:service_provider_id, :group_id, :scopes)"
+            await self.db_session.execute(
+                query_create_access,
+                {
+                    "service_provider_id": service_provider_id,
+                    "group_id": new_group.id,
+                    "scopes": "",
+                },
+            )
+            return new_group
 
     async def update_group(self, group_id: int, group_name: str) -> GroupResponse:
         async with self.db_session.transaction():

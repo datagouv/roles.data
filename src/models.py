@@ -54,6 +54,7 @@ class UserResponse(UserBase):
 
 
 class UserWithRoleResponse(UserBase):
+    id: int
     role_name: str
     is_admin: bool
 
@@ -153,4 +154,4 @@ class ServiceAccountResponse(ServiceAccountBase):
 
 class Token(BaseModel):
     access_token: str
-    token_type: str = "bearer"
+    token_type: str

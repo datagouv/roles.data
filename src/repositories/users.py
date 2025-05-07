@@ -6,12 +6,10 @@ class UsersRepository:
     def __init__(self, db_session):
         self.db_session = db_session
 
-    # Get users
-
     async def get_user_by_email(self, email: str) -> UserResponse:
         async with self.db_session.transaction():
             query = """
-            SELECT * FROM users WHERE U.email = :email
+            SELECT * FROM users as U WHERE U.email = :email
             """
             return await self.db_session.fetch_one(query, {"email": email})
 
@@ -33,18 +31,8 @@ class UsersRepository:
                 """
             return await self.db_session.fetch_all(query, {"group_id": group_id})
 
-    # Delete / create
-
     async def add_user(self, user: UserCreate) -> UserResponse:
         async with self.db_session.transaction():
-            query = "INSERT INTO users (email, is_email_confirmed) VALUES (:email, :is_email_confirmed)"
+            query = "INSERT INTO users (email, is_email_confirmed) VALUES (:email, :is_email_confirmed) RETURNING *"
             values = {"email": user.email, "is_email_confirmed": False}
-            return await self.db_session.execute(query, values)
-
-    async def delete_user(self, user_id: int) -> None:
-        async with self.db_session.transaction():
-            query = "DELETE FROM users WHERE id = :user_id"
-            values = {
-                "user_id": user_id,
-            }
-            return await self.db_session.execute(query, values)
+            return await self.db_session.fetch_one(query, values)

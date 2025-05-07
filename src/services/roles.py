@@ -14,12 +14,14 @@ class RolesService:
         if not isinstance(role_data.is_admin, bool):
             raise HTTPException(status_code=400, detail="is_admin must be a boolean.")
 
-    async def create_role(self, role_data):
+    async def get_roles_by_id(self, role_id: int):
         """
-        Create a new role
+        Get a role by its ID
         """
-        await self.validate_role_data(role_data)
-        return await self.roles_repository.create_role(role_data)
+        role = await self.roles_repository.get_roles_by_id(role_id)
+        if not role:
+            raise HTTPException(status_code=404, detail="Role not found")
+        return role
 
     async def get_all_roles(self):
         """
@@ -30,19 +32,3 @@ class RolesService:
             raise HTTPException(status_code=404, detail="No roles found")
 
         return roles
-
-    async def get_roles_for_group(self, group_id: int):
-        roles = await self.roles_repository.get_roles_for_group(group_id)
-        if not roles:
-            raise HTTPException(status_code=404, detail="No roles found for this group")
-
-        return roles
-
-    async def get_roles_by_id(self, role_id: int):
-        """
-        Get a role by its ID
-        """
-        role = await self.roles_repository.get_roles_by_id(role_id)
-        if not role:
-            raise HTTPException(status_code=404, detail="Role not found")
-        return role

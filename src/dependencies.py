@@ -1,10 +1,11 @@
 from databases import Database
 from fastapi import Depends
 
-from src.auth import extract_service_provider_from_token
+from src.auth import get_key_from_token_extractor
 from src.repositories.auth import AuthRepository
 from src.repositories.service_providers import ServiceProvidersRepository
 from src.services.auth import AuthService
+from src.services.scopes import ScopesService
 from src.services.services_provider import ServiceProvidersService
 
 from .database import get_db
@@ -54,17 +55,21 @@ async def get_roles_service(db: Database = Depends(get_db)) -> RolesService:
     return RolesService(roles_repository)
 
 
+async def get_scope_service(
+    db: Database = Depends(get_db),
+) -> ServiceProvidersService:
+    """
+    Dependency function that provides a ScopeService instance.
+    """
+    service_providers_repository = ServiceProvidersRepository(db)
+    return ServiceProvidersService(service_providers_repository)
+
+
 async def get_service_providers_service(
     db: Database = Depends(get_db),
 ) -> ServiceProvidersService:
     """
     Dependency function that provides a UsersService instance.
-
-    Args:
-        db: Database connection provided by get_db dependency
-
-    Returns:
-        An initialized UsersService
     """
     service_providers_repository = ServiceProvidersRepository(db)
     return ServiceProvidersService(service_providers_repository)
@@ -75,16 +80,24 @@ async def get_groups_service(
     users_service: UsersService = Depends(get_users_service),
     roles_service: RolesService = Depends(get_roles_service),
     organisations_service: OrganisationsService = Depends(get_organisations_service),
-    service_provider_id: int = Depends(extract_service_provider_from_token),
+    service_provider_service: ServiceProvidersService = Depends(
+        get_service_providers_service
+    ),
+    scopes_service: ScopesService = Depends(get_scope_service),
+    key_from_token_extractor=Depends(get_key_from_token_extractor),
 ) -> GroupsService:
     """
     Dependency function that provides a GroupsService instance.
     """
     groups_repository = GroupsRepository(db)
+    service_provider_id = key_from_token_extractor(key="service_provider_id")
+
     return GroupsService(
         groups_repository,
         users_service,
         roles_service,
         organisations_service,
+        service_provider_service,
+        scopes_service,
         service_provider_id,
     )

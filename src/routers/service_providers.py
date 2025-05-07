@@ -1,9 +1,9 @@
 # ------- USER ROUTER FILE -------
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Path
 
-from ..dependencies import get_users_service
-from ..models import UserResponse
-from ..services.users import UsersService
+from src.services.services_provider import ServiceProvidersService
+
+from ..dependencies import get_service_providers_service
 
 router = APIRouter(
     prefix="/service-providers",
@@ -15,21 +15,16 @@ router = APIRouter(
 
 @router.get("/{service_provider_id}", status_code=200)
 async def get_service_provider_by_id(
-    service_provider_id: int, users_service: UsersService = Depends(get_users_service)
+    service_provider_id: int = Path(
+        ..., description="The ID of the service provider to retrieve"
+    ),
+    service_providers_service: ServiceProvidersService = Depends(
+        get_service_providers_service
+    ),
 ):
     """
     Get a service provider by ID.
     """
-    pass
-
-
-@router.post("/{service_provider_id}/groups/{group_id}", response_model=UserResponse)
-async def grant_service_access_to_group(
-    service_provider_id: int,
-    group_id: int,
-    users_service: UsersService = Depends(get_users_service),
-):
-    """
-    Get a specific user by email, including all roles and group memberships.
-    """
-    pass
+    return await service_providers_service.get_service_provider_by_id(
+        service_provider_id
+    )

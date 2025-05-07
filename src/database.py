@@ -12,6 +12,9 @@ database = databases.Database(settings.DATABASE_URL)
 async def get_db() -> AsyncGenerator[databases.Database, None]:
     if not database.is_connected:
         await database.connect()
+        await database.execute(
+            f"ALTER ROLE current_user SET search_path TO {settings.DB_SCHEMA}"
+        )
     try:
         yield database
     finally:
@@ -19,17 +22,11 @@ async def get_db() -> AsyncGenerator[databases.Database, None]:
         pass
 
 
-# For use in app startup/shutdown
 async def startup():
-    await database.connect()
-    # Set search path for the entire pool
-    await database.execute(
-        f"ALTER ROLE current_user SET search_path TO {settings.DB_SCHEMA}"
-    )
-    # Execute preflight query if provided
-    if settings.DATABASE_PREFLIGHT_QUERY:
-        await database.execute(settings.DATABASE_PREFLIGHT_QUERY)
+    if not database.is_connected:
+        await database.connect()
 
 
 async def shutdown():
-    await database.disconnect()
+    if database.is_connected:
+        await database.disconnect()

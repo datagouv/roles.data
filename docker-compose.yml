@@ -2,7 +2,9 @@ services:
   postgres-dev:
     image: "postgres:15.7"
     volumes:
-      - ./db/initdb/:/docker-entrypoint-initdb.d/
+      # - ./db/migrations/dev:/docker-entrypoint-initdb.d/
+      - ./db/initdb/schema.sql:/docker-entrypoint-initdb.d/000000-schema.sql
+      - ./db/seeds/dev/seed.sql:/docker-entrypoint-initdb.d/999999-seed.sql
     environment:
       - POSTGRES_DB=d-roles
       - POSTGRES_USER=d-roles
@@ -14,7 +16,9 @@ services:
   postgres-test:
     image: "postgres:15.7"
     volumes:
-      - ./db/initdb/:/docker-entrypoint-initdb.d/
+      # - ./db/migrations/dev:/docker-entrypoint-initdb.d/
+      - ./db/initdb/schema.sql:/docker-entrypoint-initdb.d/000000-schema.sql
+      - ./db/seeds/test/seed.sql:/docker-entrypoint-initdb.d/999999-seed.sql
     environment:
       - POSTGRES_DB=d-roles-test
       - POSTGRES_USER=d-roles

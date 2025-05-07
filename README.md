@@ -49,6 +49,12 @@ To lint, format and sort imports, this repository uses Ruff. You can run the fol
 uv run ruff check --fix && uv run ruff format
 ```
 
+### Tests
+
+```
+uv run python -m pytest -s src/tests/integration
+```
+
 ### Bonnes pratiques
 
 - [Design patterns](https://medium.com/@lautisuarez081/fastapi-best-practices-and-design-patterns-building-quality-python-apis-31774ff3c28a)

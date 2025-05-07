@@ -2,6 +2,8 @@
 from fastapi import APIRouter, Depends
 from pydantic import EmailStr
 
+from src.auth import decode_access_token
+
 from ..dependencies import get_users_service
 from ..models import UserCreate, UserResponse
 from ..services.users import UsersService
@@ -9,7 +11,7 @@ from ..services.users import UsersService
 router = APIRouter(
     prefix="/users",
     tags=["Utilisateurs"],
-    # dependencies=[Depends(get_token_header)],
+    dependencies=[Depends(decode_access_token)],
     responses={404: {"description": "Not found"}, 400: {"description": "Bad request"}},
 )
 

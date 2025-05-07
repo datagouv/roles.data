@@ -1,6 +1,7 @@
 # ------- USER ROUTER FILE -------
 from fastapi import APIRouter, Depends, Path
 
+from src.auth import decode_access_token
 from src.services.services_provider import ServiceProvidersService
 
 from ..dependencies import get_service_providers_service
@@ -8,7 +9,7 @@ from ..dependencies import get_service_providers_service
 router = APIRouter(
     prefix="/service-providers",
     tags=["Fournisseurs de services"],
-    # dependencies=[Depends(get_token_header)],
+    dependencies=[Depends(decode_access_token)],
     responses={404: {"description": "Not found"}, 400: {"description": "Bad request"}},
 )
 

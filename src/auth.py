@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta, timezone
-from functools import partial
 
 import jwt
 from fastapi import Depends, HTTPException
@@ -38,19 +37,13 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     return encoded_jwt
 
 
-def get_key_from_token(
-    key: str,
-    token: str,
-):
+def decode_access_token(token: str = Depends(oauth2_scheme)):
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
-        return payload.get(key)
+        return payload
     except InvalidTokenError:
         raise HTTPException(
             status_code=401,
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
-
-
-get_key_from_token_extractor = partial(get_key_from_token, token=Depends(oauth2_scheme))

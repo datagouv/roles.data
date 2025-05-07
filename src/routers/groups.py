@@ -1,6 +1,7 @@
 # ------- USER ROUTER FILE -------
 from fastapi import APIRouter, Depends, Path, Query
 
+from src.auth import decode_access_token
 from src.dependencies import get_groups_service
 
 from ..models import GroupCreate, GroupResponse, GroupWithUsersResponse
@@ -9,7 +10,7 @@ from ..services.groups import GroupsService
 router = APIRouter(
     prefix="/groups",
     tags=["Équipes"],
-    # dependencies=[Depends(get_token_header)],
+    dependencies=[Depends(decode_access_token)],
     responses={404: {"description": "Not found"}, 400: {"description": "Bad request"}},
 )
 

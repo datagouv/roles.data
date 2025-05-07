@@ -1,7 +1,7 @@
 from databases import Database
 from fastapi import Depends
 
-from src.auth import get_key_from_token_extractor
+from src.auth import decode_access_token
 from src.repositories.auth import AuthRepository
 from src.repositories.service_providers import ServiceProvidersRepository
 from src.services.auth import AuthService
@@ -75,6 +75,13 @@ async def get_service_providers_service(
     return ServiceProvidersService(service_providers_repository)
 
 
+def get_service_provider_id(access_token: dict = Depends(decode_access_token)):
+    """
+    Dependency function that extracts the service provider ID from the access token.
+    """
+    return access_token.get("service_provider_id")
+
+
 async def get_groups_service(
     db: Database = Depends(get_db),
     users_service: UsersService = Depends(get_users_service),
@@ -84,13 +91,12 @@ async def get_groups_service(
         get_service_providers_service
     ),
     scopes_service: ScopesService = Depends(get_scope_service),
-    key_from_token_extractor=Depends(get_key_from_token_extractor),
+    service_provider_id=Depends(get_service_provider_id),
 ) -> GroupsService:
     """
     Dependency function that provides a GroupsService instance.
     """
     groups_repository = GroupsRepository(db)
-    service_provider_id = key_from_token_extractor(key="service_provider_id")
 
     return GroupsService(
         groups_repository,

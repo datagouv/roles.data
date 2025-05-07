@@ -2,7 +2,7 @@ import pytest
 from databases import Database
 from fastapi.testclient import TestClient
 
-from ..auth import get_key_from_token_extractor
+from ..auth import decode_access_token
 from ..config import settings
 from ..database import get_db
 from ..main import app
@@ -29,16 +29,8 @@ async def override_get_db():
     yield test_db
 
 
-def override_get_key_from_token_extractor():
-    """
-    Override the get_key_from_token_extractor function to return a test key.
-    """
-
-    def test_key_from_token_extractor(key: str):
-        if key == "service_provider_id":
-            return 1
-
-    return test_key_from_token_extractor
+def override_decode_access_token():
+    return {"service_provider_id": "1"}
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -61,9 +53,7 @@ def test_override_setup():
     app.router.on_shutdown.append(test_db_shutdown)
 
     app.dependency_overrides[get_db] = override_get_db
-    app.dependency_overrides[get_key_from_token_extractor] = (
-        override_get_key_from_token_extractor
-    )
+    app.dependency_overrides[decode_access_token] = override_decode_access_token
 
     yield
 

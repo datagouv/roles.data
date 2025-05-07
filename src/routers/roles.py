@@ -1,6 +1,8 @@
 # ------- USER ROUTER FILE -------
 from fastapi import APIRouter, Depends
 
+from src.auth import decode_access_token
+
 from ..dependencies import get_roles_service
 from ..models import RoleResponse
 from ..services.roles import RolesService
@@ -8,7 +10,7 @@ from ..services.roles import RolesService
 router = APIRouter(
     prefix="/roles",
     tags=["Rôles"],
-    # dependencies=[Depends(get_token_header)],
+    dependencies=[Depends(decode_access_token)],
     responses={404: {"description": "Not found"}, 400: {"description": "Bad request"}},
 )
 

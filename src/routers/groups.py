@@ -83,7 +83,7 @@ async def update_user_role_in_group(
     group_service: GroupsService = Depends(get_groups_service),
 ):
     """
-    Update user role a user from a given group
+    Update the role of a user in a specified group.
     """
     return await group_service.update_user_in_group(group_id, user_id, role_id)
 

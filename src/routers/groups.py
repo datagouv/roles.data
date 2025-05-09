@@ -60,7 +60,7 @@ async def update_group(
 
 
 # Group’s users manipulation
-@router.post("/{group_id}/users/{user_id}", status_code=201)
+@router.put("/{group_id}/users/{user_id}", status_code=201)
 async def add_user_to_group(
     group_id: int = Path(..., description="The ID of the group"),
     user_id: int = Path(..., description="The ID of the user"),
@@ -75,6 +75,19 @@ async def add_user_to_group(
     return await group_service.add_user_to_group(group_id, user_id, role_id)
 
 
+@router.patch("/{group_id}/users/{user_id}", status_code=200)
+async def update_user_role_in_group(
+    group_id: int = Path(..., description="The ID of the group"),
+    user_id: int = Path(..., description="The ID of the user"),
+    role_id: int = Query(..., description="The ID of the role"),
+    group_service: GroupsService = Depends(get_groups_service),
+):
+    """
+    Update user role a user from a given group
+    """
+    return await group_service.update_user_in_group(group_id, user_id, role_id)
+
+
 @router.delete("/{group_id}/users/{user_id}", status_code=204)
 async def remove_user_from_group(
     group_id: int = Path(..., description="The ID of the group"),
@@ -87,19 +100,6 @@ async def remove_user_from_group(
     If the group or the user does not exist, a 404 error will be raised.
     """
     return await group_service.remove_user_from_group(group_id, user_id)
-
-
-@router.put("/{group_id}/users/{user_id}", status_code=200)
-async def update_user_role_in_group(
-    group_id: int = Path(..., description="The ID of the group"),
-    user_id: int = Path(..., description="The ID of the user"),
-    role_id: int = Query(..., description="The ID of the role"),
-    group_service: GroupsService = Depends(get_groups_service),
-):
-    """
-    Update user role a user from a given group
-    """
-    return await group_service.update_user_in_group(group_id, user_id, role_id)
 
 
 @router.post("/{group_id}/grant-access", status_code=200)

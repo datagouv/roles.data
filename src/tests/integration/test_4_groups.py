@@ -1,17 +1,4 @@
-import random
-import string
-
-DINUM_SIREN = "130025265"
-
-
-def random_group():
-    """Generate random group data."""
-    return {
-        "name": f"Test Group {''.join(random.choices(string.ascii_lowercase, k=5))}",
-        "organisation_siren": DINUM_SIREN,
-        "admin_email": f"admin_{random.randint(1000, 9999)}@example.com",
-    }
-
+from src.tests.helpers import random_group, random_name, random_user
 
 new_group_data = random_group()
 
@@ -68,7 +55,7 @@ def test_get_group_with_users(client):
             ),
             None,
         )
-        is None
+        is not None
     )
 
 
@@ -79,140 +66,88 @@ def test_get_group_not_found(client):
     assert response.status_code == 404
 
 
-# def test_update_group(client):
-#     """Test updating a group's name."""
-#     # First create a group
-#     group_data = random_group()
-#     create_response = client.post("/groups/", json=group_data)
-#     assert create_response.status_code == 200
-#     group_id = create_response.json()["id"]
+def test_update_group(client):
+    """Test updating a group's name."""
+    # Update the group name
+    new_name = random_name()
+    response = client.put(f"/groups/{new_group_data["id"]}?group_name={new_name}")
+    assert response.status_code == 200
 
-#     # Update the group name
-#     new_name = f"Updated Group {''.join(random.choices(string.ascii_lowercase, k=5))}"
-#     response = client.put(f"/groups/{group_id}?group_name={new_name}")
-#     assert response.status_code == 200
+    updated_group = response.json()
+    assert updated_group["id"] == new_group_data["id"]
+    assert updated_group["name"] == new_name
 
-#     updated_group = response.json()
-#     assert updated_group["id"] == group_id
-#     assert updated_group["name"] == new_name
+    # Test non-existent group
+    response = client.put(f"/groups/999999?group_name={new_name}")
+    assert response.status_code == 404
 
-#     # Test non-existent group
-#     response = client.put(f"/groups/999999?group_name={new_name}")
-#     assert response.status_code == 404
+    # revert the group name
+    response = client.put(
+        f"/groups/{new_group_data['id']}?group_name={new_group_data['name']}"
+    )
+    assert response.status_code == 200
+    updated_group = response.json()
+    assert updated_group["name"] == new_group_data["name"]
 
-# def test_add_user_to_group(client):
-#     """Test adding a user to a group."""
-#     # Create a group
-#     group_data = random_group()
-#     group_response = client.post("/groups/", json=group_data)
-#     group_id = group_response.json()["id"]
 
-#     # Create a user
-#     user_data = {
-#         "email": f"test_{random.randint(1000, 9999)}@example.com",
-#         "sub_pro_connect": f"sub_{random.randint(1000, 9999)}"
-#     }
-#     user_response = client.post("/users/", json=user_data)
-#     user_id = user_response.json()["id"]
+def test_add_user_to_group_and_update_roles(client):
+    """Test adding a user to a group."""
+    # Create a user
+    user_data = random_user()
 
-#     # Create a role or use an existing one
-#     roles_response = client.get("/roles/")
-#     role_id = roles_response.json()[0]["id"]
+    user_response = client.post("/users/", json=user_data)
+    user_id = user_response.json()["id"]
 
-#     # Add user to group with role
-#     response = client.post(f"/groups/{group_id}/users/{user_id}?role_id={role_id}")
-#     assert response.status_code == 201
+    # Create a role or use an existing one
+    roles_response = client.get("/roles/")
+    role_1 = roles_response.json()[0]
+    role_2 = roles_response.json()[1]
 
-#     # Verify user is in the group
-#     group_details = client.get(f"/groups/{group_id}")
-#     group_users = group_details.json()["users"]
-#     assert any(user["id"] == user_id for user in group_users)
+    # Add user to group with role
+    response = client.put(
+        f"/groups/{new_group_data["id"]}/users/{user_id}?role_id={role_1['id']}"
+    )
+    assert response.status_code == 201
 
-# def test_remove_user_from_group(client):
-#     """Test removing a user from a group."""
-#     # Setup: create group, user, and add user to group
-#     group_data = random_group()
-#     group_response = client.post("/groups/", json=group_data)
-#     group_id = group_response.json()["id"]
+    # Verify user is in the group
+    group_details = client.get(f"/groups/{new_group_data["id"]}")
+    group_users = group_details.json()["users"]
+    find_user = next(user for user in group_users if user["id"] == user_id)
+    assert find_user is not None
+    assert find_user["role_name"] == role_1["role_name"]
 
-#     user_data = {
-#         "email": f"test_{random.randint(1000, 9999)}@example.com",
-#         "sub_pro_connect": f"sub_{random.randint(1000, 9999)}"
-#     }
-#     user_response = client.post("/users/", json=user_data)
-#     user_id = user_response.json()["id"]
+    # Update user role in group
+    client.patch(
+        f"/groups/{new_group_data["id"]}/users/{user_id}?role_id={role_2['id']}"
+    )
 
-#     roles_response = client.get("/roles/")
-#     role_id = roles_response.json()[0]["id"]
+    # Verify user has new role in the group
+    group_details = client.get(f"/groups/{new_group_data["id"]}")
+    group_users = group_details.json()["users"]
+    find_user = next(user for user in group_users if user["id"] == user_id)
+    assert find_user is not None
+    assert find_user["role_name"] == role_2["role_name"]
 
-#     # Add user to group
-#     client.post(f"/groups/{group_id}/users/{user_id}?role_id={role_id}")
 
-#     # Now remove the user from the group
-#     response = client.delete(f"/groups/{group_id}/users/{user_id}")
-#     assert response.status_code == 204
+def test_remove_user_from_group(client):
+    """Test removing a user from a group."""
 
-#     # Verify user is not in the group
-#     group_details = client.get(f"/groups/{group_id}")
-#     group_users = group_details.json()["users"]
-#     assert not any(user["id"] == user_id for user in group_users)
+    user_data = random_user()
 
-# def test_update_user_role_in_group(client):
-#     """Test updating a user's role in a group."""
-#     # Setup: create group, user, and add user to group
-#     group_data = random_group()
-#     group_response = client.post("/groups/", json=group_data)
-#     group_id = group_response.json()["id"]
+    user_response = client.post("/users/", json=user_data)
+    user_id = user_response.json()["id"]
 
-#     user_data = {
-#         "email": f"test_{random.randint(1000, 9999)}@example.com",
-#         "sub_pro_connect": f"sub_{random.randint(1000, 9999)}"
-#     }
-#     user_response = client.post("/users/", json=user_data)
-#     user_id = user_response.json()["id"]
+    roles_response = client.get("/roles/")
+    role_id = roles_response.json()[0]["id"]
 
-#     # Get roles
-#     roles_response = client.get("/roles/")
-#     roles = roles_response.json()
-#     original_role_id = roles[0]["id"]
-#     new_role_id = roles[1]["id"] if len(roles) > 1 else roles[0]["id"]
+    # Add user to group
+    client.post(f"/groups/{new_group_data['id']}/users/{user_id}?role_id={role_id}")
 
-#     # Add user to group with initial role
-#     client.post(f"/groups/{group_id}/users/{user_id}?role_id={original_role_id}")
+    # Now remove the user from the group
+    response = client.delete(f"/groups/{new_group_data['id']}/users/{user_id}")
+    assert response.status_code == 204
 
-#     # Update user's role
-#     response = client.put(f"/groups/{group_id}/users/{user_id}?role_id={new_role_id}")
-#     assert response.status_code == 200
-
-#     # Verify role was updated - would need a way to check user's role in group
-
-# def test_grant_access(client):
-#     """Test granting access to a group."""
-#     # Create a group
-#     group_data = random_group()
-#     group_response = client.post("/groups/", json=group_data)
-#     group_id = group_response.json()["id"]
-
-#     # Grant access with scopes
-#     scopes = "read,write"
-#     response = client.post(f"/groups/{group_id}/grant-access?scopes={scopes}")
-#     assert response.status_code == 200
-
-#     # Verify access was granted - implementation dependent
-
-# def test_update_access(client):
-#     """Test updating access for a group."""
-#     # Create a group
-#     group_data = random_group()
-#     group_response = client.post("/groups/", json=group_data)
-#     group_id = group_response.json()["id"]
-
-#     # First grant access
-#     client.post(f"/groups/{group_id}/grant-access?scopes=read")
-
-#     # Update access with new scopes
-#     new_scopes = "read,write,delete"
-#     response = client.put(f"/groups/{group_id}/update-access?scopes={new_scopes}")
-#     assert response.status_code == 200
-
-#     # Verify access was updated - implementation dependent
+    # Verify user is not in the group
+    group_details = client.get(f"/groups/{new_group_data['id']}")
+    group_users = group_details.json()["users"]
+    assert not any(user["id"] == user_id for user in group_users)

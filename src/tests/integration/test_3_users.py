@@ -1,9 +1,4 @@
-from uuid import uuid4
-
-
-def random_user():
-    """Generate a random user for testing."""
-    return {"email": f"test_{uuid4()}@example.com", "sub_pro_connect": f"sub_{uuid4()}"}
+from src.tests.helpers import random_user
 
 
 def test_create_user(client):

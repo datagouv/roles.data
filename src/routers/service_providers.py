@@ -1,10 +1,10 @@
 # ------- USER ROUTER FILE -------
-from fastapi import APIRouter, Depends, Path
+from fastapi import APIRouter, Depends
 
 from src.auth import decode_access_token
 from src.services.services_provider import ServiceProvidersService
 
-from ..dependencies import get_service_providers_service
+from ..dependencies import get_service_provider_id, get_service_providers_service
 
 router = APIRouter(
     prefix="/service-providers",
@@ -14,17 +14,27 @@ router = APIRouter(
 )
 
 
-@router.get("/{service_provider_id}", status_code=200)
-async def get_service_provider_by_id(
-    service_provider_id: int = Path(
-        ..., description="The ID of the service provider to retrieve"
-    ),
+@router.get("/", status_code=200)
+async def get_all_service_providers(
     service_providers_service: ServiceProvidersService = Depends(
         get_service_providers_service
     ),
 ):
     """
-    Get a service provider by ID.
+    List of all service providers.
+    """
+    return await service_providers_service.get_all_service_providers()
+
+
+@router.get("/info", status_code=200)
+async def get_service_provider_info(
+    service_provider_id: int = Depends(get_service_provider_id),
+    service_providers_service: ServiceProvidersService = Depends(
+        get_service_providers_service
+    ),
+):
+    """
+    Get the details of the service provider paired with the current service account.
     """
     return await service_providers_service.get_service_provider_by_id(
         service_provider_id

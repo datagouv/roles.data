@@ -94,11 +94,12 @@ CREATE TABLE  IF NOT EXISTS d_roles.service_accounts (
     name VARCHAR(255) NOT NULL,
     token TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-    CONSTRAINT fk_sa_sp_id FOREIGN KEY (service_provider_id) REFERENCES d_roles.service_providers (id) ON DELETE CASCADE,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_sa_sp_id FOREIGN KEY (service_provider_id) REFERENCES d_roles.service_providers (id) ON DELETE CASCADE
 );
 
 
 INSERT INTO d_roles.roles (id, role_name, is_admin) VALUES
-(1, 'admin', true),
-(2, 'user', false);
+(1, 'administrateur', true),
+(2, 'agent', false),
+(3, 'prestataire', false);

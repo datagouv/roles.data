@@ -1,4 +1,6 @@
 # ------- SERVICE FILE -------
+from fastapi import HTTPException
+
 from ..models import UserCreate, UserResponse, UserWithRoleResponse
 from ..repositories.users import UsersRepository
 
@@ -15,13 +17,23 @@ class UsersService:
         """
         Retrieve user by email
         """
-        return await self.user_repository.get_user_by_email(email)
+        user = await self.user_repository.get_user_by_email(email)
+        if not user:
+            raise HTTPException(
+                status_code=404, detail=f"User with email {email} not found"
+            )
+        return user
 
     async def get_user_by_id(self, user_id: int) -> UserResponse:
         """
         Retrieve user by ID
         """
-        return await self.user_repository.get_user_by_id(user_id)
+        user = await self.user_repository.get_user_by_id(user_id)
+        if not user:
+            raise HTTPException(
+                status_code=404, detail=f"User with ID {user_id} not found"
+            )
+        return user
 
     async def get_users_by_group_id(self, group_id: int) -> list[UserWithRoleResponse]:
         """
@@ -36,23 +48,17 @@ class UsersService:
             return True
         return False
 
-    async def create_user(
-        self, user_data: UserCreate, fail_if_already_exist=True
-    ) -> UserResponse:
+    async def create_user(self, user_data: UserCreate) -> UserResponse:
         # Business Logic Validation
         await self.validate_user_data(user_data)
 
-        user = await self.get_user_by_email(user_data.email)
+        try:
+            # this will raise an HTTPException if the user does not exist
+            await self.get_user_by_email(user_data.email)
 
-        if user:
-            if fail_if_already_exist:
-                raise ValueError("User already exists.")
-            return user
-        else:
-            return await self.user_repository.add_user(user_data)
-
-    async def delete_user(self, user_id: int) -> None:
-        """
-        Retrieve user by ID
-        """
-        return await self.user_repository.delete_user(user_id)
+            raise ValueError("User already exists.")
+        except HTTPException as e:
+            if e.status_code == 404:
+                new_user = await self.user_repository.add_user(user_data)
+                return new_user
+            raise e

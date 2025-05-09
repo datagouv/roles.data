@@ -61,21 +61,7 @@ class UserWithRoleResponse(UserBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-# --- Role ---
-class RoleBase(BaseModel):
-    role_name: str
-    is_admin: bool
-
-
-class RoleResponse(RoleBase):
-    id: int
-
-    model_config = ConfigDict(from_attributes=True)
-
-
 # --- Group ---
-
-
 class GroupBase(BaseModel):
     name: str
 
@@ -91,9 +77,10 @@ class GroupResponse(GroupBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-class GroupWithUsersResponse(GroupResponse):
+class GroupWithUsersAndScopesResponse(GroupResponse):
     organisation_siren: int
-    users: list[UserWithRoleResponse] = []
+    users: list[UserWithRoleResponse]
+    scopes: str
 
 
 class ParentChildCreate(BaseModel):
@@ -110,9 +97,19 @@ class ParentChildResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+# --- Role ---
+class RoleBase(BaseModel):
+    role_name: str
+    is_admin: bool
+
+
+class RoleResponse(RoleBase):
+    id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 # --- Service Provider & scopes ---
-
-
 class ScopeBase(BaseModel):
     scopes: str  # Consider using list[str] if representing multiple scopes
 

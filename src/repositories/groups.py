@@ -1,5 +1,5 @@
 # ------- REPOSITORY FILE -------
-from ..models import GroupCreate, GroupResponse, GroupWithUsersResponse
+from ..models import GroupCreate, GroupResponse, GroupWithUsersAndScopesResponse
 
 
 class GroupsRepository:
@@ -20,7 +20,7 @@ class GroupsRepository:
 
     async def get_group_by_id(
         self, group_id: int, service_provider_id: int
-    ) -> GroupWithUsersResponse | None:
+    ) -> GroupWithUsersAndScopesResponse | None:
         async with self.db_session.transaction():
             query = """
             SELECT G.id, G.name, organisations.siren as organisation_siren

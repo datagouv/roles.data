@@ -5,7 +5,7 @@ from src.services.services_provider import ServiceProvidersService
 from ..models import (
     GroupCreate,
     GroupResponse,
-    GroupWithUsersResponse,
+    GroupWithUsersAndScopesResponse,
     OrganisationCreate,
     UserCreate,
 )
@@ -88,16 +88,27 @@ class GroupsService:
     async def list_groups(self) -> list[GroupResponse]:
         return await self.groups_repository.list_groups(self.service_provider_id)
 
-    async def get_group_with_users(self, group_id: int) -> GroupWithUsersResponse:
+    async def get_group_with_users_and_scopes(
+        self, group_id: int
+    ) -> GroupWithUsersAndScopesResponse:
         group: GroupResponse = await self.get_group_by_id(group_id)
+        group_dict = dict(group)
 
         users = await self.users_service.get_users_by_group_id(group_id)
 
         # Python's dict() function does not include dynamically added attributes
         # so we have to manually create a dict then a new object
-        group_dict = dict(group)
         group_dict["users"] = users
-        return GroupWithUsersResponse(**group_dict)
+
+        scopes = await self.scopes_service.get_scopes(
+            self.service_provider_id, group_id
+        )
+
+        # Python's dict() function does not include dynamically added attributes
+        # so we have to manually create a dict then a new object
+        group_dict["scopes"] = scopes
+
+        return GroupWithUsersAndScopesResponse(**group_dict)
 
     async def update_group(self, group_id: int, group_name: str) -> GroupResponse:
         group = await self.get_group_by_id(group_id)
@@ -121,7 +132,7 @@ class GroupsService:
     async def update_user_in_group(self, group_id: int, user_id: int, role_id: int):
         # check if the user, is in the group
         role = await self.roles_service.get_roles_by_id(role_id)
-        group = await self.get_group_with_users(group_id)
+        group = await self.get_group_with_users_and_scopes(group_id)
 
         if user_id not in [u.id for u in group.users]:
             raise HTTPException(

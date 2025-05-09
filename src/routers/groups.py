@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Path, Query
 from src.auth import decode_access_token
 from src.dependencies import get_groups_service
 
-from ..models import GroupCreate, GroupResponse, GroupWithUsersResponse
+from ..models import GroupCreate, GroupResponse, GroupWithUsersAndScopesResponse
 from ..services.groups import GroupsService
 
 router = APIRouter(
@@ -22,7 +22,7 @@ async def list_groups(
     return await group_service.list_groups()
 
 
-@router.get("/{group_id}", response_model=GroupWithUsersResponse)
+@router.get("/{group_id}", response_model=GroupWithUsersAndScopesResponse)
 async def get_group(
     group_id: int = Path(..., description="The ID of the group to retrieve"),
     group_service: GroupsService = Depends(get_groups_service),
@@ -30,8 +30,7 @@ async def get_group(
     """
     Get a group by ID, including all users that belong to it.
     """
-    gp = await group_service.get_group_with_users(group_id)
-    return gp
+    return await group_service.get_group_with_users_and_scopes(group_id)
 
 
 @router.post("/", response_model=GroupResponse, status_code=201)
@@ -109,7 +108,7 @@ async def create_group_scopes(
     groups_service: GroupsService = Depends(get_groups_service),
 ):
     """
-    Add scopes for a given group to your service provider
+    Add scopes (that apply your service provider) to a specified group
     """
     return await groups_service.add_scopes(group_id, scopes)
 
@@ -121,6 +120,6 @@ async def update_group_scopes(
     groups_service: GroupsService = Depends(get_groups_service),
 ):
     """
-    Update scopes for a given group on your service provider
+    Update scopes (that apply your service provider) to a specified group
     """
     return await groups_service.update_scopes(group_id, scopes)

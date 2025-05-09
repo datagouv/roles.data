@@ -102,25 +102,25 @@ async def remove_user_from_group(
     return await group_service.remove_user_from_group(group_id, user_id)
 
 
-@router.post("/{group_id}/grant-access", status_code=200)
-async def grant_access(
+@router.put("/{group_id}/scopes", status_code=200)
+async def create_group_scopes(
     group_id: int,
     scopes: str = "read",
-    group_service: GroupsService = Depends(get_groups_service),
+    groups_service: GroupsService = Depends(get_groups_service),
 ):
     """
-    Grant scopes for a given group to a Service provider relation
+    Add scopes for a given group to your service provider
     """
-    return await group_service.grant_access(group_id, scopes)
+    return await groups_service.add_scopes(group_id, scopes)
 
 
-@router.put("/{group_id}/update-access", status_code=200)
-async def update_access(
+@router.patch("/{group_id}/scopes", status_code=200)
+async def update_group_scopes(
     group_id: int,
     scopes: str = "read",
-    group_service: GroupsService = Depends(get_groups_service),
+    groups_service: GroupsService = Depends(get_groups_service),
 ):
     """
-    Update scopes for a given group - Service provider relation
+    Update scopes for a given group on your service provider
     """
-    return await group_service.update_access(group_id, scopes)
+    return await groups_service.update_scopes(group_id, scopes)

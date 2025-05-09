@@ -18,12 +18,12 @@ class ScopesService:
             raise HTTPException(status_code=404, detail="Scopes not found")
         return scopes
 
-    async def create_scopes(self, service_provider_id: int, group_id: int, scopes: str):
+    async def grant(self, service_provider_id: int, group_id: int, scopes: str):
         return await self.scopes_repository.create(
             service_provider_id, group_id, scopes
         )
 
-    async def update_scopes(self, service_provider_id: int, group_id: int, scopes: str):
+    async def update(self, service_provider_id: int, group_id: int, scopes: str):
         return await self.scopes_repository.update(
             service_provider_id, group_id, scopes
         )

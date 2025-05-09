@@ -53,10 +53,6 @@ api_tags_metadata = [
         "description": "Récupération des rôles existants",
     },
     {
-        "name": "Scopes",
-        "description": "Gestion des scopes ou droits d’accès",
-    },
-    {
         "name": "Fournisseurs de services",
         "description": "Récupération du fournisseurs de services",
     },

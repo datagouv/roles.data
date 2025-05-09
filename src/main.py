@@ -3,7 +3,7 @@ from fastapi.openapi.utils import get_openapi
 
 from .database import shutdown, startup
 from .documentation import api_description, api_summary, api_tags_metadata
-from .routers import auth, groups, health, roles, scopes, service_providers, users
+from .routers import auth, groups, health, roles, service_providers, users
 
 app = FastAPI()
 
@@ -16,7 +16,6 @@ app.include_router(health.router)
 app.include_router(users.router)
 app.include_router(groups.router)
 app.include_router(roles.router)
-app.include_router(scopes.router)
 app.include_router(service_providers.router)
 
 

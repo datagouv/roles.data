@@ -151,3 +151,33 @@ def test_remove_user_from_group(client):
     group_details = client.get(f"/groups/{new_group_data['id']}")
     group_users = group_details.json()["users"]
     assert not any(user["id"] == user_id for user in group_users)
+
+
+def test_grant_and_update_access(client):
+    """Test granting access to a group."""
+    # Create a group
+    group_data = random_group()
+    group_response = client.post("/groups/", json=group_data)
+    group_id = group_response.json()["id"]
+
+    # Grant access with scopes
+    scopes = "read,write"
+    response = client.put(f"/scopes/{group_id}?scopes={scopes}")
+    assert response.status_code == 200
+
+    # Verify access was granted
+    response = client.get(f"/groups/{group_id}")
+    assert response.status_code == 200
+    group = response.json()
+    assert group["scopes"] == scopes  # Assuming the response includes scopes
+
+    # Update access with new scopes
+    new_scopes = "read,write,delete"
+    response = client.put(f"/groups/{group_id}/update-access?scopes={new_scopes}")
+    assert response.status_code == 200
+
+    # Verify access was updated
+    response = client.get(f"/groups/{group_id}")
+    assert response.status_code == 200
+    group = response.json()
+    assert group["scopes"] == scopes

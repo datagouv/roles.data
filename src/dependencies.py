@@ -3,6 +3,7 @@ from fastapi import Depends
 
 from src.auth import decode_access_token
 from src.repositories.auth import AuthRepository
+from src.repositories.scopes import ScopesRepository
 from src.repositories.service_providers import ServiceProvidersRepository
 from src.services.auth import AuthService
 from src.services.scopes import ScopesService
@@ -55,16 +56,6 @@ async def get_roles_service(db: Database = Depends(get_db)) -> RolesService:
     return RolesService(roles_repository)
 
 
-async def get_scope_service(
-    db: Database = Depends(get_db),
-) -> ServiceProvidersService:
-    """
-    Dependency function that provides a ScopeService instance.
-    """
-    service_providers_repository = ServiceProvidersRepository(db)
-    return ServiceProvidersService(service_providers_repository)
-
-
 async def get_service_providers_service(
     db: Database = Depends(get_db),
 ) -> ServiceProvidersService:
@@ -82,6 +73,16 @@ def get_service_provider_id(access_token: dict = Depends(decode_access_token)):
     return access_token.get("service_provider_id")
 
 
+async def get_scopes_service(
+    db: Database = Depends(get_db),
+) -> ScopesService:
+    """
+    Dependency function that provides a ScopeService instance.
+    """
+    scopes_repository = ScopesRepository(db)
+    return ScopesService(scopes_repository)
+
+
 async def get_groups_service(
     db: Database = Depends(get_db),
     users_service: UsersService = Depends(get_users_service),
@@ -90,7 +91,7 @@ async def get_groups_service(
     service_provider_service: ServiceProvidersService = Depends(
         get_service_providers_service
     ),
-    scopes_service: ScopesService = Depends(get_scope_service),
+    scopes_service: ScopesService = Depends(get_scopes_service),
     service_provider_id=Depends(get_service_provider_id),
 ) -> GroupsService:
     """

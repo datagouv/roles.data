@@ -132,7 +132,7 @@ class GroupsService:
             group.id, user_id, role.id
         )
 
-    async def grant_access(self, group_id: int, scopes: str):
+    async def add_scopes(self, group_id: int, scopes: str):
         group = await self.get_group_by_id(group_id)
         service_provider = (
             await self.service_provider_service.get_service_provider_by_id(
@@ -140,11 +140,9 @@ class GroupsService:
             )
         )
 
-        return await self.scopes_service.create_scopes(
-            service_provider.id, group.id, scopes
-        )
+        return await self.scopes_service.grant(service_provider.id, group.id, scopes)
 
-    async def update_access(self, group_id: int, scopes: str):
+    async def update_scopes(self, group_id: int, scopes: str):
         group = await self.get_group_by_id(group_id)
         service_provider = (
             await self.service_provider_service.get_service_provider_by_id(
@@ -155,6 +153,4 @@ class GroupsService:
         # verify if the group is already linked to the service provider
         await self.scopes_service.get_scopes(service_provider.id, group.id)
         # check if the group is linked to the service provider
-        return await self.scopes_service.update_scopes(
-            service_provider.id, group.id, scopes
-        )
+        return await self.scopes_service.update(service_provider.id, group.id, scopes)

@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 
 from .database import shutdown, startup
+from .documentation import api_description, api_summary, api_tags_metadata
 from .routers import auth, groups, health, roles, service_providers, users
 
 app = FastAPI()
@@ -10,12 +11,12 @@ app = FastAPI()
 app.add_event_handler("startup", startup)
 app.add_event_handler("shutdown", shutdown)
 
+app.include_router(auth.router)
 app.include_router(health.router)
 app.include_router(users.router)
 app.include_router(groups.router)
 app.include_router(roles.router)
 app.include_router(service_providers.router)
-app.include_router(auth.router)
 
 
 def custom_openapi():
@@ -24,9 +25,10 @@ def custom_openapi():
     openapi_schema = get_openapi(
         title="D-rôles",
         version="0.0.1",
-        summary="This is a very custom OpenAPI schema",
-        description="Here's a longer description of the custom **OpenAPI** schema",
+        summary=api_summary,
+        description=api_description,
         routes=app.routes,
+        tags=api_tags_metadata,
     )
 
     app.openapi_schema = openapi_schema

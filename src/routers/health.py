@@ -14,7 +14,10 @@ router = APIRouter(
 
 
 @router.get("/")
-async def health_check(db: Database = Depends(get_db)):
+async def ping(db: Database = Depends(get_db)):
+    """
+    Health check endpoint to verify if the database is connected and the application is alive.
+    """
     try:
         query = "SELECT R.is_admin as is_alive from roles as R WHERE R.role_name = 'administrateur'"
         result = await db.fetch_one(query)

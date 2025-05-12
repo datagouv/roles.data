@@ -26,16 +26,13 @@ def test_create_group(client):
     assert "id" in group
     new_group_data["id"] = group["id"]
 
-    response = client.get("/groups/")
+    response = client.get(f"/groups/{new_group_data['id']}")
     assert response.status_code == 200
-    groups = response.json()
-    assert len(groups) > 0
-    assert (
-        next(
-            (group for group in groups if group["name"] == new_group_data["name"]), None
-        )
-        is not None
-    )
+    group = response.json()
+    assert group["name"] == new_group_data["name"]
+    assert group["organisation_siren"] == new_group_data["organisation_siren"]
+    assert group["scopes"] == new_group_data["scopes"]
+    assert group["users"][0]["email"] == new_group_data["admin_email"]
 
 
 def test_get_group_with_users(client):
@@ -57,6 +54,33 @@ def test_get_group_with_users(client):
         )
         is not None
     )
+
+
+def test_search_group_by_user(client):
+    """Test searching groups by user email"""
+    # Create a new group
+    response = client.get(
+        "/groups/search", params={"email": new_group_data["admin_email"]}
+    )
+    assert response.status_code == 200
+    group = response.json()
+    assert isinstance(group, list)
+    assert len(group) == 1
+    assert group[0]["name"] == new_group_data["name"]
+    assert group[0]["organisation_siren"] == new_group_data["organisation_siren"]
+    assert group[0]["scopes"] == new_group_data["scopes"]
+    assert group[0]["users"][0]["email"] == new_group_data["admin_email"]
+
+    # Test non-existent user
+    response404 = client.get("/groups/search", params={"email": "hey@test.fr"})
+    assert response404.status_code == 404
+
+    # Test non-existent group
+    responseEmpty = client.get("/groups/search", params={"email": "user@yopmail.com"})
+    assert responseEmpty.status_code == 200
+    group = responseEmpty.json()
+    assert isinstance(group, list)
+    assert len(group) == 0
 
 
 def test_get_group_not_found(client):

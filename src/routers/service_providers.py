@@ -34,7 +34,7 @@ async def get_service_provider_info(
     ),
 ):
     """
-    Get the details of the service provider paired with the current service account.
+    Get the details of the service provider paired with your service account.
     """
     return await service_providers_service.get_service_provider_by_id(
         service_provider_id

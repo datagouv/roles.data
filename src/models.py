@@ -69,6 +69,7 @@ class GroupBase(BaseModel):
 class GroupCreate(GroupBase):
     organisation_siren: Siren  # type: ignore # Optional for group creation
     admin_email: EmailStr
+    scopes: str
 
 
 class GroupResponse(GroupBase):
@@ -78,7 +79,7 @@ class GroupResponse(GroupBase):
 
 
 class GroupWithUsersAndScopesResponse(GroupResponse):
-    organisation_siren: int
+    organisation_siren: Siren
     users: list[UserWithRoleResponse]
     scopes: str
 

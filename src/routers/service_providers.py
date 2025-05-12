@@ -14,18 +14,6 @@ router = APIRouter(
 )
 
 
-@router.get("/", status_code=200)
-async def get_all_service_providers(
-    service_providers_service: ServiceProvidersService = Depends(
-        get_service_providers_service
-    ),
-):
-    """
-    List of all service providers.
-    """
-    return await service_providers_service.get_all_service_providers()
-
-
 @router.get("/info", status_code=200)
 async def get_service_provider_info(
     service_provider_id: int = Depends(get_service_provider_id),

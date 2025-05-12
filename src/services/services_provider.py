@@ -21,11 +21,3 @@ class ServiceProvidersService:
         if not service_provider:
             raise HTTPException(status_code=404, detail="Service provider not found")
         return service_provider
-
-    async def get_all_service_providers(
-        self,
-    ) -> list[ServiceProviderResponse]:  # -> Any:# -> Any:
-        """
-        Get all service providers.
-        """
-        return await self.service_provider_repository.get_all()

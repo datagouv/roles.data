@@ -138,14 +138,14 @@ class ServiceAccountProviderResponse(BaseModel):
 
 
 class ServiceAccountBase(BaseModel):
-    name: str
     deactivated: boolean
+    name: str
     hashed_password: str
+    service_provider_id: int
 
 
 class ServiceAccountResponse(ServiceAccountBase):
     id: int
-    service_provider_id: int
 
     model_config = ConfigDict(from_attributes=True)
 

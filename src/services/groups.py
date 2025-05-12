@@ -88,6 +88,26 @@ class GroupsService:
     async def list_groups(self) -> list[GroupResponse]:
         return await self.groups_repository.list_groups(self.service_provider_id)
 
+    async def search_groups(self, email: str) -> list[GroupWithUsersAndScopesResponse]:
+        """
+        Search for groups by user email.
+
+        This method will return all groups that the user is a member of, regardless of their role.
+        """
+        user = await self.users_service.get_user_by_email(email)
+        groups = await self.groups_repository.search_groups_by_user(
+            user.id, self.service_provider_id
+        )
+
+        groupsWithUsers = []
+        for g in groups:
+            # Python's dict() function does not include dynamically added attributes
+            # so we have to manually create a dict then a new object
+            g_dict = dict(g)
+            g_dict["users"] = await self.users_service.get_users_by_group_id(g.id)
+            groupsWithUsers.append(GroupWithUsersAndScopesResponse(**g_dict))
+        return groupsWithUsers
+
     async def get_group_with_users_and_scopes(
         self, group_id: int
     ) -> GroupWithUsersAndScopesResponse:
@@ -104,8 +124,6 @@ class GroupsService:
             self.service_provider_id, group_id
         )
 
-        # Python's dict() function does not include dynamically added attributes
-        # so we have to manually create a dict then a new object
         group_dict["scopes"] = scopes
 
         return GroupWithUsersAndScopesResponse(**group_dict)

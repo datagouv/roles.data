@@ -27,7 +27,7 @@ async def create_user(
 async def get_user_by_email(
     email: EmailStr,
     users_service: UsersService = Depends(get_users_service),
-):
+) -> UserResponse:
     """
     Get a specific user by email, including all roles and group memberships.
     """
@@ -37,7 +37,7 @@ async def get_user_by_email(
 @router.get("/{user_id}", status_code=200)
 async def get_user_by_id(
     user_id: int, users_service: UsersService = Depends(get_users_service)
-):
+) -> UserResponse:
     """
     Get a user by ID.
     """

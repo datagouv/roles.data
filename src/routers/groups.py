@@ -1,5 +1,6 @@
 # ------- USER ROUTER FILE -------
 from fastapi import APIRouter, Depends, Path, Query
+from pydantic import EmailStr
 
 from src.auth import decode_access_token
 from src.dependencies import get_groups_service
@@ -19,7 +20,23 @@ router = APIRouter(
 async def list_groups(
     group_service: GroupsService = Depends(get_groups_service),
 ):
+    """
+    List every available groups for your service provider
+    """
     return await group_service.list_groups()
+
+
+@router.get("/search", response_model=list[GroupWithUsersAndScopesResponse])
+async def search_groups_by_user(
+    email: EmailStr = Query(
+        ..., description="The email of the user to filter groups by"
+    ),
+    group_service: GroupsService = Depends(get_groups_service),
+):
+    """
+    Search for groups by user email.
+    """
+    return await group_service.search_groups(email=email)
 
 
 @router.get("/{group_id}", response_model=GroupWithUsersAndScopesResponse)

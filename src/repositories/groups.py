@@ -48,6 +48,27 @@ class GroupsRepository:
                 },
             )
 
+    async def search_groups_by_user(
+        self, user_id: int, service_provider_id: int
+    ) -> list[GroupWithUsersAndScopesResponse]:
+        async with self.db_session.transaction():
+            query = """
+            SELECT G.id, G.name, O.siren as organisation_siren, GSPR.scopes
+            FROM groups as G
+            INNER JOIN organisations AS O ON G.orga_id = O.id
+            INNER JOIN group_user_relations AS GUR ON GUR.group_id = G.id
+            INNER JOIN users AS U ON U.id = GUR.user_id
+            INNER JOIN group_service_provider_relations AS GSPR ON GSPR.group_id = G.id AND GSPR.service_provider_id = :service_provider_id
+            WHERE U.id = :user_id
+            """
+            return await self.db_session.fetch_all(
+                query,
+                {
+                    "user_id": user_id,
+                    "service_provider_id": service_provider_id,
+                },
+            )
+
     async def create_group(
         self, group_data: GroupCreate, orga_id: int, service_provider_id: int
     ) -> GroupResponse:
@@ -63,7 +84,7 @@ class GroupsRepository:
                 {
                     "service_provider_id": service_provider_id,
                     "group_id": new_group.id,
-                    "scopes": "",
+                    "scopes": group_data.scopes,
                 },
             )
             return new_group

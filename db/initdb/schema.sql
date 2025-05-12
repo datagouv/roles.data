@@ -1,5 +1,3 @@
--- utiliser DB_SCHEMA en varaiable d'env plutot que d_roles
--- checker ce qui arrive si le schemea existe pas
 \set schema_name :POSTGRES_SCHEMA
 
 CREATE SCHEMA :schema_name;

@@ -6,7 +6,7 @@ echo "=========================="
 echo "Creating database schema..."
 
 # Run the schema creation SQL file
-PGPASSWORD=$POSTGRES_PASSWORD psql -h localhost -p 5432 -U $POSTGRES_USER -d $POSTGRES_DB -v POSTGRES_SCHEMA=$POSTGRES_SCHEMA -f /app/db/initdb/schema.sql
+PGPASSWORD=$POSTGRES_PASSWORD psql -h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER -d $POSTGRES_DB -v POSTGRES_SCHEMA=$POSTGRES_SCHEMA -f ./db/initdb/schema.sql
 
 echo "Schema created successfully."
 echo "=========================="

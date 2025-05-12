@@ -1,3 +1,4 @@
+
 INSERT INTO d_roles.users (email, sub_pro_connect, is_email_confirmed)
 VALUES ('user@yopmail.com', '', false);
 

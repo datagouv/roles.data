@@ -55,6 +55,16 @@ uv run ruff check --fix && uv run ruff format
 uv run python -m pytest -s src/tests/integration
 ```
 
+## Base de donnée
+
+### Migrations
+
+Ajouter un fichier `db/migrations/{YYYYMMDD}_{description}.sql` avec le SQL nécessaire pour la migration
+
+### Seed
+
+Mettre a jour le fichier seeds (selon l'environnement) dans `db/seeds/{environnement}/seed.sql`
+
 ### Bonnes pratiques
 
 - [Design patterns](https://medium.com/@lautisuarez081/fastapi-best-practices-and-design-patterns-building-quality-python-apis-31774ff3c28a)

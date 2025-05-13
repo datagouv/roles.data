@@ -63,7 +63,7 @@ jobs:
           DB_PASSWORD: d-roles
           DB_SCHEMA: d_roles
         run: |
-          make db_scripts
+          sh ./db/entrypoint.sh
           make test
 
       - name: Clean up

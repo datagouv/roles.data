@@ -14,10 +14,10 @@ jobs:
       postgres:
         image: postgres:15.7
         env:
-          DB_NAME: d-roles-test
-          DB_USER: d-roles
-          DB_PASSWORD: d-roles
-          DB_SCHEMA: d_roles
+          POSTGRES_DB: d-roles-test
+          POSTGRES_USER: d-roles
+          POSTGRES_PASSWORD: d-roles
+          POSTGRES_SCHEMA: d_roles
         ports:
           - 5432:5432
         options: >-

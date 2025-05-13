@@ -5,7 +5,7 @@ from .database import shutdown, startup
 from .documentation import api_description, api_summary, api_tags_metadata
 from .routers import auth, groups, health, roles, service_providers, users
 
-app = FastAPI()
+app = FastAPI(redirect_slashes=True)
 
 # Register startup and shutdown events
 app.add_event_handler("startup", startup)

@@ -21,14 +21,14 @@ services:
     ports:
       - "5433:5432"
 
-  app:
-    build: .
-    environment:
-      - POSTGRES_HOST=postgres-dev
-      - POSTGRES_DB=$DB_NAME
-      - POSTGRES_USER=$DB_USER
-      - POSTGRES_PASSWORD=$DB_PASSWORD
-      - POSTGRES_SCHEMA=$DB_SCHEMA
-      - POSTGRES_PORT=5432
-    depends_on:
-      - postgres-dev
+  # app:
+  #   build: .
+  #   environment:
+  #     - POSTGRES_HOST=postgres-dev
+  #     - POSTGRES_DB=$DB_NAME
+  #     - POSTGRES_USER=$DB_USER
+  #     - POSTGRES_PASSWORD=$DB_PASSWORD
+  #     - POSTGRES_SCHEMA=$DB_SCHEMA
+  #     - POSTGRES_PORT=5432
+  #   depends_on:
+  #     - postgres-dev

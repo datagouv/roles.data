@@ -21,14 +21,32 @@ docker images
 docker run -d -p 8888:80 --name d-roles-applicatif <Image-ID>
 ```
 
-### DB
+## DB
 
-Local dev
+### local
 
 ```
+# lancer les DB de dev et test
 docker-compose-up
+
+# se connecter
 psql -h localhost -p 5432 -U d-roles -d d-roles
+
+# executer les migrations et la seed
+make db_scripts
 ```
+
+#### Migrations
+
+Ajouter un fichier `db/migrations/{YYYYMMDD}_{description}.sql` avec le SQL nécessaire pour la migration
+
+#### Seed
+
+Mettre a jour le fichier seeds (selon l'environnement) dans `db/seeds/{environnement}/seed.sql`
+
+## Prod & preprod
+
+En prod et preprod, le script `db/entrypoint.sh` est utilisé comme custom entrypoint de l'image docker applicative et execute les migrations et seed de la DB.
 
 ## Code conventions
 

@@ -1,34 +1,34 @@
 services:
   postgres-dev:
     image: "postgres:15.7"
-    volumes:
-      # these will run between the schema and the seed
-      # - ./db/migrations/dev:/docker-entrypoint-initdb.d/
-      # this will run first as it create the DB schema
-      - ./db/initdb/schema.sql:/docker-entrypoint-initdb.d/000000-schema.sql
-      # this will run last as it seeds the DB
-      - ./db/seeds/dev/seed.sql:/docker-entrypoint-initdb.d/999999-seed.sql
     environment:
-      - POSTGRES_DB=d-roles
-      - POSTGRES_USER=d-roles
-      - POSTGRES_PASSWORD=d-roles
-      - POSTGRES_SCHEMA=d_roles
+      - POSTGRES_DB=$DB_NAME
+      - POSTGRES_USER=$DB_USER
+      - POSTGRES_PASSWORD=$DB_PASSWORD
+      - POSTGRES_SCHEMA=$DB_SCHEMA
+      - DB_ENV=dev
     ports:
       - "5432:5432"
 
   postgres-test:
     image: "postgres:15.7"
-    volumes:
-      # these will run between the schema and the seed
-      # - ./db/migrations/dev:/docker-entrypoint-initdb.d/
-      # this will run first as it create the DB schema
-      - ./db/initdb/schema.sql:/docker-entrypoint-initdb.d/000000-schema.sql
-      # this will run last as it seeds the DB
-      - ./db/seeds/test/seed.sql:/docker-entrypoint-initdb.d/999999-seed.sql
     environment:
-      - POSTGRES_DB=d-roles-test
-      - POSTGRES_USER=d-roles
-      - POSTGRES_PASSWORD=d-roles
-      - POSTGRES_SCHEMA=d_roles
+      - POSTGRES_DB=$DB_NAME
+      - POSTGRES_USER=$DB_USER
+      - POSTGRES_PASSWORD=$DB_PASSWORD
+      - POSTGRES_SCHEMA=$DB_SCHEMA
+      - DB_ENV=dev
     ports:
       - "5433:5432"
+
+  # app:
+  #   build: .
+  #   environment:
+  #     - POSTGRES_HOST=postgres-dev
+  #     - POSTGRES_DB=$DB_NAME
+  #     - POSTGRES_USER=$DB_USER
+  #     - POSTGRES_PASSWORD=$DB_PASSWORD
+  #     - POSTGRES_SCHEMA=$DB_SCHEMA
+  #     - POSTGRES_PORT=5432
+  #   depends_on:
+  #     - postgres-dev

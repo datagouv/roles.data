@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -6,20 +6,20 @@ class Settings(BaseSettings):
     Application settings loaded from environment variables
     """
 
-    SECRET_KEY: str = "your-secret-key-here"
+    SECRET_KEY: str = ""
 
     # Database settings
-    DB_HOST: str = "localhost"
-    DB_PORT: str = "5432"
-    DB_NAME: str = "d-roles"
-    DB_USER: str = "d-roles"
-    DB_PASSWORD: str = "d-roles"
-    DB_SCHEMA: str = "d_roles"
+    DB_HOST: str = ""
+    DB_PORT: str = ""
+    DB_NAME: str = ""
+    DB_USER: str = ""
+    DB_PASSWORD: str = ""
+    DB_SCHEMA: str = ""
 
-    SECRET_KEY: str = "dev-secret-key"
+    SECRET_KEY: str = ""
 
-    DB_PORT_TEST: str = "5433"
-    DB_NAME_TEST: str = "d-roles-test"
+    DB_PORT_TEST: str = ""
+    DB_NAME_TEST: str = ""
 
     @property
     def DATABASE_URL(self) -> str:
@@ -31,6 +31,8 @@ class Settings(BaseSettings):
 
     # Add other settings as needed
     DEBUG: bool = False
+
+    model_config = SettingsConfigDict(env_file=".env")
 
 
 # Create global settings instance

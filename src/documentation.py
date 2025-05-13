@@ -14,13 +14,13 @@ Tous les utilisateurs du groupe de John héritent du scope `ecriture` sur ma-sta
 
 **Groupe** : un ensemble d’utilisateurs, appartenant a une organisation
 
-**Organisation** : une structure identifiée par son numéro SIREN, (ex: DINUM, `130025265`)
+**Organisation** : une structure identifiée par son numéro SIREN (ex: DINUM, `130025265`)
 
 **Rôle** : le rôle d’un utilisateur au sein d'un groupe. (ex: `administrateur` ou `utilisateur`)
 
 **Fournisseur de service** : un produit numérique (ex: une startup d’état)
 
-**Scope** : la description des droits d’accès dont dispose une équipe, sur un fournisseur de service. (ex: `ecriture` ou `lecture`)
+**Scope** : la description des droits d’accès dont dispose une équipe, sur un fournisseur de service (ex: `ecriture` ou `lecture`)
 
 
 ## Utilisation
@@ -41,19 +41,27 @@ api_tags_metadata = [
         "description": "Ping de l’application",
     },
     {
-        "name": "Utilisateurs",
-        "description": "Création et récupération des utilisateurs",
+        "name": "Fournisseur de services",
+        "description": "Votre fournisseur de service (ex: ma-startup-d-etat.fr)",
     },
     {
-        "name": "Équipes",
-        "description": "Création, modification des groupes, attribution des scopes",
+        "name": "Utilisateurs",
+        "description": "Création et récupération des utilisateurs (les utilisateurs sont indépendants du fournisseur de service)",
     },
     {
         "name": "Rôles",
-        "description": "Récupération des rôles existants",
+        "description": "Les rôles disponibles pour les utilisateurs (les utilisateurs sont indépendants du fournisseur de service)",
     },
     {
-        "name": "Fournisseurs de services",
-        "description": "Récupération du fournisseurs de services",
+        "name": "Équipes",
+        "description": "Création, et récupération des équipes",
+    },
+    {
+        "name": "Administration d’une équipe",
+        "description": "Doit nécessairement être executé par un administrateur de l’équipe",
+    },
+    {
+        "name": "Gestion des droits d’une équipe",
+        "description": "Permet de gérer les droits d’accès d’une équipe sur un fournisseur de service",
     },
 ]

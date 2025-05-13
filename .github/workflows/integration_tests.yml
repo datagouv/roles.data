@@ -57,12 +57,12 @@ jobs:
 
       - name: Run database schema migrations
         run: |
-          make db_scripts
+          POSTGRES_PASSWORD='d-roles' POSTGRES_HOST='postgres' POSTGRES_PORT='5432' POSTGRES_USER='d-roles' POSTGRES_DB='d-roles' POSTGRES_SCHEMA='d_roles' sh ./db/entrypoint.sh
 
       - name: Run tests
         env:
           # Use port 5433 as specified in your docker-compose
-          POSTGRES_HOST: localhost
+          POSTGRES_HOST: postgres
           POSTGRES_PORT: 5433
           POSTGRES_DB: d-roles-test
           POSTGRES_USER: d-roles

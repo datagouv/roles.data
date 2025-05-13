@@ -13,7 +13,7 @@ if [ -d "./db/migrations/${ENV}" ]; then
   # Loop through all SQL files in the migrations directory in alphabetical order
   for migration in $(find ./db/migrations/${ENV} -name "*.sql" | sort); do
     echo "Applying migration: $(basename $migration)"
-    PGPASSWORD=$POSTGRES_PASSWORD psql -h $POSTGRES_HOST -U $POSTGRES_USER -d $POSTGRES_DB -v POSTGRES_SCHEMA=$POSTGRES_SCHEMA -f $migration
+    PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -d $DB_NAME -v DB_SCHEMA=$DB_SCHEMA -f $migration
   done
 else
   echo "No migrations found for environment: ${ENV}"

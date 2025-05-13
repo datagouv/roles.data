@@ -14,13 +14,12 @@ jobs:
       postgres:
         image: postgres:15.7
         env:
-          POSTGRES_DB: d-roles-test
-          POSTGRES_USER: d-roles
-          POSTGRES_PASSWORD: d-roles
-          POSTGRES_SCHEMA: d_roles
+          DB_NAME: d-roles-test
+          DB_USER: d-roles
+          DB_PASSWORD: d-roles
+          DB_SCHEMA: d_roles
         ports:
           - 5432:5432
-        # Health check to wait until postgres has started
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -57,17 +56,17 @@ jobs:
 
       - name: Run database schema migrations
         run: |
-          POSTGRES_PASSWORD='d-roles' POSTGRES_HOST='postgres' POSTGRES_PORT='5432' POSTGRES_USER='d-roles' POSTGRES_DB='d-roles' POSTGRES_SCHEMA='d_roles' sh ./db/entrypoint.sh
+          DB_PASSWORD='d-roles' DB_HOST='postgres' DB_PORT='5432' DB_USER='d-roles' DB_NAME='d-roles' DB_SCHEMA='d_roles' sh ./db/entrypoint.sh
 
       - name: Run tests
         env:
           # Use port 5433 as specified in your docker-compose
-          POSTGRES_HOST: postgres
-          POSTGRES_PORT: 5433
-          POSTGRES_DB: d-roles-test
-          POSTGRES_USER: d-roles
-          POSTGRES_PASSWORD: d-roles
-          POSTGRES_SCHEMA: d_roles
+          DB_HOST: postgres
+          DB_PORT: 5433
+          DB_NAME: d-roles-test
+          DB_USER: d-roles
+          DB_PASSWORD: d-roles
+          DB_SCHEMA: d_roles
         run: |
           make test
 

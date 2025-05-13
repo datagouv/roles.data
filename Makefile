@@ -1,3 +1,9 @@
+# Include environment variables from .env file
+ifneq (,$(wildcard ./.env))
+    include .env
+    export
+endif
+
 start:
 	uv run fastapi dev src/main.py
 
@@ -11,4 +17,6 @@ db_start:
 	docker-compose up
 
 db_scripts:
-	POSTGRES_PASSWORD='d-roles' POSTGRES_HOST='localhost' POSTGRES_PORT='5432' POSTGRES_USER='d-roles' POSTGRES_DB='d-roles' POSTGRES_SCHEMA='d_roles' sh ./db/entrypoint.sh
+	echo "Using DB_HOST: ${DB_HOST}, DB_PORT: ${DB_PORT}, etc."
+	sh ./db/entrypoint.sh
+	DB_PASSWORD='d-roles' DB_PORT='5433' DB_NAME='d-roles' sh ./db/entrypoint.sh

@@ -1,4 +1,4 @@
-\set schema_name :POSTGRES_SCHEMA
+\set schema_name :DB_SCHEMA
 
 CREATE SCHEMA :schema_name;
 

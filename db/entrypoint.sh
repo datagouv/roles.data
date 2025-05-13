@@ -6,7 +6,7 @@ wait_for_postgres() {
   echo "========================================="
   echo "Waiting for PostgreSQL to be available..."
 
-  until PGPASSWORD=$POSTGRES_PASSWORD psql -h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER -d $POSTGRES_DB -c '\q'; do
+  until PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -c '\q'; do
     echo "PostgreSQL is unavailable - sleeping"
     sleep 5
   done
@@ -17,7 +17,7 @@ wait_for_postgres() {
 wait_for_postgres
 
 # If DB_* environment variables are set, use them
-if [ -n "localhost" ] && [ -n "$POSTGRES_USER" ] && [ -n "$POSTGRES_PASSWORD" ] && [ -n "$POSTGRES_DB" ]; then
+if [ -n "localhost" ] && [ -n "$DB_USER" ] && [ -n "$DB_PASSWORD" ] && [ -n "$DB_NAME" ]; then
 
   # Run database scripts in order (with absolute paths)
   SCRIPT_DIR="$(dirname "$0")/scripts"

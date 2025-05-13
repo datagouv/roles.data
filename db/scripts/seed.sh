@@ -8,12 +8,10 @@ echo "Seeding database..."
 # Get environment (dev is default)
 ENV=${DB_ENV:-dev}
 
-echo POSTGRES_HOST
-echo $POSTGRES_HOST
 # Check if seed file exists
 if [ -f "./db/seeds/${ENV}/seed.sql" ]; then
   echo "Running seed for environment: ${ENV}"
-  PGPASSWORD=$POSTGRES_PASSWORD psql -h $POSTGRES_HOST -p $POSTGRES_PORT -U $POSTGRES_USER -d $POSTGRES_DB -v POSTGRES_SCHEMA=$POSTGRES_SCHEMA -f ./db/seeds/${ENV}/seed.sql
+  PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -v DB_SCHEMA=$DB_SCHEMA -f ./db/seeds/${ENV}/seed.sql
 else
   echo "No seed file found for environment: ${ENV}"
 fi

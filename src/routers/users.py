@@ -29,7 +29,7 @@ async def get_user_by_email(
     users_service: UsersService = Depends(get_users_service),
 ) -> UserResponse:
     """
-    Get a specific user by email, including all roles and group memberships.
+    Get a specific user by email
     """
     return await users_service.get_user_by_email(email=email)
 
@@ -39,6 +39,6 @@ async def get_user_by_id(
     user_id: int, users_service: UsersService = Depends(get_users_service)
 ) -> UserResponse:
     """
-    Get a user by ID.
+    Get a user by ID
     """
     return await users_service.get_user_by_id(user_id)

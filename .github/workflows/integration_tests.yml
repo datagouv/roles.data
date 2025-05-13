@@ -65,8 +65,3 @@ jobs:
         run: |
           sh ./db/entrypoint.sh
           make test
-
-      - name: Clean up
-        if: always()
-        run: |
-          docker-compose down

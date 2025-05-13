@@ -54,20 +54,16 @@ jobs:
           DB_SCHEMA=d_roles
           EOL
 
-      - name: Run database schema migrations
-        run: |
-          DB_PASSWORD='d-roles' DB_HOST='postgres' DB_PORT='5432' DB_USER='d-roles' DB_NAME='d-roles' DB_SCHEMA='d_roles' sh ./db/entrypoint.sh
-
       - name: Run tests
         env:
-          # Use port 5433 as specified in your docker-compose
-          DB_HOST: postgres
-          DB_PORT: 5433
+          DB_HOST: localhost
+          DB_PORT: 5432
           DB_NAME: d-roles-test
           DB_USER: d-roles
           DB_PASSWORD: d-roles
           DB_SCHEMA: d_roles
         run: |
+          make db_scripts
           make test
 
       - name: Clean up

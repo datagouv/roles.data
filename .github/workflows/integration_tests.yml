@@ -1,0 +1,71 @@
+name: Run Integration Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: |
+          uv pip install -e .
+          uv pip install pytest pytest-asyncio httpx
+
+      - name: Create .env file
+        run: |
+          cat > .env << EOL
+          DB_NAME=d-roles-test
+          DB_USER=d-roles
+          DB_PASSWORD=d-roles
+          DB_SCHEMA=d_roles
+          EOL
+
+      - name: Start PostgreSQL with Docker Compose
+        run: |
+          docker-compose up -d postgres-test
+
+      - name: Wait for PostgreSQL to be ready
+        run: |
+          # Give PostgreSQL time to initialize
+          sleep 5
+          # Check if PostgreSQL is ready
+          timeout 20s bash -c 'until docker exec $(docker ps -q -f name=postgres-test) pg_isready; do sleep 1; done'
+
+      - name: Run database schema migrations
+        run: |
+          make db_scripts
+
+      - name: Run tests
+        env:
+          # Use port 5433 as specified in your docker-compose
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5433
+          POSTGRES_DB: d-roles-test
+          POSTGRES_USER: d-roles
+          POSTGRES_PASSWORD: d-roles
+          POSTGRES_SCHEMA: d_roles
+        run: |
+          make test
+
+      - name: Clean up
+        if: always()
+        run: |
+          docker-compose down

@@ -1,7 +1,7 @@
 from typing import Annotated, NewType
 from xmlrpc.client import boolean
 
-from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 # Create a NewType for type hints
 Siren = NewType("Siren", str)
@@ -63,13 +63,22 @@ class UserWithRoleResponse(UserBase):
 
 # --- Group ---
 class GroupBase(BaseModel):
-    name: str
+    name: str = Field(..., description="Nom de l’équipe")
 
 
 class GroupCreate(GroupBase):
-    organisation_siren: Siren  # type: ignore # Optional for group creation
-    admin_email: EmailStr
-    scopes: str
+    organisation_siren: Siren = Field(..., description="Siren de l’organisation")
+    admin_email: EmailStr = Field(
+        ..., description="Email de l’administrateur de l’équipe"
+    )
+    is_public: boolean = Field(
+        False,
+        description="Marque l’équipe comme publique. Celle ci peut alors être utilisée par n’importe quel fournisseur de service",
+    )
+    scopes: str = Field(
+        ...,
+        description="Droits d’accès sur le fournisseur de service qui créé l’équipe (ex: ecriture, lecture)",
+    )
 
 
 class GroupResponse(GroupBase):

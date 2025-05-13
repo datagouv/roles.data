@@ -73,9 +73,14 @@ class GroupsRepository:
         self, group_data: GroupCreate, orga_id: int, service_provider_id: int
     ) -> GroupResponse:
         async with self.db_session.transaction():
-            query_create_group = "INSERT INTO groups (name, orga_id) VALUES (:name, :orga_id) RETURNING *"
+            query_create_group = "INSERT INTO groups (name, orga_id, is_public) VALUES (:name, :orga_id, :is_public) RETURNING *"
             new_group = await self.db_session.fetch_one(
-                query_create_group, {"name": group_data.name, "orga_id": orga_id}
+                query_create_group,
+                {
+                    "name": group_data.name,
+                    "orga_id": orga_id,
+                    "is_public": group_data.is_public,
+                },
             )
 
             query_create_access = "INSERT INTO group_service_provider_relations (service_provider_id, group_id, scopes) VALUES (:service_provider_id, :group_id, :scopes)"

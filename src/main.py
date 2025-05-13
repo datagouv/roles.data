@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 
-from src.routers import groups_admin, groups_scopes
+from src.routers import groups_users
 
 from .database import shutdown, startup
 from .documentation import api_description, api_summary, api_tags_metadata
@@ -19,8 +19,7 @@ app.include_router(service_providers.router)
 app.include_router(users.router)
 app.include_router(roles.router)
 app.include_router(groups.router)
-app.include_router(groups_admin.router)
-app.include_router(groups_scopes.router)
+app.include_router(groups_users.router)
 
 
 def custom_openapi():

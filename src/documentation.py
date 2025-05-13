@@ -54,14 +54,10 @@ api_tags_metadata = [
     },
     {
         "name": "Équipes",
-        "description": "Création, et récupération des équipes",
+        "description": "Manipulation des équipes associées au fournisseur de service",
     },
     {
         "name": "Administration d’une équipe",
         "description": "Doit nécessairement être executé par un administrateur de l’équipe",
-    },
-    {
-        "name": "Gestion des droits d’une équipe",
-        "description": "Permet de gérer les droits d’accès d’une équipe sur un fournisseur de service",
     },
 ]

@@ -61,3 +61,29 @@ async def create_group(
     If the organization doesn't exist, it will be created automatically.
     """
     return await groups_service.create_group(group)
+
+
+@router.put("/{group_id}/scopes", status_code=200)
+async def add_scopes_to_an_existing_group(
+    group_id: int,
+    scopes: str = "read",
+    groups_service: GroupsService = Depends(get_groups_service),
+):
+    """
+    Add scopes (that apply your service provider) to a specified group
+
+    Can only be applied to a public group
+    """
+    return await groups_service.add_scopes(group_id, scopes)
+
+
+@router.patch("/{group_id}/scopes", status_code=200)
+async def update_existing_group_scopes(
+    group_id: int,
+    scopes: str = "read",
+    groups_service: GroupsService = Depends(get_groups_service),
+):
+    """
+    Update scopes (that apply your service provider) to a specified group
+    """
+    return await groups_service.update_scopes(group_id, scopes)

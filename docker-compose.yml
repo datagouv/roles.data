@@ -20,15 +20,27 @@ services:
       - DB_ENV=dev
     ports:
       - "5433:5432"
+    expose:
+      - "3000"
 
-  # app:
-  #   build: .
-  #   environment:
-  #     - POSTGRES_HOST=postgres-dev
-  #     - POSTGRES_DB=$DB_NAME
-  #     - POSTGRES_USER=$DB_USER
-  #     - POSTGRES_PASSWORD=$DB_PASSWORD
-  #     - POSTGRES_SCHEMA=$DB_SCHEMA
-  #     - POSTGRES_PORT=5432
-  #   depends_on:
-  #     - postgres-dev
+  app:
+    build: .
+    environment:
+      - POSTGRES_HOST=postgres-dev
+      - POSTGRES_DB=$DB_NAME
+      - POSTGRES_USER=$DB_USER
+      - POSTGRES_PASSWORD=$DB_PASSWORD
+      - POSTGRES_SCHEMA=$DB_SCHEMA
+      - POSTGRES_PORT=5432
+      - DB_HOST=postgres-dev
+    depends_on:
+      - postgres-dev
+
+  nginx:
+    image: "nginx:alpine-slim"
+    ports:
+      - "80:80"
+    depends_on:
+      - app
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf

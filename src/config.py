@@ -9,8 +9,8 @@ class Settings(BaseSettings):
     SECRET_KEY: str = ""
 
     # Database settings
-    DB_HOST: str = ""
-    DB_PORT: str = ""
+    DB_HOST: str = "localhost"
+    DB_PORT: int = 5432
     DB_NAME: str = ""
     DB_USER: str = ""
     DB_PASSWORD: str = ""
@@ -18,7 +18,7 @@ class Settings(BaseSettings):
 
     SECRET_KEY: str = ""
 
-    DB_PORT_TEST: str = ""
+    DB_PORT_TEST: int = 5433
     DB_NAME_TEST: str = ""
 
     @property

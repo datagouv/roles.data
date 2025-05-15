@@ -1,5 +1,5 @@
 # ------- SERVICE FILE -------
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 
 from ..models import UserCreate, UserResponse, UserWithRoleResponse
 from ..repositories.users import UsersRepository
@@ -20,7 +20,8 @@ class UsersService:
         user = await self.user_repository.get_user_by_email(email)
         if not user:
             raise HTTPException(
-                status_code=404, detail=f"User with email {email} not found"
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"User with email {email} not found",
             )
         return user
 
@@ -31,7 +32,8 @@ class UsersService:
         user = await self.user_repository.get_user_by_id(user_id)
         if not user:
             raise HTTPException(
-                status_code=404, detail=f"User with ID {user_id} not found"
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"User with ID {user_id} not found",
             )
         return user
 

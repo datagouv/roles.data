@@ -1,27 +1,64 @@
 # D-roles
 
-Gestion des droits des utilisateurs des outils du pôle DATA
+API de gestion des droits utilisateurs pour les outils du pôle DATA
 
-## Developpement
+## 📋 Table des matières
 
-### Applicatif
+- [Installation](#installation)
+- [Configuration docker](#configuration-docker)
+- [Base de données](#base-de-données)
+- [Tests](#tests)
+- [Conventions de code](#conventions-de-code)
 
-Le projet s’appuie sur [uv](https://docs.astral.sh/uv) pour la gestion des dépendances.
+## Installation
 
-```
+### Prérequis
+
+- Python 3.13+
+- [uv](https://docs.astral.sh/uv) - Gestionnaire de dépendances
+- PostgreSQL 15.7
+- Docker & Docker Compose
+
+### Installation rapide
+
+```bash
+# Cloner le dépôt
+git clone https://github.com/votre-organisation/d-roles.git
+cd d-roles
+
+# Installer les dépendances
 uv sync
-uv run fastapi dev src/main.py
+
+# Lancer les conteneurs de base de données
+make db_start
+
+# Initialiser & migrer la base de données
+make db_scripts
+
+# Lancer l'application
+make start
 ```
 
-Pour build le container applicatif
+NB : en mode developpement rapide, l'application n’est pas dockerisée. Seuls les containers de la base de donnée le sont.
+
+## Configuration docker
+
+Pour tester la configuration docker complète de l'application :
 
 ```
-docker build .
-docker images
-docker run -d -p 8888:80 --name d-roles-applicatif <Image-ID>
+make docker
 ```
 
-## DB
+La commande lance 4 containers :
+
+- nginx (cf `./nginx.conf`)
+- app
+- postgres-dev
+- postgres-test
+
+Ce mode permet de tester la conf nginx, le dockerfile et la logique de migration.
+
+## Base de données
 
 ### local
 
@@ -36,6 +73,14 @@ psql -h localhost -p 5432 -U d-roles -d d-roles
 make db_scripts
 ```
 
+### Structure des scripts de la base de données
+
+Les scripts appliqués à la base de donnée sont executés dans cet ordre :
+
+- `schema.sql` - création de la base de données
+- `migrations/*` - migrations successives
+- `seed.sql` - données de tests, par environnement (test, preprod, dev)
+
 #### Migrations
 
 Ajouter un fichier `db/migrations/{YYYYMMDD}_{description}.sql` avec le SQL nécessaire pour la migration
@@ -44,36 +89,34 @@ Ajouter un fichier `db/migrations/{YYYYMMDD}_{description}.sql` avec le SQL néc
 
 Mettre a jour le fichier seeds (selon l'environnement) dans `db/seeds/{environnement}/seed.sql`
 
-## Prod & preprod
+## Tests
 
-En prod et preprod, le script `db/entrypoint.sh` est utilisé comme custom entrypoint de l'image docker applicative et execute les migrations et seed de la DB.
+Les tests d'intégration tournent sur pytest. La DB postgres-test est une DB différent de la DB de dev, pré-stubbé et isolée.
 
-## Code conventions
+```
+# démarrer la DB
+make db_start
+
+# test de migrations/seed
+# make db_scripts
+
+# lancer les tests
+make test
+```
+
+## Conventions de code
 
 ### Pre-commit
-
-Ce projet a un hook pre-commit
 
 ```
 uv add pre-commit
 pre-commit install --install-hooks
 ```
 
-### Lint and format code
+### Formatting et linting
 
-To lint, format and sort imports, this repository uses Ruff. You can run the following command to lint and format the code:
-
-```
-uv run ruff check --fix && uv run ruff format
-```
-
-### Tests
+Ce projet utilise Ruff pour le formatage et le linting :
 
 ```
-uv run python -m pytest -s src/tests/integration
+make lint
 ```
-
-### Bonnes pratiques
-
-- [Design patterns](https://medium.com/@lautisuarez081/fastapi-best-practices-and-design-patterns-building-quality-python-apis-31774ff3c28a)
-- [Bonnes pratiques de code](https://github.com/zhanymkanov/fastapi-best-practices)

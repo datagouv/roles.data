@@ -1,4 +1,4 @@
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 
 from src.repositories.scopes import ScopesRepository
 
@@ -28,7 +28,7 @@ class ScopesService:
         )
         if existing_scopes is None:
             raise HTTPException(
-                status_code=404,
+                status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Scopes for group {group_id} and service provider {service_provider_id} not found",
             )
 

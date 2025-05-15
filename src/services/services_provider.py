@@ -1,4 +1,4 @@
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 
 from src.models import ServiceProviderResponse
 from src.repositories.service_providers import ServiceProvidersRepository
@@ -19,13 +19,8 @@ class ServiceProvidersService:
         )
 
         if not service_provider:
-            raise HTTPException(status_code=404, detail="Service provider not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Service provider not found",
+            )
         return service_provider
-
-    async def get_all_service_providers(
-        self,
-    ) -> list[ServiceProviderResponse]:  # -> Any:# -> Any:
-        """
-        Get all service providers.
-        """
-        return await self.service_provider_repository.get_all()

@@ -1,4 +1,4 @@
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 
 from src.services.services_provider import ServiceProvidersService
 
@@ -45,7 +45,9 @@ class GroupsService:
 
     async def validate_group_data(self, group_data: GroupCreate) -> None:
         if not group_data.organisation_siren:
-            raise HTTPException(status_code=400, detail="Siren is required.")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Siren is required."
+            )
 
     async def get_group_by_id(self, group_id: int) -> GroupResponse:
         group = await self.groups_repository.get_group_by_id(
@@ -53,7 +55,7 @@ class GroupsService:
         )
         if not group:
             raise HTTPException(
-                status_code=404,
+                status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Group with ID {group_id} not found, are you certain it exists and you can use it ?",
             )
         return group
@@ -154,7 +156,7 @@ class GroupsService:
 
         if user_id not in [u.id for u in group.users]:
             raise HTTPException(
-                status_code=404,
+                status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"User with ID {user_id} not found in group {group_id}",
             )
         return await self.groups_repository.update_user_role_in_group(

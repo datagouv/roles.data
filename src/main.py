@@ -1,11 +1,13 @@
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 
+from src.routers import groups_admin, groups_scopes
+
 from .database import shutdown, startup
 from .documentation import api_description, api_summary, api_tags_metadata
 from .routers import auth, groups, health, roles, service_providers, users
 
-app = FastAPI()
+app = FastAPI(redirect_slashes=True, redoc_url="/")
 
 # Register startup and shutdown events
 app.add_event_handler("startup", startup)
@@ -13,10 +15,12 @@ app.add_event_handler("shutdown", shutdown)
 
 app.include_router(auth.router)
 app.include_router(health.router)
-app.include_router(users.router)
-app.include_router(groups.router)
-app.include_router(roles.router)
 app.include_router(service_providers.router)
+app.include_router(users.router)
+app.include_router(roles.router)
+app.include_router(groups.router)
+app.include_router(groups_admin.router)
+app.include_router(groups_scopes.router)
 
 
 def custom_openapi():

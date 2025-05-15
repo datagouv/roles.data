@@ -138,7 +138,7 @@ class ServiceAccountProviderResponse(BaseModel):
 
 
 class ServiceAccountBase(BaseModel):
-    deactivated: boolean
+    is_active: boolean
     name: str
     hashed_password: str
     service_provider_id: int

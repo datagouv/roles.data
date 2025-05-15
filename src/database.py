@@ -8,25 +8,24 @@ from .config import settings
 database = databases.Database(settings.DATABASE_URL)
 
 
-# Dependency to get DB connection
-async def get_db() -> AsyncGenerator[databases.Database, None]:
+async def startup():
     if not database.is_connected:
         await database.connect()
         await database.execute(
             f"ALTER ROLE current_user SET search_path TO {settings.DB_SCHEMA}"
         )
-    try:
-        yield database
-    finally:
-        # We leave the connection open as it's pooled
-        pass
-
-
-async def startup():
-    if not database.is_connected:
-        await database.connect()
 
 
 async def shutdown():
     if database.is_connected:
         await database.disconnect()
+
+
+# Dependency to get DB connection
+async def get_db() -> AsyncGenerator[databases.Database, None]:
+    await startup()
+    try:
+        yield database
+    finally:
+        # We leave the connection open as it's pooled
+        pass

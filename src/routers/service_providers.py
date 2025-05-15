@@ -8,7 +8,7 @@ from ..dependencies import get_service_provider_id, get_service_providers_servic
 
 router = APIRouter(
     prefix="/service-providers",
-    tags=["Fournisseurs de services"],
+    tags=["Fournisseur de services"],
     dependencies=[Depends(decode_access_token)],
     responses={404: {"description": "Not found"}, 400: {"description": "Bad request"}},
 )

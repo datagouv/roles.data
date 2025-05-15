@@ -1,4 +1,4 @@
-from fastapi import HTTPException
+from fastapi import HTTPException, status
 
 from src.auth import verify_password
 from src.models import ServiceAccountResponse
@@ -15,13 +15,16 @@ class AuthService:
         service_account = await self.auth_repository.get_service_account(
             service_account_name=client_id
         )
-        has_correct_credentials = service_account is not None and verify_password(
-            client_secret, service_account.hashed_password
+
+        has_correct_credentials = (
+            service_account is not None
+            and verify_password(client_secret, service_account.hashed_password)
+            and service_account.is_active
         )
 
         if not has_correct_credentials:
             raise HTTPException(
-                status_code=401,
+                status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Incorrect credentials",
                 headers={"WWW-Authenticate": "Bearer"},
             )

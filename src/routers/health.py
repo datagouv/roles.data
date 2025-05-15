@@ -19,6 +19,12 @@ async def ping(db: Database = Depends(get_db)):
     Health check endpoint to verify if the database is connected and the application is alive.
     """
     try:
+        print("hey")
+        query = "SELECT schema_name FROM information_schema.schemata;"
+        result = await db.fetch_all(query)
+        print([dict(r) for r in result])
+        print("ho")
+
         query = "SELECT R.is_admin as is_alive from roles as R WHERE R.role_name = 'administrateur'"
         result = await db.fetch_one(query)
 
@@ -31,7 +37,8 @@ async def ping(db: Database = Depends(get_db)):
         else:
             raise Exception("Database query returned unexpected result")
 
-    except Exception:
+    except Exception as e:
+        print(e)
         # Log the exception here if needed
         return {
             "status": "unhealthy",

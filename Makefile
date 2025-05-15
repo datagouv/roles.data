@@ -17,9 +17,10 @@ docker: # run application in docker
 	docker-compose up
 
 db_scripts:
-	echo "Using DB_HOST: ${DB_HOST}, DB_PORT: ${DB_PORT}, etc."
-	sh ./db/entrypoint.sh
-	DB_PASSWORD='d-roles' DB_PORT='5433' DB_NAME='d-roles' sh ./db/entrypoint.sh
+	echo "Using DB_SCHEMA: ${DB_SCHEMA}"
+
+	DB_HOST='localhost' DB_PORT=5432 sh ./db/entrypoint.sh
+	DB_HOST='localhost' DB_PASSWORD='d-roles' DB_PORT=5433 DB_NAME='d-roles' sh ./db/entrypoint.sh
 
 db_start: # only run DB container
 	docker-compose up postgres-dev postgres-test

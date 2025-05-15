@@ -7,7 +7,7 @@ echo "Running database migrations..."
 
 # Create migrations table if it doesn't exist
 echo "Ensuring migration tracking table exists..."
-PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -d $DB_NAME -c "
+PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST  -p $DB_PORT -U $DB_USER -d $DB_NAME -c "
 CREATE TABLE IF NOT EXISTS ${DB_SCHEMA}.migrations (
     id SERIAL PRIMARY KEY,
     filename VARCHAR(255) NOT NULL UNIQUE,
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS ${DB_SCHEMA}.migrations (
 # Check if migrations directory exists
 if [ -d "./db/migrations" ]; then
   # Get list of migrations that have already been applied
-  applied_migrations=$(PGPASSWORD=$DB_PASSWORD psql -h $POSTGRES_HOST -U $DB_USER -d $DB_NAME -t -c "SELECT filename FROM ${POSTGRES_SCHEMA}.migrations;")
+  applied_migrations=$(PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -t -c "SELECT filename FROM ${DB_SCHEMA}.migrations;")
 
   # Loop through all SQL files in the migrations directory in alphabetical order
   for migration in $(find ./db/migrations -name "*.sql" | sort); do
@@ -30,17 +30,17 @@ if [ -d "./db/migrations" ]; then
       echo "Applying new migration: $migration"
 
       # Start a transaction
-      PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -d $DB_NAME -c "BEGIN;"
+      PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -c "BEGIN;"
 
       # Apply the migration
-      PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -d $DB_NAME -v $DB_SCHEMA -f $migration
+      PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -v DB_SCHEMA=$DB_SCHEMA -f $migration
 
       # Record the migration in the migrations table
-      PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -d $DB_NAME -c "
-      INSERT INTO ${DB_SCHEMA}.migrations (filename) VALUES ('$migration_file');"
+      PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -c "
+      INSERT INTO ${DB_SCHEMA}.migrations (filename) VALUES ('$migration');"
 
       # Commit the transaction
-      PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -U $DB_USER -d $DB_NAME -c "COMMIT;"
+      PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -c "COMMIT;"
 
       echo "Successfully applied: $migration"
     fi
@@ -52,7 +52,7 @@ fi
 
 # Show applied migrations
 echo "Current migration status:"
-PGPASSWORD=$POSTGRES_PASSWORD psql -h $DB_HOST -U $DB_USER -d $DB_NAME -c "
+PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST  -p $DB_PORT -U $DB_USER -d $DB_NAME -c "
 SELECT filename, applied_at FROM ${DB_SCHEMA}.migrations ORDER BY applied_at;"
 
 

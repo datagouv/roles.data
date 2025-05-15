@@ -1,4 +1,4 @@
-\set schema_name :POSTGRES_SCHEMA
+\set schema_name :DB_SCHEMA
 
 -- First, rename the column
 ALTER TABLE :schema_name.service_accounts

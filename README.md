@@ -1,5 +1,8 @@
 # D-roles
 
+[![Run Integration Tests](https://github.com/datagouv/d-roles/actions/workflows/integration_tests.yml/badge.svg)](https://github.com/datagouv/d-roles/actions/workflows/integration_tests.yml)
+[![Create and deploy a new release](https://github.com/datagouv/d-roles/actions/workflows/create-deploy-release.yml/badge.svg)](https://github.com/datagouv/d-roles/actions/workflows/create-deploy-release.yml)
+
 API de gestion des droits utilisateurs pour les outils du pôle DATA
 
 ## 📋 Table des matières

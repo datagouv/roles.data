@@ -122,11 +122,12 @@ class GroupsService:
         # so we have to manually create a dict then a new object
         group_dict["users"] = users
 
-        scopes = await self.scopes_service.get_scopes(
+        scopes_and_contract = await self.scopes_service.get_scopes_and_contract(
             self.service_provider_id, group_id
         )
 
-        group_dict["scopes"] = scopes
+        group_dict["scopes"] = scopes_and_contract.scopes
+        group_dict["contract"] = scopes_and_contract.contract
 
         return GroupWithUsersAndScopesResponse(**group_dict)
 
@@ -163,17 +164,7 @@ class GroupsService:
             group.id, user_id, role.id
         )
 
-    async def add_scopes(self, group_id: int, scopes: str):
-        group = await self.get_group_by_id(group_id)
-        service_provider = (
-            await self.service_provider_service.get_service_provider_by_id(
-                self.service_provider_id
-            )
-        )
-
-        return await self.scopes_service.grant(service_provider.id, group.id, scopes)
-
-    async def update_scopes(self, group_id: int, scopes: str):
+    async def update_scopes(self, group_id: int, scopes: str, contract: str):
         group = await self.get_group_by_id(group_id)
         service_provider = (
             await self.service_provider_service.get_service_provider_by_id(
@@ -182,6 +173,8 @@ class GroupsService:
         )
 
         # verify if the group is already linked to the service provider
-        await self.scopes_service.get_scopes(service_provider.id, group.id)
+        await self.scopes_service.get_scopes_and_contract(service_provider.id, group.id)
         # check if the group is linked to the service provider
-        return await self.scopes_service.update(service_provider.id, group.id, scopes)
+        return await self.scopes_service.update(
+            service_provider.id, group.id, scopes, contract
+        )

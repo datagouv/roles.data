@@ -53,7 +53,7 @@ class GroupsRepository:
     ) -> list[GroupWithUsersAndScopesResponse]:
         async with self.db_session.transaction():
             query = """
-            SELECT G.id, G.name, O.siren as organisation_siren, GSPR.scopes
+            SELECT G.id, G.name, O.siren as organisation_siren, GSPR.scopes, GSPR.contract
             FROM groups as G
             INNER JOIN organisations AS O ON G.orga_id = O.id
             INNER JOIN group_user_relations AS GUR ON GUR.group_id = G.id
@@ -78,13 +78,14 @@ class GroupsRepository:
                 query_create_group, {"name": group_data.name, "orga_id": orga_id}
             )
 
-            query_create_access = "INSERT INTO group_service_provider_relations (service_provider_id, group_id, scopes) VALUES (:service_provider_id, :group_id, :scopes)"
+            query_create_access = "INSERT INTO group_service_provider_relations (service_provider_id, group_id, scopes, contract) VALUES (:service_provider_id, :group_id, :scopes, :contract)"
             await self.db_session.execute(
                 query_create_access,
                 {
                     "service_provider_id": service_provider_id,
                     "group_id": new_group.id,
-                    "scopes": group_data.scopes,
+                    "scopes": group_data.scopes if group_data.scopes else "",
+                    "contract": group_data.contract if group_data.contract else "",
                 },
             )
             return new_group

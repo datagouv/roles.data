@@ -20,27 +20,13 @@ class ScopesRepository:
                 {"service_provider_id": service_provider_id, "group_id": group_id},
             )
 
-    async def create(self, service_provider_id: int, group_id: int, scopes: str):
-        async with self.db_session.transaction():
-            query = """
-            INSERT INTO group_service_provider_relations (service_provider_id, group_id, scopes)
-            VALUES (:service_provider_id, :group_id, :scopes)
-            RETURNING *
-            """
-            return await self.db_session.fetch_one(
-                query,
-                {
-                    "service_provider_id": service_provider_id,
-                    "group_id": group_id,
-                    "scopes": scopes,
-                },
-            )
-
-    async def update(self, service_provider_id: int, group_id: int, scopes: str):
+    async def update(
+        self, service_provider_id: int, group_id: int, scopes: str, contract: str
+    ):
         async with self.db_session.transaction():
             query = """
             UPDATE group_service_provider_relations
-            SET scopes = :scopes
+            SET scopes = :scopes, contract = :contract
             WHERE service_provider_id = :service_provider_id AND group_id = :group_id
             RETURNING *
             """
@@ -50,5 +36,6 @@ class ScopesRepository:
                     "service_provider_id": service_provider_id,
                     "group_id": group_id,
                     "scopes": scopes,
+                    "contract": contract,
                 },
             )

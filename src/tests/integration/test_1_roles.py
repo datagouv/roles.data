@@ -18,7 +18,7 @@ def test_get_all_roles(client):
     assert admin_role["is_admin"] is True
 
     # Verify user role exists
-    user_role = next((r for r in roles if r["role_name"] == "agent"), None)
+    user_role = next((r for r in roles if r["role_name"] == "utilisateur"), None)
     assert user_role is not None
     assert user_role["is_admin"] is False
 

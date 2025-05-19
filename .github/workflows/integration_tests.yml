@@ -1,0 +1,65 @@
+name: Run Integration Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15.7
+        env:
+          POSTGRES_DB: d-roles
+          POSTGRES_USER: d-roles
+          POSTGRES_PASSWORD: d-roles
+          POSTGRES_SCHEMA: d_roles
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies
+        run: |
+          uv venv
+          uv pip install -e .
+
+      - name: Create .env file
+        run: |
+          cat > .env << EOL
+          DB_NAME=d-roles
+          DB_USER=d-roles
+          DB_PASSWORD=d-roles
+          DB_SCHEMA=d_roles
+          DB_PORT: 5433
+          EOL
+
+      - name: Run tests
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5433
+          DB_NAME: d-roles
+          DB_USER: d-roles
+          DB_PASSWORD: d-roles
+          DB_SCHEMA: d_roles
+        run: |
+          sh ./db/entrypoint.sh
+          make test

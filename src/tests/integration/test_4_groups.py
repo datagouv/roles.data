@@ -1,6 +1,15 @@
 from src.tests.helpers import random_group, random_name, random_user
 
-new_group_data = random_group()
+
+def create_group(client):
+    """Create a group for testing."""
+    new_group_data = random_group()
+    response = client.post("/groups/", json=new_group_data)
+    assert response.status_code == 201
+    group = response.json()
+    assert group["name"] == new_group_data["name"]
+    new_group_data["id"] = group["id"]
+    return new_group_data
 
 
 def test_list_groups(client):
@@ -10,34 +19,31 @@ def test_list_groups(client):
     groups = response.json()
     assert isinstance(groups, list)
     assert (
-        next(
-            (group for group in groups if group["name"] == new_group_data["name"]), None
-        )
-        is None
+        next((group for group in groups if group["name"] == "stack technique"), None)
+        is not None
     )
 
 
 def test_create_group(client):
     """Test creating a new group."""
-    response = client.post("/groups/", json=new_group_data)
-    assert response.status_code == 201
-    group = response.json()
-    assert group["name"] == new_group_data["name"]
-    assert "id" in group
-    new_group_data["id"] = group["id"]
+    new_group = create_group(client)
 
-    response = client.get(f"/groups/{new_group_data['id']}")
+    response = client.get(f"/groups/{new_group['id']}")
     assert response.status_code == 200
     group = response.json()
-    assert group["name"] == new_group_data["name"]
-    assert group["organisation_siren"] == new_group_data["organisation_siren"]
-    assert group["scopes"] == new_group_data["scopes"]
-    assert group["users"][0]["email"] == new_group_data["admin_email"]
+    assert "id" in group
+    assert group["name"] == new_group["name"]
+    assert group["organisation_siren"] == new_group["organisation_siren"]
+    assert group["scopes"] == new_group["scopes"]
+    assert group["contract"] == new_group["contract"]
+    assert group["users"][0]["email"] == new_group["admin_email"]
 
 
 def test_get_group_with_users(client):
     """Test retrieving a group with its users."""
     # Create a new group
+    new_group_data = create_group(client)
+
     response = client.get(f"/groups/{new_group_data['id']}")
     assert response.status_code == 200
     group = response.json()
@@ -59,6 +65,8 @@ def test_get_group_with_users(client):
 def test_search_group_by_user(client):
     """Test searching groups by user email"""
     # Create a new group
+    new_group_data = create_group(client)
+
     response = client.get(
         "/groups/search", params={"email": new_group_data["admin_email"]}
     )
@@ -69,6 +77,7 @@ def test_search_group_by_user(client):
     assert group[0]["name"] == new_group_data["name"]
     assert group[0]["organisation_siren"] == new_group_data["organisation_siren"]
     assert group[0]["scopes"] == new_group_data["scopes"]
+    assert group[0]["contract"] == new_group_data["contract"]
     assert group[0]["users"][0]["email"] == new_group_data["admin_email"]
 
     # Test non-existent user
@@ -76,7 +85,9 @@ def test_search_group_by_user(client):
     assert response404.status_code == 404
 
     # Test non-existent group
-    responseEmpty = client.get("/groups/search", params={"email": "user@yopmail.com"})
+    responseEmpty = client.get(
+        "/groups/search", params={"email": "user-not-in-group@beta.gouv.fr"}
+    )
     assert responseEmpty.status_code == 200
     group = responseEmpty.json()
     assert isinstance(group, list)
@@ -93,6 +104,8 @@ def test_get_group_not_found(client):
 def test_update_group(client):
     """Test updating a group's name."""
     # Update the group name
+    new_group_data = create_group(client)
+
     new_name = random_name()
     response = client.put(f"/groups/{new_group_data["id"]}?group_name={new_name}")
     assert response.status_code == 200
@@ -117,6 +130,8 @@ def test_update_group(client):
 def test_add_user_to_group_and_update_roles(client):
     """Test adding a user to a group."""
     # Create a user
+    new_group_data = create_group(client)
+
     user_data = random_user()
 
     user_response = client.post("/users/", json=user_data)
@@ -155,6 +170,7 @@ def test_add_user_to_group_and_update_roles(client):
 
 def test_remove_user_from_group(client):
     """Test removing a user from a group."""
+    new_group_data = create_group(client)
 
     user_data = random_user()
 
@@ -180,9 +196,12 @@ def test_remove_user_from_group(client):
 def test_update_scopes(client):
     """Test granting access to a group."""
     # Update access with new scopes
+    new_group_data = create_group(client)
+
     new_scopes = "read,write,delete"
+    new_contract = "datapass_48"
     response = client.patch(
-        f"/groups/{new_group_data["id"]}/scopes?scopes={new_scopes}"
+        f"/groups/{new_group_data["id"]}/scopes?scopes={new_scopes}&contract={new_contract}"
     )
     assert response.status_code == 200
 
@@ -191,22 +210,4 @@ def test_update_scopes(client):
     assert response.status_code == 200
     group = response.json()
     assert group["scopes"] == new_scopes
-
-
-# def test_grant_scopes():
-#     # Create a group
-#     group_data = random_group()
-#     group_response = client.post("/groups/", json=group_data)
-#     group_id = group_response.json()["id"]
-
-#     # Grant access with scopes
-#     scopes = "read,write"
-#     response = client.put(f"/groups/{group_id}/scopes?scopes={scopes}")
-#     assert response.status_code == 200
-
-#     # Verify access was granted
-#     response = client.get(f"/groups/{group_id}")
-#     assert response.status_code == 200
-#     group = response.json()
-#     print(group)
-#     assert group["scopes"] == scopes  # Assuming the response includes scopes
+    assert group["contract"] == new_contract

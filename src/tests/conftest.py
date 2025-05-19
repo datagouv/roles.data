@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 
 from ..auth import decode_access_token
 from ..config import settings
-from ..database import get_db
+from ..database import DatabaseWithSchema, get_db
 from ..main import app
 
 # Create a test database instance
@@ -12,11 +12,9 @@ test_db = Database(settings.DATABASE_TEST_URL)
 
 
 async def test_db_startup():
-    await test_db.connect()
-    # Set search path for the entire pool
-    await test_db.execute(
-        f"ALTER ROLE current_user SET search_path TO {settings.DB_SCHEMA}"
-    )
+    if not test_db.is_connected:
+        await test_db.connect()
+        await test_db.execute(f"SET search_path TO {settings.DB_SCHEMA}")
 
 
 async def test_db_shutdown():
@@ -26,7 +24,15 @@ async def test_db_shutdown():
 # Create an override function with the same signature as get_db
 async def override_get_db():
     await test_db_startup()
-    yield test_db
+
+    # always ensure the schema is set (for every connections of the pool)
+    schema_test_db = DatabaseWithSchema(test_db, settings.DB_SCHEMA)
+
+    try:
+        yield schema_test_db
+    finally:
+        # We leave the connection open as it's pooled
+        pass
 
 
 def override_decode_access_token():

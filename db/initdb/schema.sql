@@ -1,6 +1,8 @@
-\set schema_name :POSTGRES_SCHEMA
+\set schema_name :DB_SCHEMA
 
 CREATE SCHEMA :schema_name;
+
+BEGIN;
 
 -- Create the database tables
 
@@ -106,3 +108,5 @@ INSERT INTO :schema_name.roles (id, role_name, is_admin) VALUES
 (1, 'administrateur', true),
 (2, 'agent', false),
 (3, 'prestataire', false) ON CONFLICT (id) DO NOTHING;
+
+COMMIT;

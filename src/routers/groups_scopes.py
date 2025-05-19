@@ -14,25 +14,16 @@ router = APIRouter(
 )
 
 
-@router.put("/{group_id}/scopes", status_code=200)
-async def create_group_scopes(
-    group_id: int,
-    scopes: str = "read",
-    groups_service: GroupsService = Depends(get_groups_service),
-):
-    """
-    Add scopes (that apply your service provider) to a specified group
-    """
-    return await groups_service.add_scopes(group_id, scopes)
-
-
 @router.patch("/{group_id}/scopes", status_code=200)
 async def update_group_scopes(
     group_id: int,
-    scopes: str = "read",
+    scopes: str | None = "",
+    contract: str | None = "",
     groups_service: GroupsService = Depends(get_groups_service),
 ):
     """
-    Update scopes (that apply your service provider) to a specified group
+    Update scopes or contract (that apply your service provider) to a specified group
     """
-    return await groups_service.update_scopes(group_id, scopes)
+    return await groups_service.update_scopes(
+        group_id, scopes if scopes else "", contract if contract else ""
+    )

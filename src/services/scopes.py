@@ -1,5 +1,6 @@
 from fastapi import HTTPException, status
 
+from src.models import ScopeBase
 from src.repositories.scopes import ScopesRepository
 
 
@@ -11,18 +12,20 @@ class ScopesService:
     def __init__(self, scopes_repository: ScopesRepository):
         self.scopes_repository = scopes_repository
 
-    async def get_scopes(self, service_provider_id: int, group_id: int) -> str | None:
+    async def get_scopes_and_contract(
+        self, service_provider_id: int, group_id: int
+    ) -> ScopeBase:
         scopes_response = await self.scopes_repository.get(
             service_provider_id, group_id
         )
-        return scopes_response.scopes if scopes_response else None
-
-    async def grant(self, service_provider_id: int, group_id: int, scopes: str):
-        return await self.scopes_repository.create(
-            service_provider_id, group_id, scopes
+        return ScopeBase(
+            scopes=scopes_response.scopes if scopes_response else "",
+            contract=scopes_response.contract if scopes_response else "",
         )
 
-    async def update(self, service_provider_id: int, group_id: int, scopes: str):
+    async def update(
+        self, service_provider_id: int, group_id: int, scopes: str, contract: str
+    ) -> None:
         existing_scopes = await self.scopes_repository.get(
             service_provider_id, group_id
         )
@@ -33,5 +36,5 @@ class ScopesService:
             )
 
         return await self.scopes_repository.update(
-            service_provider_id, group_id, scopes
+            service_provider_id, group_id, scopes, contract
         )

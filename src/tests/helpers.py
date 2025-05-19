@@ -12,6 +12,7 @@ def random_group():
         "organisation_siren": DINUM_SIREN,
         "admin_email": f"admin_{random.randint(1000, 9999)}@example.com",
         "scopes": "read maintain",
+        "contract": "datapass_test",
     }
 
 

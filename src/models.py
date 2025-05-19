@@ -69,7 +69,8 @@ class GroupBase(BaseModel):
 class GroupCreate(GroupBase):
     organisation_siren: Siren  # type: ignore # Optional for group creation
     admin_email: EmailStr
-    scopes: str
+    scopes: str | None
+    contract: str | None
 
 
 class GroupResponse(GroupBase):
@@ -82,6 +83,7 @@ class GroupWithUsersAndScopesResponse(GroupResponse):
     organisation_siren: Siren
     users: list[UserWithRoleResponse]
     scopes: str
+    contract: str
 
 
 class ParentChildCreate(BaseModel):
@@ -113,6 +115,7 @@ class RoleResponse(RoleBase):
 # --- Service Provider & scopes ---
 class ScopeBase(BaseModel):
     scopes: str  # Consider using list[str] if representing multiple scopes
+    contract: str
 
 
 class ScopeResponse(ScopeBase):

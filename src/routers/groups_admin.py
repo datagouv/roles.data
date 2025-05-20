@@ -18,12 +18,16 @@ router = APIRouter(
 @router.put("/{group_id}", response_model=GroupResponse)
 async def update_group(
     group_id: int = Path(..., description="The ID of the group to update"),
+    admin_id: int = Query(
+        ..., description="The user ID of the admin making the request"
+    ),
     group_name: str = Query(..., description="The new name of the group"),
     groups_service: GroupsService = Depends(get_groups_service),
 ):
     """
     Update a group (change its name).
     """
+    await groups_service.verify_user_is_admin(admin_id, group_id)
     return await groups_service.update_group(group_id, group_name)
 
 
@@ -32,39 +36,51 @@ async def update_group(
 async def add_user_to_group(
     group_id: int = Path(..., description="The ID of the group"),
     user_id: int = Path(..., description="The ID of the user"),
+    admin_id: int = Query(
+        ..., description="The user ID of the admin making the request"
+    ),
     role_id: int = Query(..., description="The ID of the user's role"),
-    group_service: GroupsService = Depends(get_groups_service),
+    groups_service: GroupsService = Depends(get_groups_service),
 ):
     """
     Add a user to a given group with a specific role.
 
     If the group, the user or the role does not exist, a 404 error will be raised.
     """
-    return await group_service.add_user_to_group(group_id, user_id, role_id)
+    await groups_service.verify_user_is_admin(admin_id, group_id)
+    return await groups_service.add_user_to_group(group_id, user_id, role_id)
 
 
 @router.patch("/{group_id}/users/{user_id}", status_code=200)
 async def update_user_role_in_group(
     group_id: int = Path(..., description="The ID of the group"),
     user_id: int = Path(..., description="The ID of the user"),
+    admin_id: int = Query(
+        ..., description="The user ID of the admin making the request"
+    ),
     role_id: int = Query(..., description="The ID of the role"),
-    group_service: GroupsService = Depends(get_groups_service),
+    groups_service: GroupsService = Depends(get_groups_service),
 ):
     """
     Update the role of a user in a specified group.
     """
-    return await group_service.update_user_in_group(group_id, user_id, role_id)
+    await groups_service.verify_user_is_admin(admin_id, group_id)
+    return await groups_service.update_user_in_group(group_id, user_id, role_id)
 
 
 @router.delete("/{group_id}/users/{user_id}", status_code=204)
 async def remove_user_from_group(
     group_id: int = Path(..., description="The ID of the group"),
     user_id: int = Path(..., description="The ID of the user"),
-    group_service: GroupsService = Depends(get_groups_service),
+    admin_id: int = Query(
+        ..., description="The user ID of the admin making the request"
+    ),
+    groups_service: GroupsService = Depends(get_groups_service),
 ):
     """
     Remove a user from a given group
 
     If the group or the user does not exist, a 404 error will be raised.
     """
-    return await group_service.remove_user_from_group(group_id, user_id)
+    await groups_service.verify_user_is_admin(admin_id, group_id)
+    return await groups_service.remove_user_from_group(group_id, user_id)

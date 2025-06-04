@@ -1,4 +1,5 @@
 from fastapi import HTTPException, status
+from pydantic import EmailStr
 
 from src.services.services_provider import ServiceProvidersService
 
@@ -105,12 +106,15 @@ class GroupsService:
     async def list_groups(self) -> list[GroupResponse]:
         return await self.groups_repository.list_groups(self.service_provider_id)
 
-    async def search_groups(self, email: str) -> list[GroupWithUsersAndScopesResponse]:
+    async def search_groups(
+        self, email: EmailStr
+    ) -> list[GroupWithUsersAndScopesResponse]:
         """
-        Search for groups by user email.
+        Search for groups by ProConnect sub.
 
         This method will return all groups that the user is a member of, regardless of their role.
         """
+
         user = await self.users_service.get_user_by_email(email)
         groups = await self.groups_repository.search_groups_by_user(
             user.id, self.service_provider_id

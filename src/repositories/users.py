@@ -6,6 +6,15 @@ class UsersRepository:
     def __init__(self, db_session):
         self.db_session = db_session
 
+    async def verify_user(self, user_email: str, user_sub: str):
+        async with self.db_session.transaction():
+            query = """
+            UPDATE users SET sub_pro_connect = :sub_pro_connect, is_email_confirmed = TRUE
+            WHERE email = :email
+            """
+            values = {"email": user_email, "sub_pro_connect": user_sub}
+            await self.db_session.execute(query, values)
+
     async def get_user_by_email(self, email: str) -> UserResponse:
         async with self.db_session.transaction():
             query = """

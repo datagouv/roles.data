@@ -13,6 +13,13 @@ class UsersService:
         if not user_data.email:
             raise ValueError("Email is required.")
 
+    async def verify_user(self, user_email: str, user_sub: str):
+        # Verify if the user exists
+        user = await self.get_user_by_email(user_email)
+
+        if not user.is_verified:
+            await self.user_repository.verify_user(user_email, user_sub)
+
     async def get_user_by_email(self, email: str) -> UserResponse:
         """
         Retrieve user by email
@@ -22,6 +29,11 @@ class UsersService:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"User with email {email} not found",
+            )
+        if not user.is_verified:
+            raise HTTPException(
+                status_code=status.HTTP_423_LOCKED,
+                detail="User is not yet verified.",
             )
         return user
 
@@ -35,6 +47,11 @@ class UsersService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"User with ID {user_id} not found",
             )
+        if not user.is_verified:
+            raise HTTPException(
+                status_code=status.HTTP_423_LOCKED,
+                detail="User is not yet verified.",
+            )
         return user
 
     async def get_user_by_sub(self, user_sub: str) -> UserResponse:
@@ -45,7 +62,7 @@ class UsersService:
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"User with sub {user_sub} not found",
+                detail=f"User with sub {user_sub} is not found, either it does not exist or it is not yet verified",
             )
         return user
 

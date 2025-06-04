@@ -16,20 +16,20 @@ router = APIRouter(
 
 
 @router.get("/", response_model=list[RoleResponse])
-async def get_all_existing_roles(
+async def all(
     roles_service: RolesService = Depends(get_roles_service),
 ):
     """
-    Retrieve all existing roles
+    Retourne la liste des rôles existants.
+
+    Les rôles ne peuvent pas être créés ou supprimés. Si vous avez besoin d’un nouveau rôle, veuillez contacter l’équipe de dev.
     """
     return await roles_service.get_all_roles()
 
 
 @router.get("/{role_id}", response_model=RoleResponse, status_code=200)
-async def get_role_by_id(
-    role_id: int, roles_service: RolesService = Depends(get_roles_service)
-):
+async def by_id(role_id: int, roles_service: RolesService = Depends(get_roles_service)):
     """
-    Get a role by its ID.
+    Récupérer un role par son ID.
     """
     return await roles_service.get_roles_by_id(role_id)

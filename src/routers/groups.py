@@ -3,7 +3,8 @@ from fastapi import APIRouter, Depends, Path, Query
 from pydantic import EmailStr
 
 from src.auth import decode_access_token
-from src.dependencies import get_groups_service
+from src.dependencies import get_groups_service, get_users_service
+from src.services.users import UsersService
 
 from ..models import GroupCreate, GroupResponse, GroupWithUsersAndScopesResponse
 from ..services.groups import GroupsService
@@ -21,43 +22,52 @@ async def list_groups(
     group_service: GroupsService = Depends(get_groups_service),
 ):
     """
-    List every available groups for your service provider
+    Liste les équipes disponibles pour votre fournisseur de services.
     """
     return await group_service.list_groups()
 
 
 @router.get("/search", response_model=list[GroupWithUsersAndScopesResponse])
-async def search_groups_by_user(
-    email: EmailStr = Query(
-        ..., description="The email of the user to filter groups by"
+async def search(
+    email: EmailStr = Query(..., description="Mail de l’utilisateur"),
+    active_user_sub: str | None = Query(
+        ..., description="Sub de l’utilisateur (facultatif)"
     ),
+    users_service: UsersService = Depends(get_users_service),
     group_service: GroupsService = Depends(get_groups_service),
 ):
     """
-    Search for groups by user email.
+    Recherche les équipes d’un utilisateur vérifié, avec son adresse e-mail.
+
+    Si l'utilisateur n'est pas encore vérifié, l’appel échouera et vous devrez vérifier l'utilisateur (cf. `/users/verify`).
+
+    Il est possible de passer en argument `active_user_sub` qui permet de se passer d’un appel à `/user/verify`
     """
+    if active_user_sub:
+        await users_service.verify_user(user_sub=active_user_sub, user_email=email)
+
     return await group_service.search_groups(email=email)
 
 
 @router.get("/{group_id}", response_model=GroupWithUsersAndScopesResponse)
-async def get_group(
-    group_id: int = Path(..., description="The ID of the group to retrieve"),
+async def by_id(
+    group_id: int = Path(..., description="ID du groupe à récupérer"),
     group_service: GroupsService = Depends(get_groups_service),
 ):
     """
-    Get a group by ID, including all users that belong to it.
+    Récupère une équipe par son ID. Inclut les utilisateurs, leurs rôles et les droits du groupes sur le fournisseur de service.
     """
     return await group_service.get_group_with_users_and_scopes(group_id)
 
 
 @router.post("/", response_model=GroupResponse, status_code=201)
-async def create_group(
+async def create(
     group: GroupCreate,
     groups_service: GroupsService = Depends(get_groups_service),
 ):
     """
-    Create a new group.
+    Crée une nouvelle équipe.
 
-    If the organization doesn't exist, it will be created automatically.
+    Si l’organisation n’existe pas encore, elle est créée automatiquement.
     """
     return await groups_service.create_group(group)

@@ -16,7 +16,7 @@ router = APIRouter(
 @router.get("/")
 async def ping(db: Database = Depends(get_db)):
     """
-    Health check endpoint to verify if the database is connected and the application is alive.
+    Vérifie l’état de la connexion à la base de données.
     """
     try:
         async with db.transaction():

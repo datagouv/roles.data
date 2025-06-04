@@ -39,17 +39,17 @@ class OrganisationResponse(OrganisationBase):
 
 class UserBase(BaseModel):
     email: EmailStr
-    sub_pro_connect: str | None = None
-    is_email_confirmed: bool = False
 
 
 class UserCreate(UserBase):
     pass
 
 
-class UserResponse(BaseModel):
+class UserResponse(UserBase):
     id: int
-    email: EmailStr
+    is_verified: bool
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserWithRoleResponse(UserBase):

@@ -47,10 +47,9 @@ class UserCreate(UserBase):
     pass
 
 
-class UserResponse(UserBase):
+class UserResponse(BaseModel):
     id: int
-
-    model_config = ConfigDict(from_attributes=True)
+    email: EmailStr
 
 
 class UserWithRoleResponse(UserBase):

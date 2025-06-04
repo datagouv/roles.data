@@ -18,16 +18,16 @@ router = APIRouter(
 @router.put("/{group_id}", response_model=GroupResponse)
 async def update_group(
     group_id: int = Path(..., description="The ID of the group to update"),
-    admin_id: int = Query(
-        ..., description="The user ID of the admin making the request"
-    ),
     group_name: str = Query(..., description="The new name of the group"),
+    active_user_sub: str = Query(
+        ..., description="The ProConnect sub of the user making the request"
+    ),
     groups_service: GroupsService = Depends(get_groups_service),
 ):
     """
     Update a group (change its name).
     """
-    await groups_service.verify_user_is_admin(admin_id, group_id)
+    await groups_service.verify_user_is_admin(active_user_sub, group_id)
     return await groups_service.update_group(group_id, group_name)
 
 

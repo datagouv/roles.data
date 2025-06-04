@@ -37,6 +37,18 @@ class UsersService:
             )
         return user
 
+    async def get_user_by_sub(self, user_sub: str) -> UserResponse:
+        """
+        Retrieve user by it's ProConnect sub
+        """
+        user = await self.user_repository.get_user_by_sub(user_sub)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"User with sub {user_sub} not found",
+            )
+        return user
+
     async def get_users_by_group_id(self, group_id: int) -> list[UserWithRoleResponse]:
         """
         Retrieve all user for a given group ID

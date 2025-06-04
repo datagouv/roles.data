@@ -49,19 +49,19 @@ class GroupsService:
                 status_code=status.HTTP_400_BAD_REQUEST, detail="Siren is required."
             )
 
-    async def verify_user_is_admin(self, admin_id: int, group_id: int) -> None:
+    async def verify_user_is_admin(self, acting_user_sub: str, group_id: int) -> None:
         """
         Verify if the user is an admin of the group.
         """
         # verify usert exists and group exists
-        await self.users_service.get_user_by_id(admin_id)
+        acting_user = await self.users_service.get_user_by_sub(acting_user_sub)
         await self.get_group_by_id(group_id)
 
         group_users = await self.users_service.get_users_by_group_id(group_id)
-        if admin_id not in [u.id for u in group_users]:
+        if acting_user.id not in [u.id for u in group_users]:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"User with ID {admin_id} is not admin of the group.",
+                detail=f"User with sub {acting_user_sub} is not admin of the group.",
             )
 
     async def get_group_by_id(self, group_id: int) -> GroupResponse:

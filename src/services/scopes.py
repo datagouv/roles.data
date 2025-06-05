@@ -18,9 +18,10 @@ class ScopesService:
         scopes_response = await self.scopes_repository.get(
             service_provider_id, group_id
         )
+
         return ScopeBase(
-            scopes=scopes_response.scopes if scopes_response else "",
-            contract=scopes_response.contract if scopes_response else "",
+            scopes=(scopes_response.scopes or "") if scopes_response else "",
+            contract=(scopes_response.contract or "") if scopes_response else "",
         )
 
     async def update(

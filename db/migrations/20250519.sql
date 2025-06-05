@@ -3,7 +3,7 @@
 BEGIN;
 
 ALTER TABLE :schema_name.group_service_provider_relations
-ADD COLUMN contract TEXT NULL;
+ADD COLUMN contract TEXT NOT NULL DEFAULT '';
 
 -- Add this after your table creation
 ALTER TABLE :schema_name.service_accounts

@@ -21,7 +21,6 @@ def test_get_user_by_id(client):
     create_response = client.post("/users/", json=user_data)
     user_id = create_response.json()["id"]
 
-    # Now get the user by ID
     response = client.get(f"/users/{user_id}")
 
     # This should succeed but has a bug (no return statement in the route)

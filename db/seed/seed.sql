@@ -14,7 +14,7 @@ INSERT INTO :schema_name.groups (id, name, orga_id)
 VALUES (1, 'stack technique', 1) ON CONFLICT (id) DO NOTHING;
 
 -- Create users with different emails
-INSERT INTO :schema_name.users (id, email, is_email_confirmed)
+INSERT INTO :schema_name.users (id, email, is_verified)
 VALUES
   (1, 'user@yopmail.com', false),
   (2, 'xavier.jouppe@beta.gouv.fr', false),

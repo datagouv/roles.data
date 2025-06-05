@@ -16,6 +16,11 @@ def random_group():
     }
 
 
+def random_sub_pro_connect():
+    """Generate a random sub ProConnect."""
+    return f"sub_{uuid4()}"
+
+
 def random_user():
     """Generate a random user for testing."""
     return {"email": f"test_{uuid4()}@example.com", "sub_pro_connect": f"sub_{uuid4()}"}
@@ -35,3 +40,11 @@ def create_group(client):
     assert group["name"] == new_group_data["name"]
     new_group_data["id"] = group["id"]
     return new_group_data
+
+
+def verify_user(client, user_email, user_sub):
+    """Verify a user by email and sub."""
+    response = client.patch(
+        "/users/verify", params={"user_email": user_email, "user_sub": user_sub}
+    )
+    assert response.status_code == 200

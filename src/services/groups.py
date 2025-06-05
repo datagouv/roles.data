@@ -54,12 +54,13 @@ class GroupsService:
         """
         Verify if the user is an admin of the group.
         """
-        # verify usert exists and group exists
+        # verify user exists and group exists
         acting_user = await self.users_service.get_user_by_sub(acting_user_sub)
         await self.get_group_by_id(group_id)
 
         group_users = await self.users_service.get_users_by_group_id(group_id)
-        if acting_user.id not in [u.id for u in group_users]:
+
+        if acting_user.id not in [u.id for u in group_users if u.is_admin]:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"User with sub {acting_user_sub} is not admin of the group.",
@@ -85,7 +86,7 @@ class GroupsService:
 
         try:
             admin_user = await self.users_service.get_user_by_email(
-                group_data.admin_email
+                group_data.admin_email, only_verified_user=False
             )
         except HTTPException as e:
             if e.status_code == 404:
@@ -110,12 +111,14 @@ class GroupsService:
         self, email: EmailStr
     ) -> list[GroupWithUsersAndScopesResponse]:
         """
-        Search for groups by ProConnect sub.
+        Search for groups by user email.
 
         This method will return all groups that the user is a member of, regardless of their role.
         """
 
-        user = await self.users_service.get_user_by_email(email)
+        user = await self.users_service.get_user_by_email(
+            email, only_verified_user=True
+        )
         groups = await self.groups_repository.search_groups_by_user(
             user.id, self.service_provider_id
         )
@@ -157,14 +160,18 @@ class GroupsService:
     # user management
     async def add_user_to_group(self, group_id: int, user_id: int, role_id: int):
         role = await self.roles_service.get_roles_by_id(role_id)
-        user = await self.users_service.get_user_by_id(user_id)
+        user = await self.users_service.get_user_by_id(
+            user_id, only_verified_user=False
+        )
         group = await self.get_group_by_id(group_id)
         return await self.groups_repository.add_user_to_group(
             group.id, user.id, role.id
         )
 
     async def remove_user_from_group(self, group_id: int, user_id: int):
-        user = await self.users_service.get_user_by_id(user_id)
+        user = await self.users_service.get_user_by_id(
+            user_id, only_verified_user=False
+        )
         group = await self.get_group_by_id(group_id)
 
         return await self.groups_repository.remove_user_from_group(group.id, user.id)

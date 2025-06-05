@@ -1,4 +1,4 @@
-from src.tests.helpers import create_group
+from src.tests.helpers import create_group, random_sub_pro_connect
 
 
 def test_list_groups(client):
@@ -56,9 +56,18 @@ def test_search_group_by_user(client):
     # Create a new group
     new_group_data = create_group(client)
 
-    response = client.get(
+    random_sub = random_sub_pro_connect()
+
+    responseNotVerified = client.get(
         "/groups/search", params={"email": new_group_data["admin_email"]}
     )
+    assert responseNotVerified.status_code == 423
+
+    response = client.get(
+        "/groups/search",
+        params={"email": new_group_data["admin_email"], "acting_user_sub": random_sub},
+    )
+
     assert response.status_code == 200
     group = response.json()
     assert isinstance(group, list)
@@ -70,12 +79,18 @@ def test_search_group_by_user(client):
     assert group[0]["users"][0]["email"] == new_group_data["admin_email"]
 
     # Test non-existent user
-    response404 = client.get("/groups/search", params={"email": "hey@test.fr"})
+    response404 = client.get(
+        "/groups/search", params={"email": "hey@test.fr", "acting_user_sub": random_sub}
+    )
     assert response404.status_code == 404
 
     # Test non-existent group
     responseEmpty = client.get(
-        "/groups/search", params={"email": "user-not-in-group@beta.gouv.fr"}
+        "/groups/search",
+        params={
+            "email": "user-not-in-group@beta.gouv.fr",
+            "acting_user_sub": random_sub,
+        },
     )
     assert responseEmpty.status_code == 200
     group = responseEmpty.json()

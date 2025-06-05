@@ -30,8 +30,8 @@ async def list_groups(
 @router.get("/search", response_model=list[GroupWithUsersAndScopesResponse])
 async def search(
     email: EmailStr = Query(..., description="Mail de l’utilisateur"),
-    active_user_sub: str | None = Query(
-        ..., description="Sub de l’utilisateur (facultatif)"
+    acting_user_sub: str | None = Query(
+        None, description="Sub de l’utilisateur (facultatif)"
     ),
     users_service: UsersService = Depends(get_users_service),
     group_service: GroupsService = Depends(get_groups_service),
@@ -41,10 +41,11 @@ async def search(
 
     Si l'utilisateur n'est pas encore vérifié, l’appel échouera et vous devrez vérifier l'utilisateur (cf. `/users/verify`).
 
-    Il est possible de passer en argument `active_user_sub` qui permet de se passer d’un appel à `/user/verify`
+    Il est possible de passer en argument `acting_user_sub` qui permet de se passer d’un appel à `/user/verify`
     """
-    if active_user_sub:
-        await users_service.verify_user(user_sub=active_user_sub, user_email=email)
+
+    if acting_user_sub:
+        await users_service.verify_user(user_sub=acting_user_sub, user_email=email)
 
     return await group_service.search_groups(email=email)
 

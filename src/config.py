@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     Application settings loaded from environment variables
     """
 
+    SENTRY_DSN: str = ""
     SECRET_KEY: str = ""
 
     # Database settings

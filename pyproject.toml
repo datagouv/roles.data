@@ -17,6 +17,7 @@ dependencies = [
     "pydantic>=2.11.3",
     "pyjwt>=2.10.1",
     "passlib[bcrypt]>=1.7.4",
+    "sentry-sdk[fastapi]>=2.29.1",
 ]
 
 [dependency-groups]

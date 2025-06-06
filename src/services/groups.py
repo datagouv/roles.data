@@ -50,7 +50,9 @@ class GroupsService:
                 status_code=status.HTTP_400_BAD_REQUEST, detail="Siren is required."
             )
 
-    async def verify_user_is_admin(self, acting_user_sub: str, group_id: int) -> None:
+    async def verify_acting_user_rights(
+        self, acting_user_sub: str, group_id: int
+    ) -> None:
         """
         Verify if the user is an admin of the group.
         """
@@ -163,7 +165,14 @@ class GroupsService:
         user = await self.users_service.get_user_by_id(
             user_id, only_verified_user=False
         )
-        group = await self.get_group_by_id(group_id)
+        group = await self.get_group_with_users_and_scopes(group_id)
+
+        if self.is_user_in_group(group, user_id):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"User with ID {user_id} is already in group {group_id}",
+            )
+
         return await self.groups_repository.add_user_to_group(
             group.id, user.id, role.id
         )
@@ -172,7 +181,14 @@ class GroupsService:
         user = await self.users_service.get_user_by_id(
             user_id, only_verified_user=False
         )
-        group = await self.get_group_by_id(group_id)
+        group = await self.get_group_with_users_and_scopes(group_id)
+
+        if self.is_user_admin(group, user_id):
+            if self.has_only_one_admin(group):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"Impossible to remove user {user_id} from group {group_id} as it is the only admin of the group.",
+                )
 
         return await self.groups_repository.remove_user_from_group(group.id, user.id)
 
@@ -181,11 +197,20 @@ class GroupsService:
         role = await self.roles_service.get_roles_by_id(role_id)
         group = await self.get_group_with_users_and_scopes(group_id)
 
-        if user_id not in [u.id for u in group.users]:
+        if not self.is_user_in_group(group, user_id):
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"User with ID {user_id} not found in group {group_id}",
             )
+
+        if not role.is_admin:
+            if self.has_only_one_admin(group):
+                if self.is_user_admin(group, user_id):
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail=f"Impossible to update user {user_id} role in group {group_id} as it is the only admin of the group.",
+                    )
+
         return await self.groups_repository.update_user_role_in_group(
             group.id, user_id, role.id
         )
@@ -204,3 +229,25 @@ class GroupsService:
         return await self.scopes_service.update(
             service_provider.id, group.id, scopes, contract
         )
+
+    def is_user_in_group(
+        self, group: GroupWithUsersAndScopesResponse, user_id: int
+    ) -> bool:
+        """
+        Check if a user is in a group.
+        """
+        return user_id in [u.id for u in group.users]
+
+    def is_user_admin(
+        self, group: GroupWithUsersAndScopesResponse, user_id: int
+    ) -> bool:
+        """
+        Check if a user is an admin of a group.
+        """
+        return next((u.is_admin for u in group.users if u.id == user_id), False)
+
+    def has_only_one_admin(self, group: GroupWithUsersAndScopesResponse) -> bool:
+        """
+        Check if a group has only one admin.
+        """
+        return len([u.id for u in group.users if u.is_admin]) == 1

@@ -18,7 +18,7 @@ def test_update_group(client):
     responseNotVerified = client.put(
         f"/groups/{new_group_data["id"]}?acting_user_sub={admin_sub}&group_name={new_name}"
     )
-    # sub should be unknown, so the request should fail
+    # sub is unknown, so the request should fail
     assert responseNotVerified.status_code == 404
 
     verify_user(client, admin_email, admin_sub)
@@ -88,7 +88,7 @@ def test_add_user_to_group_and_update_roles(client):
         f"/groups/{new_group_data["id"]}/users/{user_id}?acting_user_sub={admin_sub}&role_id={role_1['id']}"
     )
 
-    # sub should be unknown, so the request should fail
+    # sub is unknown, so the request should fail
     assert responseNotVerified.status_code == 404
 
     verify_user(client, admin_email, admin_sub)
@@ -98,6 +98,12 @@ def test_add_user_to_group_and_update_roles(client):
         f"/groups/{new_group_data["id"]}/users/{user_id}?acting_user_sub={admin_sub}&role_id={role_1['id']}"
     )
     assert response.status_code == 201
+
+    # Cannot add the same user again
+    response_add_user_again = client.put(
+        f"/groups/{new_group_data["id"]}/users/{user_id}?acting_user_sub={admin_sub}&role_id={role_1['id']}"
+    )
+    assert response_add_user_again.status_code == 403
 
     # Verify user is in the group
     group_details = client.get(f"/groups/{new_group_data["id"]}")
@@ -126,7 +132,6 @@ def test_remove_user_from_group(client):
     admin_sub = random_sub_pro_connect()
 
     user_data = random_user()
-
     create_user_response = client.post("/users/", json=user_data)
     user_id = create_user_response.json()["id"]
 
@@ -136,7 +141,7 @@ def test_remove_user_from_group(client):
     responseNotVerified = client.patch(
         f"/groups/{new_group_data['id']}/users/{user_id}?acting_user_sub={admin_sub}&role_id={role_id}"
     )
-    # sub should be unknown, so the request should fail
+    # sub is unknown, so the request should fail
     assert responseNotVerified.status_code == 404
 
     verify_user(client, admin_email, admin_sub)
@@ -156,3 +161,28 @@ def test_remove_user_from_group(client):
     group_details = client.get(f"/groups/{new_group_data['id']}")
     group_users = group_details.json()["users"]
     assert not any(user["id"] == user_id for user in group_users)
+
+
+def test_cannot_remove_only_admin_from_group(client):
+    """Test that we cannot remove the only admin user from a group."""
+    # Create a group with an admin user
+    new_group_data = create_group(client)
+    admin_email = new_group_data["admin_email"]
+    admin_sub = random_sub_pro_connect()
+
+    # Verify the admin user
+    verify_user(client, admin_email, admin_sub)
+
+    get_admin_response = client.get("/users/search", params={"email": admin_email})
+    admin_id = get_admin_response.json()["id"]
+
+    # Attempt to remove the only admin from the group
+    response_delete_only_admin = client.delete(
+        f"/groups/{new_group_data['id']}/users/{admin_id}?acting_user_sub={admin_sub}"
+    )
+    assert response_delete_only_admin.status_code == 403
+
+    response_change_only_admin_role = client.patch(
+        f"/groups/{new_group_data["id"]}/users/{admin_id}?acting_user_sub={admin_sub}&role_id={2}"
+    )
+    assert response_change_only_admin_role.status_code == 403

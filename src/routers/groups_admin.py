@@ -27,7 +27,7 @@ async def update_name(
     """
     Mise à jour du nom d’une équipe.
     """
-    await groups_service.verify_user_is_admin(acting_user_sub, group_id)
+    await groups_service.verify_acting_user_rights(acting_user_sub, group_id)
     return await groups_service.update_group(group_id, group_name)
 
 
@@ -47,7 +47,7 @@ async def add_user(
 
     Si le groupe, l’utilisateur ou le rôle n’existe pas, une erreur 404 sera levée.
     """
-    await groups_service.verify_user_is_admin(acting_user_sub, group_id)
+    await groups_service.verify_acting_user_rights(acting_user_sub, group_id)
     return await groups_service.add_user_to_group(group_id, user_id, role_id)
 
 
@@ -66,7 +66,7 @@ async def update_user_role(
 
     Si le groupe, l’utilisateur ou le rôle n’existe pas, une erreur 404 sera levée.
     """
-    await groups_service.verify_user_is_admin(acting_user_sub, group_id)
+    await groups_service.verify_acting_user_rights(acting_user_sub, group_id)
     return await groups_service.update_user_in_group(group_id, user_id, role_id)
 
 
@@ -84,5 +84,5 @@ async def remove_user(
 
     Si le groupe, ou l’utilisateur, une erreur 404 sera levée.
     """
-    await groups_service.verify_user_is_admin(acting_user_sub, group_id)
+    await groups_service.verify_acting_user_rights(acting_user_sub, group_id)
     return await groups_service.remove_user_from_group(group_id, user_id)

@@ -1,12 +1,12 @@
 # ------- USER ROUTER FILE -------
 from fastapi import APIRouter, Depends, Path, Query
-from pydantic import EmailStr
+from pydantic import UUID4, EmailStr
 
 from src.auth import decode_access_token
 from src.dependencies import get_groups_service, get_users_service
 from src.services.users import UsersService
 
-from ..models import GroupCreate, GroupResponse, GroupWithUsersAndScopesResponse
+from ..model import GroupCreate, GroupResponse, GroupWithUsersAndScopesResponse
 from ..services.groups import GroupsService
 
 router = APIRouter(
@@ -30,7 +30,7 @@ async def list_groups(
 @router.get("/search", response_model=list[GroupWithUsersAndScopesResponse])
 async def search(
     email: EmailStr = Query(..., description="Mail de l’utilisateur"),
-    acting_user_sub: str | None = Query(
+    acting_user_sub: UUID4 | None = Query(
         None, description="Sub de l’utilisateur (facultatif)"
     ),
     users_service: UsersService = Depends(get_users_service),

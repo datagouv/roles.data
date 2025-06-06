@@ -1,5 +1,5 @@
 # ------- REPOSITORY FILE -------
-from ..models import OrganisationCreate, OrganisationResponse
+from ..model import OrganisationCreate, OrganisationResponse
 
 
 class OrganisationsRepository:

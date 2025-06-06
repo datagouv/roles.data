@@ -32,8 +32,7 @@ async def ping(db: Database = Depends(get_db)):
             else:
                 raise Exception("Database query returned unexpected result")
 
-    except Exception as e:
-        print(e)
+    except Exception:
         # Log the exception here if needed
         return {
             "status": "unhealthy",

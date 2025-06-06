@@ -1,5 +1,5 @@
 # ------- REPOSITORY FILE -------
-from src.models import ScopeResponse
+from src.model import ScopeResponse
 
 
 class ScopesRepository:

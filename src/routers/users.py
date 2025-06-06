@@ -1,11 +1,11 @@
 # ------- USER ROUTER FILE -------
 from fastapi import APIRouter, Depends
-from pydantic import EmailStr
+from pydantic import UUID4, EmailStr
 
 from src.auth import decode_access_token
 
 from ..dependencies import get_users_service
-from ..models import UserCreate, UserResponse
+from ..model import UserCreate, UserResponse
 from ..services.users import UsersService
 
 router = APIRouter(
@@ -56,7 +56,7 @@ async def by_id(
 @router.patch("/verify", status_code=200)
 async def confirm_user(
     user_email: EmailStr,
-    user_sub: str,
+    user_sub: UUID4,
     users_service: UsersService = Depends(get_users_service),
 ) -> None:
     """

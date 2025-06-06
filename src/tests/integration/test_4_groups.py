@@ -27,6 +27,26 @@ def test_create_group(client):
     assert group["contract"] == new_group["contract"]
     assert group["users"][0]["email"] == new_group["admin_email"]
 
+    new_group_bad_siren = create_group(client)
+    new_group_bad_siren["organisation_siren"] = "aaaaaaaaa"
+    response = client.post("/groups/", json=new_group_bad_siren)
+    # invalid siren should return 400
+    assert response.status_code == 400
+
+    new_group_no_siren = create_group(client)
+    del new_group_no_siren["organisation_siren"]
+
+    response = client.post("/groups/", json=new_group_no_siren)
+    # invalid siren should return 400
+    assert response.status_code == 422
+
+    new_group_empty_siren = create_group(client)
+    new_group_empty_siren["organisation_siren"] = ""
+
+    response = client.post("/groups/", json=new_group_empty_siren)
+    # invalid siren should return 400
+    assert response.status_code == 400
+
 
 def test_get_group_with_users(client):
     """Test retrieving a group with its users."""

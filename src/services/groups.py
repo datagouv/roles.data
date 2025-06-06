@@ -1,9 +1,9 @@
 from fastapi import HTTPException, status
-from pydantic import EmailStr
+from pydantic import UUID4, EmailStr
 
 from src.services.services_provider import ServiceProvidersService
 
-from ..models import (
+from ..model import (
     GroupCreate,
     GroupResponse,
     GroupWithUsersAndScopesResponse,
@@ -51,7 +51,7 @@ class GroupsService:
             )
 
     async def verify_acting_user_rights(
-        self, acting_user_sub: str, group_id: int
+        self, acting_user_sub: UUID4, group_id: int
     ) -> None:
         """
         Verify if the user is an admin of the group.

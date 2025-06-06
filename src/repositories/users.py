@@ -1,12 +1,14 @@
 # ------- REPOSITORY FILE -------
-from ..models import UserCreate, UserResponse, UserWithRoleResponse
+from pydantic import UUID4
+
+from ..model import UserCreate, UserResponse, UserWithRoleResponse
 
 
 class UsersRepository:
     def __init__(self, db_session):
         self.db_session = db_session
 
-    async def verify_user(self, user_email: str, user_sub: str):
+    async def verify_user(self, user_email: str, user_sub: UUID4):
         async with self.db_session.transaction():
             query = """
             UPDATE users SET sub_pro_connect = :sub_pro_connect, is_verified = TRUE
@@ -29,12 +31,14 @@ class UsersRepository:
             """
             return await self.db_session.fetch_one(query, {"id": user_id})
 
-    async def get_user_by_sub(self, user_sub: str) -> UserResponse:
+    async def get_user_by_sub(self, user_sub: UUID4) -> UserResponse:
         async with self.db_session.transaction():
             query = """
             SELECT U.id, U.email, U.is_verified FROM users as U WHERE U.sub_pro_connect = :sub_pro_connect
             """
-            return await self.db_session.fetch_one(query, {"sub_pro_connect": user_sub})
+            return await self.db_session.fetch_one(
+                query, {"sub_pro_connect": str(user_sub)}
+            )
 
     async def get_users_by_group_id(self, group_id: int) -> list[UserWithRoleResponse]:
         async with self.db_session.transaction():

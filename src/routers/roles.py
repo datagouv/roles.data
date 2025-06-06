@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 from src.auth import decode_access_token
 
 from ..dependencies import get_roles_service
-from ..models import RoleResponse
+from ..model import RoleResponse
 from ..services.roles import RolesService
 
 router = APIRouter(

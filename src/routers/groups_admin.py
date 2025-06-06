@@ -1,10 +1,11 @@
 # ------- USER ROUTER FILE -------
 from fastapi import APIRouter, Depends, Path, Query
+from pydantic import UUID4
 
 from src.auth import decode_access_token
 from src.dependencies import get_groups_service
 
-from ..models import GroupResponse
+from ..model import GroupResponse
 from ..services.groups import GroupsService
 
 router = APIRouter(
@@ -19,7 +20,7 @@ router = APIRouter(
 async def update_name(
     group_id: int = Path(..., description="ID de l’équipe"),
     group_name: str = Query(..., description="Nouveau nom"),
-    acting_user_sub: str = Query(
+    acting_user_sub: UUID4 = Query(
         ..., description="Sub ProConnect de l’utilisateur effectuant la requête"
     ),
     groups_service: GroupsService = Depends(get_groups_service),
@@ -36,7 +37,7 @@ async def update_name(
 async def add_user(
     group_id: int = Path(..., description="ID de l’équipe"),
     user_id: int = Path(..., description="ID de l’utilisateur"),
-    acting_user_sub: str = Query(
+    acting_user_sub: UUID4 = Query(
         ..., description="Sub ProConnect de l’utilisateur effectuant la requête"
     ),
     role_id: int = Query(..., description="ID du rôle"),
@@ -55,7 +56,7 @@ async def add_user(
 async def update_user_role(
     group_id: int = Path(..., description="ID de l’équipe"),
     user_id: int = Path(..., description="ID de l’utilisateur"),
-    acting_user_sub: str = Query(
+    acting_user_sub: UUID4 = Query(
         ..., description="Sub ProConnect de l’utilisateur effectuant la requête"
     ),
     role_id: int = Query(..., description="ID du nouveau rôle"),
@@ -74,7 +75,7 @@ async def update_user_role(
 async def remove_user(
     group_id: int = Path(..., description="ID de l’équipe"),
     user_id: int = Path(..., description="ID de l’utilisateur"),
-    acting_user_sub: str = Query(
+    acting_user_sub: UUID4 = Query(
         ..., description="Sub ProConnect de l’utilisateur effectuant la requête"
     ),
     groups_service: GroupsService = Depends(get_groups_service),

@@ -1,4 +1,4 @@
-from src.models import ServiceProviderResponse
+from src.model import ServiceProviderResponse
 
 
 class ServiceProvidersRepository:

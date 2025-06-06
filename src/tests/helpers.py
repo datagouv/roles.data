@@ -18,7 +18,7 @@ def random_group():
 
 def random_sub_pro_connect():
     """Generate a random sub ProConnect."""
-    return f"sub_{uuid4()}"
+    return uuid4()
 
 
 def random_user():

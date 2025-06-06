@@ -2,8 +2,9 @@
 from xmlrpc.client import boolean
 
 from fastapi import HTTPException, status
+from pydantic import UUID4
 
-from ..models import UserCreate, UserResponse, UserWithRoleResponse
+from ..model import UserCreate, UserResponse, UserWithRoleResponse
 from ..repositories.users import UsersRepository
 
 
@@ -15,7 +16,7 @@ class UsersService:
         if not user_data.email:
             raise ValueError("Email is required.")
 
-    async def verify_user(self, user_email: str, user_sub: str):
+    async def verify_user(self, user_email: str, user_sub: UUID4):
         user = await self.get_user_by_email(user_email, only_verified_user=False)
         if user and not user.is_verified:
             await self.user_repository.verify_user(user_email, user_sub)
@@ -58,7 +59,7 @@ class UsersService:
             )
         return user
 
-    async def get_user_by_sub(self, user_sub: str) -> UserResponse:
+    async def get_user_by_sub(self, user_sub: UUID4) -> UserResponse:
         """
         Retrieve user by it's ProConnect sub
         """

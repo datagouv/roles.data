@@ -5,7 +5,7 @@ from fastapi.security import HTTPBasic
 
 from src.auth import ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token
 from src.dependencies import get_auth_service
-from src.models import Token
+from src.model import Token
 from src.services.auth import AuthService
 
 router = APIRouter(

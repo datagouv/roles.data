@@ -5,7 +5,7 @@
 
 API de gestion des droits utilisateurs pour les outils du pôle DATA
 
-## 📋 Table des matières
+## Table des matières
 
 - [Installation](#installation)
 - [Configuration docker](#configuration-docker)

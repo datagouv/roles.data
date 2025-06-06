@@ -1,11 +1,21 @@
+import sentry_sdk
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 
 from src.routers import groups_admin, groups_scopes
 
+from .config import settings
 from .database import shutdown, startup
 from .documentation import api_description, api_summary, api_tags_metadata
 from .routers import auth, groups, health, roles, service_providers, users
+
+if settings.SENTRY_DSN != "":
+    sentry_sdk.init(
+        dsn=settings.SENTRY_DSN,
+        # Set traces_sample_rate to 1.0 to capture 100%
+        # of transactions for tracing.
+        traces_sample_rate=0.1,
+    )
 
 app = FastAPI(redirect_slashes=True, redoc_url="/")
 

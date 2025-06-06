@@ -85,7 +85,7 @@ CREATE TABLE  IF NOT EXISTS :schema_name.group_service_provider_relations (
     service_provider_id INTEGER NOT NULL,
     group_id INTEGER NOT NULL,
     UNIQUE (service_provider_id, group_id),
-    scopes TEXT NOT NULL,
+    scopes TEXT NOT NULL DEFAULT '',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_scopes_group FOREIGN KEY (group_id) REFERENCES :schema_name.groups (id) ON DELETE CASCADE,

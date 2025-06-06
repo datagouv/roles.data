@@ -80,7 +80,8 @@ def test_search_group_by_user(client):
 
     # Test non-existent user
     response404 = client.get(
-        "/groups/search", params={"email": "hey@test.fr", "acting_user_sub": random_sub}
+        "/groups/search",
+        params={"email": "hey@test.fr", "acting_user_sub": random_sub_pro_connect()},
     )
     assert response404.status_code == 404
 
@@ -89,7 +90,7 @@ def test_search_group_by_user(client):
         "/groups/search",
         params={
             "email": "user-not-in-group@beta.gouv.fr",
-            "acting_user_sub": random_sub,
+            "acting_user_sub": random_sub_pro_connect(),
         },
     )
     assert responseEmpty.status_code == 200

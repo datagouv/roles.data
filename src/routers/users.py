@@ -24,6 +24,10 @@ async def create(
     Crée l’utilisateur dans la base de données.
 
     L’utilisateur doit être un utilisateur ProConnect existant.
+
+    Quand l'utilisateur est créé, il est encore non vérifié. Un appel à l'endpoint `/users/verify` permet de le confirmer avec son sub ProConnect.
+
+    Cela permet de créér un utilisateur et de l’ajouter à une équipe sans connaitre son sub.
     """
     return await users_service.create_user(user)
 
@@ -56,10 +60,10 @@ async def confirm_user(
     users_service: UsersService = Depends(get_users_service),
 ) -> None:
     """
-    Vérifie/confirme un utilisateur et enregistre son sub ProConnect
+    Vérifie un utilisateur en enregistrant son sub ProConnect
 
     Un utilisateur est non vérifié lors de sa création.
 
-    Un utilisateur non vérifié ne peut pas accomplir les actions d’administration d’équipe
+    Attention, il est impossible de récupérer les groupes d’un utilisateur non vérifié
     """
     return await users_service.verify_user(user_email, user_sub)

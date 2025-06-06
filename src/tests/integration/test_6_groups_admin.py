@@ -18,7 +18,8 @@ def test_update_group(client):
     responseNotVerified = client.put(
         f"/groups/{new_group_data["id"]}?acting_user_sub={admin_sub}&group_name={new_name}"
     )
-    assert responseNotVerified.status_code == 423
+    # sub should be unknown, so the request should fail
+    assert responseNotVerified.status_code == 404
 
     verify_user(client, admin_email, admin_sub)
     response = client.put(
@@ -86,7 +87,9 @@ def test_add_user_to_group_and_update_roles(client):
     responseNotVerified = client.put(
         f"/groups/{new_group_data["id"]}/users/{user_id}?acting_user_sub={admin_sub}&role_id={role_1['id']}"
     )
-    assert responseNotVerified.status_code == 423
+
+    # sub should be unknown, so the request should fail
+    assert responseNotVerified.status_code == 404
 
     verify_user(client, admin_email, admin_sub)
 
@@ -124,21 +127,22 @@ def test_remove_user_from_group(client):
 
     user_data = random_user()
 
-    user_response = client.post("/users/", json=user_data)
-    user_id = user_response.json()["id"]
+    create_user_response = client.post("/users/", json=user_data)
+    user_id = create_user_response.json()["id"]
 
     roles_response = client.get("/roles/")
     role_id = roles_response.json()[0]["id"]
 
-    responseNotVerified = client.post(
+    responseNotVerified = client.patch(
         f"/groups/{new_group_data['id']}/users/{user_id}?acting_user_sub={admin_sub}&role_id={role_id}"
     )
-    assert responseNotVerified.status_code == 423
+    # sub should be unknown, so the request should fail
+    assert responseNotVerified.status_code == 404
 
     verify_user(client, admin_email, admin_sub)
 
     # Add user to group
-    client.post(
+    client.patch(
         f"/groups/{new_group_data['id']}/users/{user_id}?acting_user_sub={admin_sub}&role_id={role_id}"
     )
 

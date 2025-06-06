@@ -41,7 +41,7 @@ async def search(
 
     Si l'utilisateur n'est pas encore vérifié, l’appel échouera et vous devrez vérifier l'utilisateur (cf. `/users/verify`).
 
-    Il est possible de passer en argument `acting_user_sub` qui permet de se passer d’un appel à `/user/verify`
+    NB : il est possible de vérifier automatiquement l’utilisateur en passant en argument `acting_user_sub`.
     """
 
     if acting_user_sub:

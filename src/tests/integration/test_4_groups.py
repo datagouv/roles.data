@@ -1,4 +1,4 @@
-from src.tests.helpers import create_group
+from src.tests.helpers import create_group, random_sub_pro_connect
 
 
 def test_list_groups(client):
@@ -26,6 +26,26 @@ def test_create_group(client):
     assert group["scopes"] == new_group["scopes"]
     assert group["contract"] == new_group["contract"]
     assert group["users"][0]["email"] == new_group["admin_email"]
+
+    new_group_bad_siren = create_group(client)
+    new_group_bad_siren["organisation_siren"] = "aaaaaaaaa"
+    response = client.post("/groups/", json=new_group_bad_siren)
+    # invalid siren should return 400
+    assert response.status_code == 400
+
+    new_group_no_siren = create_group(client)
+    del new_group_no_siren["organisation_siren"]
+
+    response = client.post("/groups/", json=new_group_no_siren)
+    # invalid siren should return 400
+    assert response.status_code == 422
+
+    new_group_empty_siren = create_group(client)
+    new_group_empty_siren["organisation_siren"] = ""
+
+    response = client.post("/groups/", json=new_group_empty_siren)
+    # invalid siren should return 400
+    assert response.status_code == 400
 
 
 def test_get_group_with_users(client):
@@ -56,9 +76,18 @@ def test_search_group_by_user(client):
     # Create a new group
     new_group_data = create_group(client)
 
-    response = client.get(
+    random_sub = random_sub_pro_connect()
+
+    responseNotVerified = client.get(
         "/groups/search", params={"email": new_group_data["admin_email"]}
     )
+    assert responseNotVerified.status_code == 423
+
+    response = client.get(
+        "/groups/search",
+        params={"email": new_group_data["admin_email"], "acting_user_sub": random_sub},
+    )
+
     assert response.status_code == 200
     group = response.json()
     assert isinstance(group, list)
@@ -70,12 +99,19 @@ def test_search_group_by_user(client):
     assert group[0]["users"][0]["email"] == new_group_data["admin_email"]
 
     # Test non-existent user
-    response404 = client.get("/groups/search", params={"email": "hey@test.fr"})
+    response404 = client.get(
+        "/groups/search",
+        params={"email": "hey@test.fr", "acting_user_sub": random_sub_pro_connect()},
+    )
     assert response404.status_code == 404
 
     # Test non-existent group
     responseEmpty = client.get(
-        "/groups/search", params={"email": "user-not-in-group@beta.gouv.fr"}
+        "/groups/search",
+        params={
+            "email": "user-not-in-group@beta.gouv.fr",
+            "acting_user_sub": random_sub_pro_connect(),
+        },
     )
     assert responseEmpty.status_code == 200
     group = responseEmpty.json()

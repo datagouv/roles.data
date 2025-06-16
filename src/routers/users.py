@@ -1,11 +1,11 @@
 # ------- USER ROUTER FILE -------
 from fastapi import APIRouter, Depends
-from pydantic import EmailStr
+from pydantic import UUID4, EmailStr
 
 from src.auth import decode_access_token
 
 from ..dependencies import get_users_service
-from ..models import UserCreate, UserResponse
+from ..model import UserCreate, UserResponse
 from ..services.users import UsersService
 
 router = APIRouter(
@@ -17,28 +17,53 @@ router = APIRouter(
 
 
 @router.post("/", response_model=UserResponse, status_code=201)
-async def create_user(
+async def create(
     user: UserCreate, users_service: UsersService = Depends(get_users_service)
-):
+) -> UserResponse:
+    """
+    Crée l’utilisateur dans la base de données.
+
+    L’utilisateur doit être un utilisateur ProConnect existant.
+
+    Quand l'utilisateur est créé, il est encore non vérifié. Un appel à l'endpoint `/users/verify` permet de le confirmer avec son sub ProConnect.
+
+    Cela permet de créér un utilisateur et de l’ajouter à une équipe sans connaitre son sub.
+    """
     return await users_service.create_user(user)
 
 
 @router.get("/search", response_model=UserResponse)
-async def get_user_by_email(
+async def by_email(
     email: EmailStr,
     users_service: UsersService = Depends(get_users_service),
 ) -> UserResponse:
     """
-    Get a specific user by email
+    Retourne un utilisateur identifié par son adresse e-mail.
     """
-    return await users_service.get_user_by_email(email=email)
+    return await users_service.get_user_by_email(email=email, only_verified_user=False)
 
 
 @router.get("/{user_id}", status_code=200)
-async def get_user_by_id(
+async def by_id(
     user_id: int, users_service: UsersService = Depends(get_users_service)
 ) -> UserResponse:
     """
-    Get a user by ID
+    Retourne un utilisateur identifié par son ID.
     """
-    return await users_service.get_user_by_id(user_id)
+    return await users_service.get_user_by_id(user_id, only_verified_user=False)
+
+
+@router.patch("/verify", status_code=200)
+async def confirm_user(
+    user_email: EmailStr,
+    user_sub: UUID4,
+    users_service: UsersService = Depends(get_users_service),
+) -> None:
+    """
+    Vérifie un utilisateur en enregistrant son sub ProConnect
+
+    Un utilisateur est non vérifié lors de sa création.
+
+    Attention, il est impossible de récupérer les groupes d’un utilisateur non vérifié
+    """
+    return await users_service.verify_user(user_email, user_sub)

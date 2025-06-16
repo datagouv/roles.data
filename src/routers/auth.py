@@ -5,7 +5,7 @@ from fastapi.security import HTTPBasic
 
 from src.auth import ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token
 from src.dependencies import get_auth_service
-from src.models import Token
+from src.model import Token
 from src.services.auth import AuthService
 
 router = APIRouter(
@@ -25,13 +25,13 @@ async def get_token(
     auth_service: AuthService = Depends(get_auth_service),
 ):
     """
-    OAuth2 token endpoint for Client Credentials flow.
+    OAuth2 pour un flow “Client Credentials”.
 
-    Client authentication can be provided through:
-    1. HTTP Basic Authentication in the Authorization header
-    2. Request body with client_id and client_secret fields
+    L’authentication peut être effectuée de deux manières :
+    1. HTTP Basic Authentication dans le header Authorization
+    2. `client_id` et `client_secret` dans le body de la requête (form data)
 
-    The grant_type must be 'client_credentials'.
+    Le `grant_type` est `client_credentials`.
     """
     # Verify grant type
     if grant_type != "client_credentials":

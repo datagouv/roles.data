@@ -1,7 +1,7 @@
 # ------- REPOSITORY FILE -------
 
 
-from src.models import ServiceAccountResponse
+from src.model import ServiceAccountResponse
 
 
 class AuthRepository:

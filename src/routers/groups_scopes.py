@@ -22,7 +22,9 @@ async def update_group_scopes(
     groups_service: GroupsService = Depends(get_groups_service),
 ):
     """
-    Update scopes or contract (that apply your service provider) to a specified group
+    Met à jour :
+    - les droits ou `scopes` d’une équipe sur votre fournisseur de service
+    - le contrat qui lie l’équipe à votre fournisseur de service
     """
     return await groups_service.update_scopes(
         group_id, scopes if scopes else "", contract if contract else ""

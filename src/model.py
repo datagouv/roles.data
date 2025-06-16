@@ -1,27 +1,51 @@
-from typing import Annotated, NewType
+from typing import Annotated
 from xmlrpc.client import boolean
 
-from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
-
-# Create a NewType for type hints
-Siren = NewType("Siren", str)
+from fastapi import HTTPException, status
+from pydantic import BaseModel, BeforeValidator, ConfigDict, EmailStr, Field
 
 
-# Validator function
 def validate_siren(v: str) -> str:
     if not isinstance(v, str) or not v.isdigit() or len(v) != 9:
-        raise ValueError("Siren must be a 9-digit string")
+        raise HTTPException(
+            status.HTTP_400_BAD_REQUEST, "Siren must be a 9-digit string"
+        )
+
+    if v == "356000000":
+        # La poste
+        return v
+
+    # Luhn algorithm
+    total = 0
+    for i, char in enumerate(reversed(v)):
+        digit = int(char)
+        if i % 2 == 1:  # Every second digit from right
+            digit *= 2
+            if digit > 9:
+                digit = digit // 10 + digit % 10
+        total += digit
+
+    if total % 10 != 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid SIREN: fails Luhn checksum",
+        )
+
     return v
 
 
 # Type annotation with validation
-SirenType = Annotated[str, field_validator("validate_siren")]
+Siren = Annotated[
+    str,
+    BeforeValidator(validate_siren),
+    Field(description="A valid Siren"),
+]
 
 
 # --- Organisation ---
 class OrganisationBase(BaseModel):
     name: str | None = None
-    siren: Siren  # type: ignore # Optional for group creation
+    siren: Siren
 
 
 class OrganisationCreate(OrganisationBase):
@@ -39,8 +63,6 @@ class OrganisationResponse(OrganisationBase):
 
 class UserBase(BaseModel):
     email: EmailStr
-    sub_pro_connect: str | None = None
-    is_email_confirmed: bool = False
 
 
 class UserCreate(UserBase):
@@ -49,6 +71,7 @@ class UserCreate(UserBase):
 
 class UserResponse(UserBase):
     id: int
+    is_verified: bool
 
     model_config = ConfigDict(from_attributes=True)
 

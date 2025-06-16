@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 
-from src.models import ServiceProviderResponse
+from src.model import ServiceProviderResponse
 from src.repositories.service_providers import ServiceProvidersRepository
 
 

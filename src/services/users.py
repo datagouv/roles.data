@@ -1,7 +1,10 @@
 # ------- SERVICE FILE -------
-from fastapi import HTTPException, status
+from xmlrpc.client import boolean
 
-from ..models import UserCreate, UserResponse, UserWithRoleResponse
+from fastapi import HTTPException, status
+from pydantic import UUID4
+
+from ..model import UserCreate, UserResponse, UserWithRoleResponse
 from ..repositories.users import UsersRepository
 
 
@@ -13,7 +16,14 @@ class UsersService:
         if not user_data.email:
             raise ValueError("Email is required.")
 
-    async def get_user_by_email(self, email: str) -> UserResponse:
+    async def verify_user(self, user_email: str, user_sub: UUID4):
+        user = await self.get_user_by_email(user_email, only_verified_user=False)
+        if user and not user.is_verified:
+            await self.user_repository.verify_user(user_email, user_sub)
+
+    async def get_user_by_email(
+        self, email: str, only_verified_user: boolean = True
+    ) -> UserResponse:
         """
         Retrieve user by email
         """
@@ -23,9 +33,16 @@ class UsersService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"User with email {email} not found",
             )
+        if only_verified_user and not user.is_verified:
+            raise HTTPException(
+                status_code=status.HTTP_423_LOCKED,
+                detail="User is not yet verified.",
+            )
         return user
 
-    async def get_user_by_id(self, user_id: int) -> UserResponse:
+    async def get_user_by_id(
+        self, user_id: int, only_verified_user: boolean = True
+    ) -> UserResponse:
         """
         Retrieve user by ID
         """
@@ -34,6 +51,23 @@ class UsersService:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"User with ID {user_id} not found",
+            )
+        if only_verified_user and not user.is_verified:
+            raise HTTPException(
+                status_code=status.HTTP_423_LOCKED,
+                detail="User is not yet verified.",
+            )
+        return user
+
+    async def get_user_by_sub(self, user_sub: UUID4) -> UserResponse:
+        """
+        Retrieve user by it's ProConnect sub
+        """
+        user = await self.user_repository.get_user_by_sub(user_sub)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"User with sub {user_sub} is not found, either it does not exist or it is not verified",
             )
         return user
 

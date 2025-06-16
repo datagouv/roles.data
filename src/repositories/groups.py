@@ -1,5 +1,5 @@
 # ------- REPOSITORY FILE -------
-from ..models import GroupCreate, GroupResponse, GroupWithUsersAndScopesResponse
+from ..model import GroupCreate, GroupResponse, GroupWithUsersAndScopesResponse
 
 
 class GroupsRepository:

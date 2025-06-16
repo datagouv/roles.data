@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 
-from src.models import ScopeBase
+from src.model import ScopeBase
 from src.repositories.scopes import ScopesRepository
 
 

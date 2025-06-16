@@ -1,10 +1,11 @@
 # ------- USER ROUTER FILE -------
 from fastapi import APIRouter, Depends, Path, Query
+from pydantic import UUID4
 
 from src.auth import decode_access_token
 from src.dependencies import get_groups_service
 
-from ..models import GroupResponse
+from ..model import GroupResponse
 from ..services.groups import GroupsService
 
 router = APIRouter(
@@ -16,71 +17,73 @@ router = APIRouter(
 
 
 @router.put("/{group_id}", response_model=GroupResponse)
-async def update_group(
-    group_id: int = Path(..., description="The ID of the group to update"),
-    admin_id: int = Query(
-        ..., description="The user ID of the admin making the request"
+async def update_name(
+    group_id: int = Path(..., description="ID de l’équipe"),
+    group_name: str = Query(..., description="Nouveau nom"),
+    acting_user_sub: UUID4 = Query(
+        ..., description="Sub ProConnect de l’utilisateur effectuant la requête"
     ),
-    group_name: str = Query(..., description="The new name of the group"),
     groups_service: GroupsService = Depends(get_groups_service),
 ):
     """
-    Update a group (change its name).
+    Mise à jour du nom d’une équipe.
     """
-    await groups_service.verify_user_is_admin(admin_id, group_id)
+    await groups_service.verify_acting_user_rights(acting_user_sub, group_id)
     return await groups_service.update_group(group_id, group_name)
 
 
 # Group’s users manipulation
 @router.put("/{group_id}/users/{user_id}", status_code=201)
-async def add_user_to_group(
-    group_id: int = Path(..., description="The ID of the group"),
-    user_id: int = Path(..., description="The ID of the user"),
-    admin_id: int = Query(
-        ..., description="The user ID of the admin making the request"
+async def add_user(
+    group_id: int = Path(..., description="ID de l’équipe"),
+    user_id: int = Path(..., description="ID de l’utilisateur"),
+    acting_user_sub: UUID4 = Query(
+        ..., description="Sub ProConnect de l’utilisateur effectuant la requête"
     ),
-    role_id: int = Query(..., description="The ID of the user's role"),
+    role_id: int = Query(..., description="ID du rôle"),
     groups_service: GroupsService = Depends(get_groups_service),
 ):
     """
-    Add a user to a given group with a specific role.
+    Ajout d’un utilisateur
 
-    If the group, the user or the role does not exist, a 404 error will be raised.
+    Si le groupe, l’utilisateur ou le rôle n’existe pas, une erreur 404 sera levée.
     """
-    await groups_service.verify_user_is_admin(admin_id, group_id)
+    await groups_service.verify_acting_user_rights(acting_user_sub, group_id)
     return await groups_service.add_user_to_group(group_id, user_id, role_id)
 
 
 @router.patch("/{group_id}/users/{user_id}", status_code=200)
-async def update_user_role_in_group(
-    group_id: int = Path(..., description="The ID of the group"),
-    user_id: int = Path(..., description="The ID of the user"),
-    admin_id: int = Query(
-        ..., description="The user ID of the admin making the request"
+async def update_user_role(
+    group_id: int = Path(..., description="ID de l’équipe"),
+    user_id: int = Path(..., description="ID de l’utilisateur"),
+    acting_user_sub: UUID4 = Query(
+        ..., description="Sub ProConnect de l’utilisateur effectuant la requête"
     ),
-    role_id: int = Query(..., description="The ID of the role"),
+    role_id: int = Query(..., description="ID du nouveau rôle"),
     groups_service: GroupsService = Depends(get_groups_service),
 ):
     """
-    Update the role of a user in a specified group.
+    Met à jour le rôle d’un utilisateur dans une équipe
+
+    Si le groupe, l’utilisateur ou le rôle n’existe pas, une erreur 404 sera levée.
     """
-    await groups_service.verify_user_is_admin(admin_id, group_id)
+    await groups_service.verify_acting_user_rights(acting_user_sub, group_id)
     return await groups_service.update_user_in_group(group_id, user_id, role_id)
 
 
 @router.delete("/{group_id}/users/{user_id}", status_code=204)
-async def remove_user_from_group(
-    group_id: int = Path(..., description="The ID of the group"),
-    user_id: int = Path(..., description="The ID of the user"),
-    admin_id: int = Query(
-        ..., description="The user ID of the admin making the request"
+async def remove_user(
+    group_id: int = Path(..., description="ID de l’équipe"),
+    user_id: int = Path(..., description="ID de l’utilisateur"),
+    acting_user_sub: UUID4 = Query(
+        ..., description="Sub ProConnect de l’utilisateur effectuant la requête"
     ),
     groups_service: GroupsService = Depends(get_groups_service),
 ):
     """
-    Remove a user from a given group
+    Retire un utilisateur d’une équipe.
 
-    If the group or the user does not exist, a 404 error will be raised.
+    Si le groupe, ou l’utilisateur, une erreur 404 sera levée.
     """
-    await groups_service.verify_user_is_admin(admin_id, group_id)
+    await groups_service.verify_acting_user_rights(acting_user_sub, group_id)
     return await groups_service.remove_user_from_group(group_id, user_id)

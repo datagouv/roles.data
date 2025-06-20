@@ -127,7 +127,7 @@ async def update_service_account_menu(database: Database):
         elif choice == "2":
             await deactivate_account(database, account_id)
         else:
-            print("❌ Invalid option! Please select 1-5.")
+            print("❌ Invalid option! Please select 1-2.")
 
 
 async def main():

@@ -82,7 +82,7 @@ async def reset_account_password(database: Database, account_id: int):
 
     if result:
         print("✅ Service account password reset successfully!")
-        print(f"   New password: {new_password}")
+        print(f"   New password: {new_password}", flush=True)
         print("\n⚠️  Save this password securely - it won't be shown again!")
     else:
         print("❌ Failed to reset service account password!")

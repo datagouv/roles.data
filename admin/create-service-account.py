@@ -57,8 +57,6 @@ async def create_service_account(database: Database):
 
     # Generate and hash password
     password = generate_random_password()
-    print(f"🔐 Generated password: {password}")
-
     insert_query = f"""
         INSERT INTO {get_schema()}.service_accounts (
             service_provider_id,

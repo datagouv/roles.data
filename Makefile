@@ -24,3 +24,12 @@ db_scripts:
 
 db_start: # only run DB container
 	docker-compose up postgres-dev postgres-test
+
+admin_create_service_provider:
+	uv run python src/admin/create-service-provider.py
+
+admin_create_service_account:
+	uv run python src/admin/create-service-account.py
+
+admin_update_service_account:
+	uv run python src/admin/update-service-account.py

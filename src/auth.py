@@ -5,15 +5,12 @@ from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import OAuth2
 from fastapi.security.utils import get_authorization_scheme_param
 from jwt.exceptions import InvalidTokenError
-from passlib.context import CryptContext
 
 from src.config import settings
 
 # to get a string like this run:
 # openssl rand -hex 32
 ALGORITHM = "HS256"
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
@@ -69,14 +66,6 @@ oauth2_scheme = OAuth2ClientCredentials(
     tokenUrl="/auth/token",
     scopes={},
 )
-
-
-def verify_password(plain_password, hashed_password):
-    return pwd_context.verify(plain_password, hashed_password)
-
-
-def get_password_hash(password):
-    return pwd_context.hash(password)
 
 
 def create_access_token(data: dict):

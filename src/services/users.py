@@ -98,3 +98,14 @@ class UsersService:
                 new_user = await self.user_repository.add_user(user_data)
                 return new_user
             raise e
+
+    async def create_user_if_doesnt_exist(self, user_data: UserCreate) -> UserResponse:
+        try:
+            return await self.get_user_by_email(
+                user_data.email, only_verified_user=False
+            )
+        except HTTPException as e:
+            if e.status_code == 404:
+                return await self.create_user(user_data)
+            else:
+                raise e

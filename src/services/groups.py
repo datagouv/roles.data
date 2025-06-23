@@ -8,7 +8,6 @@ from ..model import (
     GroupResponse,
     GroupWithUsersAndScopesResponse,
     OrganisationCreate,
-    UserCreate,
 )
 from ..repositories import groups
 from . import organisations, roles, scopes, users
@@ -86,23 +85,20 @@ class GroupsService:
             OrganisationCreate(siren=group_data.organisation_siren)
         )
 
-        try:
-            admin_user = await self.users_service.get_user_by_email(
-                group_data.admin_email, only_verified_user=False
-            )
-        except HTTPException as e:
-            if e.status_code == 404:
-                admin_user = await self.users_service.create_user(
-                    UserCreate(email=group_data.admin_email)
-                )
-            else:
-                raise e
+        admin_user = await self.users_service.create_user_if_doesnt_exist(
+            group_data.admin
+        )
 
         new_group = await self.groups_repository.create_group(
             group_data, orga_id, self.service_provider_id
         )
 
         await self.add_user_to_group(new_group.id, admin_user.id, role_id=1)
+
+        if group_data.members:
+            for member in group_data.members:
+                user = await self.users_service.create_user_if_doesnt_exist(member)
+                await self.add_user_to_group(new_group.id, user.id, role_id=2)
 
         return new_group
 

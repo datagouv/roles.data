@@ -10,9 +10,10 @@ def random_group():
     return {
         "name": f"Test Group {''.join(random.choices(string.ascii_lowercase, k=5))}",
         "organisation_siren": DINUM_SIREN,
-        "admin_email": f"admin_{random.randint(1000, 9999)}@example.com",
+        "admin": {"email": f"admin_{random.randint(1000, 9999)}@example.com"},
         "scopes": "read maintain",
         "contract": "datapass_test",
+        "members": [{"email": f"member_{random.randint(1000, 9999)}@example.com"}],
     }
 
 

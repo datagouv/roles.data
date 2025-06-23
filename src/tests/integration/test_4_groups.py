@@ -7,10 +7,7 @@ def test_list_groups(client):
     assert response.status_code == 200
     groups = response.json()
     assert isinstance(groups, list)
-    assert (
-        next((group for group in groups if group["name"] == "stack technique"), None)
-        is not None
-    )
+    assert any(group for group in groups if group["name"] == "stack technique")
 
 
 def test_create_group(client):
@@ -25,7 +22,15 @@ def test_create_group(client):
     assert group["organisation_siren"] == new_group["organisation_siren"]
     assert group["scopes"] == new_group["scopes"]
     assert group["contract"] == new_group["contract"]
-    assert group["users"][0]["email"] == new_group["admin_email"]
+
+    assert any(
+        user for user in group["users"] if user["email"] == new_group["admin"]["email"]
+    )
+    assert any(
+        user
+        for user in group["users"]
+        if user["email"] == new_group["members"][0]["email"]
+    )
 
     new_group_bad_siren = create_group(client)
     new_group_bad_siren["organisation_siren"] = "aaaaaaaaa"
@@ -58,16 +63,10 @@ def test_get_group_with_users(client):
     group = response.json()
     assert group["name"] == new_group_data["name"]
     assert "users" in group  # Should include users array, even if empty
-    assert (
-        next(
-            (
-                user
-                for user in group["users"]
-                if user["email"] == new_group_data["admin_email"]
-            ),
-            None,
-        )
-        is not None
+    assert any(
+        user
+        for user in group["users"]
+        if user["email"] == new_group_data["admin"]["email"]
     )
 
 
@@ -79,13 +78,16 @@ def test_search_group_by_user(client):
     random_sub = random_sub_pro_connect()
 
     responseNotVerified = client.get(
-        "/groups/search", params={"email": new_group_data["admin_email"]}
+        "/groups/search", params={"email": new_group_data["admin"]["email"]}
     )
     assert responseNotVerified.status_code == 423
 
     response = client.get(
         "/groups/search",
-        params={"email": new_group_data["admin_email"], "acting_user_sub": random_sub},
+        params={
+            "email": new_group_data["admin"]["email"],
+            "acting_user_sub": random_sub,
+        },
     )
 
     assert response.status_code == 200
@@ -96,7 +98,14 @@ def test_search_group_by_user(client):
     assert group[0]["organisation_siren"] == new_group_data["organisation_siren"]
     assert group[0]["scopes"] == new_group_data["scopes"]
     assert group[0]["contract"] == new_group_data["contract"]
-    assert group[0]["users"][0]["email"] == new_group_data["admin_email"]
+
+    assert any(
+        (
+            user
+            for user in group[0]["users"]
+            if user["email"] == new_group_data["admin"]["email"]
+        )
+    )
 
     # Test non-existent user
     response404 = client.get(

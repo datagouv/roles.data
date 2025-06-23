@@ -89,8 +89,8 @@ async def create_service_account(database: Database):
     print(f"   ID: {result['id']}")
     print(f"   Name: {account_name}")
     print(f"   Service Provider ID: {provider_id}")
+    print("\n⚠️  Save this password securely - it won't be shown again!", flush=True)
     print(f"   Password: {password}", flush=True)
-    print("\n⚠️  Save this password securely - it won't be shown again!")
 
 
 async def main():

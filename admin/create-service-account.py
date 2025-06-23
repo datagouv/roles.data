@@ -7,8 +7,9 @@ import asyncio
 
 from databases import Database
 
-from admin.utils import get_schema, run_script
 from src.utils.security import generate_random_password, hash_password
+
+from .utils import get_schema, run_script
 
 
 async def list_service_providers(database: Database):

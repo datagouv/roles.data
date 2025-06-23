@@ -97,7 +97,9 @@ async def deactivate_account(database: Database, account_id: int):
         RETURNING name, is_active;
     """
 
-    result = await database.fetch_one(update_query, values={"is_active": False})
+    result = await database.fetch_one(
+        update_query, values={"is_active": False, "account_id": account_id}
+    )
 
     if result and not result["is_active"]:
         print("✅ Service account deactivated successfully!")

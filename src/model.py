@@ -91,9 +91,10 @@ class GroupBase(BaseModel):
 
 class GroupCreate(GroupBase):
     organisation_siren: Siren  # type: ignore # Optional for group creation
-    admin_email: EmailStr
+    admin: UserCreate
     scopes: str | None
     contract: str | None
+    members: list[UserCreate] | None = None
 
 
 class GroupResponse(GroupBase):

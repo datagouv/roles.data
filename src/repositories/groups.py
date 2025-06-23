@@ -88,6 +88,7 @@ class GroupsRepository:
                     "contract": group_data.contract if group_data.contract else "",
                 },
             )
+
             return new_group
 
     async def update_group(self, group_id: int, group_name: str) -> GroupResponse:

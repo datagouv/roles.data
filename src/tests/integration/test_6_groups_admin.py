@@ -11,7 +11,7 @@ def test_update_group(client):
     """Test updating a group's name."""
     # Update the group name
     new_group_data = create_group(client)
-    admin_email = new_group_data["admin_email"]
+    admin_email = new_group_data["admin"]["email"]
     admin_sub = random_sub_pro_connect()
 
     new_name = random_name()
@@ -71,7 +71,7 @@ def test_add_user_to_group_and_update_roles(client):
     """Test adding a user to a group."""
     # Create a user
     new_group_data = create_group(client)
-    admin_email = new_group_data["admin_email"]
+    admin_email = new_group_data["admin"]["email"]
     admin_sub = random_sub_pro_connect()
 
     user_data = random_user()
@@ -128,7 +128,7 @@ def test_add_user_to_group_and_update_roles(client):
 def test_remove_user_from_group(client):
     """Test removing a user from a group."""
     new_group_data = create_group(client)
-    admin_email = new_group_data["admin_email"]
+    admin_email = new_group_data["admin"]["email"]
     admin_sub = random_sub_pro_connect()
 
     user_data = random_user()
@@ -167,7 +167,7 @@ def test_cannot_remove_only_admin_from_group(client):
     """Test that we cannot remove the only admin user from a group."""
     # Create a group with an admin user
     new_group_data = create_group(client)
-    admin_email = new_group_data["admin_email"]
+    admin_email = new_group_data["admin"]["email"]
     admin_sub = random_sub_pro_connect()
 
     # Verify the admin user

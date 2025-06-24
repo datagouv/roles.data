@@ -9,7 +9,10 @@ def random_group():
     """Generate random group data."""
     return {
         "name": f"Test Group {''.join(random.choices(string.ascii_lowercase, k=5))}",
-        "organisation_siren": DINUM_SIREN,
+        "organisation": {
+            "siren": DINUM_SIREN,
+            "name": f"Test Organisation {''.join(random.choices(string.ascii_lowercase, k=5))}",
+        },
         "admin": {"email": f"admin_{random.randint(1000, 9999)}@example.com"},
         "scopes": "read maintain",
         "contract": "datapass_test",

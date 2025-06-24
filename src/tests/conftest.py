@@ -36,7 +36,7 @@ async def override_get_db():
 
 
 def override_decode_access_token():
-    return {"service_provider_id": 1}
+    return {"service_provider_id": 1, "service_account_id": 1}
 
 
 @pytest.fixture(scope="session", autouse=True)

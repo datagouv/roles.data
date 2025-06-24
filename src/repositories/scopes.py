@@ -1,10 +1,12 @@
 # ------- REPOSITORY FILE -------
-from src.model import ScopeResponse
+from src.model import LOG_ACTIONS, LOG_RESOURCE_TYPES, ScopeResponse
+from src.services.logs import LogsService
 
 
 class ScopesRepository:
-    def __init__(self, db_session):
+    def __init__(self, db_session, logs_service: LogsService):
         self.db_session = db_session
+        self.logs_service = logs_service
 
     async def get(
         self, service_provider_id: int, group_id: int
@@ -30,7 +32,7 @@ class ScopesRepository:
             WHERE service_provider_id = :service_provider_id AND group_id = :group_id
             RETURNING *
             """
-            return await self.db_session.fetch_one(
+            response = await self.db_session.fetch_one(
                 query,
                 {
                     "service_provider_id": service_provider_id,
@@ -39,3 +41,12 @@ class ScopesRepository:
                     "contract": contract,
                 },
             )
+
+            await self.logs_service.save(
+                action_type=LOG_ACTIONS.UPDATE_GROUP_SERVICE_PROVIDER_RELATION,
+                resource_type=LOG_RESOURCE_TYPES.GROUP_SERVICE_PROVIDER_RELATION,
+                resource_id=response["id"],
+                new_values=response,
+            )
+
+            return response

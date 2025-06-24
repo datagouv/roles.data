@@ -75,6 +75,7 @@ async def get_token(
         # Create access token with the service provider ID and requested scope
         token_data = {
             "service_provider_id": service_account.service_provider_id,
+            "service_account_id": service_account.id,
         }
         access_token = create_access_token(data=token_data)
 

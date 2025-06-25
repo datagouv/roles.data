@@ -40,19 +40,18 @@ def get_service_account_id(access_token: dict = Depends(decode_access_token)):
     return access_token.get("service_account_id")
 
 
-# =======================
-# DB related dependencies
-# =======================
-
-
 def get_logs_service(
-    db: Database = Depends(get_db),
     service_provider_id=Depends(get_service_provider_id),
     service_account_id=Depends(get_service_account_id),
 ) -> LogsService:
     """Dependency to get LogsService instance."""
-    logs_repository = LogsRepository(db, service_provider_id, service_account_id)
+    logs_repository = LogsRepository(service_provider_id, service_account_id)
     return LogsService(logs_repository)
+
+
+# =======================
+# DB related dependencies
+# =======================
 
 
 async def get_auth_service(

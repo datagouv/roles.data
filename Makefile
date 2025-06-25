@@ -4,6 +4,7 @@ ifneq (,$(wildcard ./.env))
     export
 endif
 
+
 start:
 	uv run fastapi dev src/main.py
 
@@ -33,3 +34,8 @@ admin_create_service_account:
 
 admin_update_service_account:
 	uv run python -m admin.update-service-account
+
+deploy:
+	@read -p "Enter env (prod,staging, dev): " env && \
+	read -p "Enter version (minor, major, patch): " version && \
+	SKIP=conventional-pre-commit git commit -m "[$$env:$$version]"

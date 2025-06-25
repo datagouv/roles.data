@@ -49,6 +49,11 @@ class OrganisationsRepository:
     async def update_name(
         self, organisation_id: int, siren: Siren
     ) -> OrganisationResponse | None:
+        """
+        Update the name of an organisation based on its SIREN.
+        If the organisation is not found, it will default to "Organisation inconnue".
+        If the API calls fails, we will retry later
+        """
         name = await self.fetch_organisation_name(siren)
 
         async with self.db_session.transaction():
@@ -66,6 +71,12 @@ class OrganisationsRepository:
             return await self.db_session.execute(query, values)
 
     async def fetch_organisation_name(self, siren: Siren):
+        """
+        Fetch the name of an organisation by its SIREN using the API Recherche Entreprise
+
+        If the organisation is not found, return None.
+        If the API request fails, raise an exception.
+        """
         async with httpx.AsyncClient(timeout=2.0) as client:
             # Search by SIREN using the search endpoint
             url = "https://recherche-entreprises.api.gouv.fr/search"

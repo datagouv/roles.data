@@ -3,9 +3,11 @@ from fastapi import Depends
 
 from src.auth import decode_access_token
 from src.repositories.auth import AuthRepository
+from src.repositories.logs import LogsRepository
 from src.repositories.scopes import ScopesRepository
 from src.repositories.service_providers import ServiceProvidersRepository
 from src.services.auth import AuthService
+from src.services.logs import LogsService
 from src.services.scopes import ScopesService
 from src.services.services_provider import ServiceProvidersService
 
@@ -19,6 +21,38 @@ from .services.organisations import OrganisationsService
 from .services.roles import RolesService
 from .services.users import UsersService
 
+# =========================
+# Access Token dependencies
+# =========================
+
+
+def get_service_provider_id(access_token: dict = Depends(decode_access_token)):
+    """
+    Dependency function that extracts the service provider ID from the access token.
+    """
+    return access_token.get("service_provider_id")
+
+
+def get_service_account_id(access_token: dict = Depends(decode_access_token)):
+    """
+    Dependency function that extracts the service account ID from the access token.
+    """
+    return access_token.get("service_account_id")
+
+
+def get_logs_service(
+    service_provider_id=Depends(get_service_provider_id),
+    service_account_id=Depends(get_service_account_id),
+) -> LogsService:
+    """Dependency to get LogsService instance."""
+    logs_repository = LogsRepository(service_provider_id, service_account_id)
+    return LogsService(logs_repository)
+
+
+# =======================
+# DB related dependencies
+# =======================
+
 
 async def get_auth_service(
     db: Database = Depends(get_db),
@@ -30,21 +64,23 @@ async def get_auth_service(
     return AuthService(auth_repository)
 
 
-async def get_users_service(db: Database = Depends(get_db)) -> UsersService:
+async def get_users_service(
+    db: Database = Depends(get_db), logs_service=Depends(get_logs_service)
+) -> UsersService:
     """
     Dependency function that provides a UsersService instance.
     """
-    users_repository = UsersRepository(db)
+    users_repository = UsersRepository(db, logs_service)
     return UsersService(users_repository)
 
 
 async def get_organisations_service(
-    db: Database = Depends(get_db),
+    db: Database = Depends(get_db), logs_service=Depends(get_logs_service)
 ) -> OrganisationsService:
     """
     Dependency function that provides a OrganisationsService instance.
     """
-    organisations_repository = OrganisationsRepository(db)
+    organisations_repository = OrganisationsRepository(db, logs_service)
     return OrganisationsService(organisations_repository)
 
 
@@ -60,26 +96,19 @@ async def get_service_providers_service(
     db: Database = Depends(get_db),
 ) -> ServiceProvidersService:
     """
-    Dependency function that provides a UsersService instance.
+    Dependency function that provides a Service Providers Service instance.
     """
     service_providers_repository = ServiceProvidersRepository(db)
     return ServiceProvidersService(service_providers_repository)
 
 
-def get_service_provider_id(access_token: dict = Depends(decode_access_token)):
-    """
-    Dependency function that extracts the service provider ID from the access token.
-    """
-    return access_token.get("service_provider_id")
-
-
 async def get_scopes_service(
-    db: Database = Depends(get_db),
+    db: Database = Depends(get_db), logs_service=Depends(get_logs_service)
 ) -> ScopesService:
     """
     Dependency function that provides a ScopeService instance.
     """
-    scopes_repository = ScopesRepository(db)
+    scopes_repository = ScopesRepository(db, logs_service)
     return ScopesService(scopes_repository)
 
 
@@ -93,11 +122,12 @@ async def get_groups_service(
     ),
     scopes_service: ScopesService = Depends(get_scopes_service),
     service_provider_id=Depends(get_service_provider_id),
+    logs_service=Depends(get_logs_service),
 ) -> GroupsService:
     """
     Dependency function that provides a GroupsService instance.
     """
-    groups_repository = GroupsRepository(db)
+    groups_repository = GroupsRepository(db, logs_service)
 
     return GroupsService(
         groups_repository,

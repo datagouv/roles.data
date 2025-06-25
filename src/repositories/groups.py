@@ -1,10 +1,19 @@
 # ------- REPOSITORY FILE -------
-from ..model import GroupCreate, GroupResponse, GroupWithUsersAndScopesResponse
+from src.services.logs import LogsService
+
+from ..model import (
+    LOG_ACTIONS,
+    LOG_RESOURCE_TYPES,
+    GroupCreate,
+    GroupResponse,
+    GroupWithUsersAndScopesResponse,
+)
 
 
 class GroupsRepository:
-    def __init__(self, db_session):
+    def __init__(self, db_session, logs_service: LogsService):
         self.db_session = db_session
+        self.logs_service = logs_service
 
     async def get_rights_on_groups(self, group_id: int, service_provider_id: int):
         async with self.db_session.transaction():
@@ -89,6 +98,19 @@ class GroupsRepository:
                 },
             )
 
+            await self.logs_service.save(
+                action_type=LOG_ACTIONS.CREATE_GROUP,
+                resource_type=LOG_RESOURCE_TYPES.GROUP,
+                db_session=self.db_session,
+                resource_id=new_group.id,
+                new_values={
+                    "name": new_group.name,
+                    "orga_id": orga_id,
+                    "scopes": group_data.scopes if group_data.scopes else "",
+                    "contract": group_data.contract if group_data.contract else "",
+                },
+            )
+
             return new_group
 
     async def update_group(self, group_id: int, group_name: str) -> GroupResponse:
@@ -97,6 +119,15 @@ class GroupsRepository:
                 "UPDATE groups SET name = :group_name WHERE id = :group_id RETURNING *"
             )
             values = {"group_name": group_name, "group_id": group_id}
+
+            await self.logs_service.save(
+                action_type=LOG_ACTIONS.UPDATE_GROUP,
+                resource_type=LOG_RESOURCE_TYPES.GROUP,
+                db_session=self.db_session,
+                resource_id=group_id,
+                new_values={"name": group_name},
+            )
+
             return await self.db_session.fetch_one(query, values)
 
     async def add_user_to_group(
@@ -111,11 +142,32 @@ class GroupsRepository:
             }
             await self.db_session.execute(query, values)
 
+            await self.logs_service.save(
+                action_type=LOG_ACTIONS.ADD_USER_TO_GROUP,
+                resource_type=LOG_RESOURCE_TYPES.GROUP,
+                db_session=self.db_session,
+                resource_id=group_id,
+                new_values={
+                    "user_id": user_id,
+                    "role_id": role_id,
+                },
+            )
+
     async def remove_user_from_group(self, group_id: int, user_id: int) -> None:
         async with self.db_session.transaction():
             query = "DELETE FROM group_user_relations WHERE group_id = :group_id AND user_id = :user_id"
             values = {"group_id": group_id, "user_id": user_id}
             await self.db_session.execute(query, values)
+
+            await self.logs_service.save(
+                action_type=LOG_ACTIONS.REMOVE_USER_FROM_GROUP,
+                resource_type=LOG_RESOURCE_TYPES.GROUP,
+                db_session=self.db_session,
+                resource_id=group_id,
+                new_values={
+                    "user_id": user_id,
+                },
+            )
 
     async def update_user_role_in_group(
         self, group_id: int, user_id: int, role_id: int
@@ -124,3 +176,14 @@ class GroupsRepository:
             query = "UPDATE group_user_relations SET role_id = :role_id WHERE group_id = :group_id AND user_id = :user_id"
             values = {"role_id": role_id, "group_id": group_id, "user_id": user_id}
             await self.db_session.execute(query, values)
+
+            await self.logs_service.save(
+                action_type=LOG_ACTIONS.UPDATE_USER_ROLE,
+                resource_type=LOG_RESOURCE_TYPES.GROUP,
+                db_session=self.db_session,
+                resource_id=group_id,
+                new_values={
+                    "user_id": user_id,
+                    "role_id": role_id,
+                },
+            )

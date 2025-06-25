@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Annotated
 from xmlrpc.client import boolean
 
@@ -44,7 +45,6 @@ Siren = Annotated[
 
 # --- Organisation ---
 class OrganisationBase(BaseModel):
-    name: str | None = None
     siren: Siren
 
 
@@ -53,6 +53,7 @@ class OrganisationCreate(OrganisationBase):
 
 
 class OrganisationResponse(OrganisationBase):
+    name: str | None = None
     id: int
 
     model_config = ConfigDict(from_attributes=True)
@@ -177,7 +178,43 @@ class ServiceAccountResponse(ServiceAccountBase):
     model_config = ConfigDict(from_attributes=True)
 
 
+# Authent
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
     expires_in: int
+
+
+# Logging
+class LOG_ACTIONS(Enum):
+    def __str__(self):
+        return str(self.name)
+
+    CREATE_USER = "User created"
+    VERIFY_USER = "User verified"
+
+    # Group actions
+    CREATE_GROUP = "Group created"
+    UPDATE_GROUP = "Group updated"
+
+    # Group membership actions
+    ADD_USER_TO_GROUP = "User added to group"
+    REMOVE_USER_FROM_GROUP = "User removed from group"
+    UPDATE_USER_ROLE = "User role updated in group"
+
+    # Organization actions
+    CREATE_ORGANISATION = "Organisation created"
+    UPDATE_ORGANISATION = "Organisation updated"
+
+    # Service provider actions
+    UPDATE_GROUP_SERVICE_PROVIDER_RELATION = "Group service provider relation updated"
+
+
+class LOG_RESOURCE_TYPES(Enum):
+    def __str__(self):
+        return str(self.name)
+
+    USER = "user"
+    GROUP = "group"
+    ORGANISATION = "organisation"
+    GROUP_SERVICE_PROVIDER_RELATION = "group_service_provider_relation"

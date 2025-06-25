@@ -45,6 +45,7 @@ class ScopesRepository:
             await self.logs_service.save(
                 action_type=LOG_ACTIONS.UPDATE_GROUP_SERVICE_PROVIDER_RELATION,
                 resource_type=LOG_RESOURCE_TYPES.GROUP_SERVICE_PROVIDER_RELATION,
+                db_session=self.db_session,
                 resource_id=response["id"],
                 new_values=response,
             )

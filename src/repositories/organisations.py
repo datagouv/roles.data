@@ -36,6 +36,7 @@ class OrganisationsRepository:
             await self.logs_service.save(
                 action_type=LOG_ACTIONS.CREATE_ORGANISATION,
                 resource_type=LOG_RESOURCE_TYPES.ORGANISATION,
+                db_session=self.db_session,
                 resource_id=orga["id"],
                 new_values=organisation_data,
             )

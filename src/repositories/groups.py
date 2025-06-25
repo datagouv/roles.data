@@ -101,6 +101,7 @@ class GroupsRepository:
             await self.logs_service.save(
                 action_type=LOG_ACTIONS.CREATE_GROUP,
                 resource_type=LOG_RESOURCE_TYPES.GROUP,
+                db_session=self.db_session,
                 resource_id=new_group.id,
                 new_values={
                     "name": new_group.name,
@@ -122,6 +123,7 @@ class GroupsRepository:
             await self.logs_service.save(
                 action_type=LOG_ACTIONS.UPDATE_GROUP,
                 resource_type=LOG_RESOURCE_TYPES.GROUP,
+                db_session=self.db_session,
                 resource_id=group_id,
                 new_values={"name": group_name},
             )
@@ -143,6 +145,7 @@ class GroupsRepository:
             await self.logs_service.save(
                 action_type=LOG_ACTIONS.ADD_USER_TO_GROUP,
                 resource_type=LOG_RESOURCE_TYPES.GROUP,
+                db_session=self.db_session,
                 resource_id=group_id,
                 new_values={
                     "user_id": user_id,
@@ -159,6 +162,7 @@ class GroupsRepository:
             await self.logs_service.save(
                 action_type=LOG_ACTIONS.REMOVE_USER_FROM_GROUP,
                 resource_type=LOG_RESOURCE_TYPES.GROUP,
+                db_session=self.db_session,
                 resource_id=group_id,
                 new_values={
                     "user_id": user_id,
@@ -176,6 +180,7 @@ class GroupsRepository:
             await self.logs_service.save(
                 action_type=LOG_ACTIONS.UPDATE_USER_ROLE,
                 resource_type=LOG_RESOURCE_TYPES.GROUP,
+                db_session=self.db_session,
                 resource_id=group_id,
                 new_values={
                     "user_id": user_id,

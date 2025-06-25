@@ -29,6 +29,7 @@ class UsersRepository:
 
             await self.logs_service.save(
                 action_type=LOG_ACTIONS.VERIFY_USER,
+                db_session=self.db_session,
                 resource_type=LOG_RESOURCE_TYPES.USER,
                 resource_id=user_response["id"],
                 new_values=values,
@@ -78,6 +79,7 @@ class UsersRepository:
             await self.logs_service.save(
                 action_type=LOG_ACTIONS.CREATE_USER,
                 resource_type=LOG_RESOURCE_TYPES.USER,
+                db_session=self.db_session,
                 resource_id=user_response["id"],
                 new_values={
                     "email": user_response["email"],

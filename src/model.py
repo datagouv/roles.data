@@ -45,7 +45,6 @@ Siren = Annotated[
 
 # --- Organisation ---
 class OrganisationBase(BaseModel):
-    name: str | None = None
     siren: Siren
 
 
@@ -54,6 +53,7 @@ class OrganisationCreate(OrganisationBase):
 
 
 class OrganisationResponse(OrganisationBase):
+    name: str | None = None
     id: int
 
     model_config = ConfigDict(from_attributes=True)
@@ -204,6 +204,7 @@ class LOG_ACTIONS(Enum):
 
     # Organization actions
     CREATE_ORGANISATION = "Organisation created"
+    UPDATE_ORGANISATION = "Organisation updated"
 
     # Service provider actions
     UPDATE_GROUP_SERVICE_PROVIDER_RELATION = "Group service provider relation updated"

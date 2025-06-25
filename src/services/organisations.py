@@ -1,3 +1,5 @@
+import asyncio
+
 from ..model import OrganisationCreate
 from ..repositories.organisations import OrganisationsRepository
 
@@ -21,6 +23,13 @@ class OrganisationsService:
         if not organisation:
             organisation = await self.organisations_repository.create_organisation(
                 organisation_data
+            )
+
+        if not organisation.name:
+            asyncio.create_task(
+                self.organisations_repository.update_name(
+                    organisation.id, organisation.siren
+                )
             )
 
         return organisation.id

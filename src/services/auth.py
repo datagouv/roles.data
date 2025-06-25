@@ -1,8 +1,8 @@
 from fastapi import HTTPException, status
 
-from src.auth import verify_password
 from src.model import ServiceAccountResponse
 from src.repositories.auth import AuthRepository
+from src.utils.security import verify_password
 
 
 class AuthService:

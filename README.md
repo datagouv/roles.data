@@ -44,6 +44,21 @@ make start
 
 NB : en mode developpement rapide, l'application n’est pas dockerisée. Seuls les containers de la base de donnée le sont.
 
+### Administration et création de comptes de service
+
+Only a devops with admin rights can run these
+
+```bash
+# create a new service provider
+make admin_create_service_provider
+
+# create a new service account
+make admin_create_service_account
+
+# reset service account password or deactivate it
+make admin_update_service_account
+```
+
 ## Configuration docker
 
 Pour tester la configuration docker complète de l'application :

@@ -19,7 +19,7 @@ def test_create_group(client):
     group = response.json()
     assert "id" in group
     assert group["name"] == new_group["name"]
-    assert group["organisation_siren"] == new_group["organisation"]["siren"]
+    assert group["organisation_siren"] == new_group["organisation_siren"]
     assert group["scopes"] == new_group["scopes"]
     assert group["contract"] == new_group["contract"]
 
@@ -33,20 +33,20 @@ def test_create_group(client):
     )
 
     new_group_bad_siren = create_group(client)
-    new_group_bad_siren["organisation"]["siren"] = "aaaaaaaaa"
+    new_group_bad_siren["organisation_siren"] = "aaaaaaaaa"
     response = client.post("/groups/", json=new_group_bad_siren)
     # invalid siren should return 400
     assert response.status_code == 400
 
     new_group_no_siren = create_group(client)
-    del new_group_no_siren["organisation"]["siren"]
+    del new_group_no_siren["organisation_siren"]
 
     response = client.post("/groups/", json=new_group_no_siren)
     # invalid siren should return 400
     assert response.status_code == 422
 
     new_group_empty_siren = create_group(client)
-    new_group_empty_siren["organisation"]["siren"] = ""
+    new_group_empty_siren["organisation_siren"] = ""
 
     response = client.post("/groups/", json=new_group_empty_siren)
     # invalid siren should return 400
@@ -95,7 +95,7 @@ def test_search_group_by_user(client):
     assert isinstance(group, list)
     assert len(group) == 1
     assert group[0]["name"] == new_group_data["name"]
-    assert group[0]["organisation_siren"] == new_group_data["organisation"]["siren"]
+    assert group[0]["organisation_siren"] == new_group_data["organisation_siren"]
     assert group[0]["scopes"] == new_group_data["scopes"]
     assert group[0]["contract"] == new_group_data["contract"]
 

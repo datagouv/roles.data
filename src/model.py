@@ -91,7 +91,7 @@ class GroupBase(BaseModel):
 
 
 class GroupCreate(GroupBase):
-    organisation: OrganisationCreate  # type: ignore # Optional for group creation
+    organisation_siren: Siren  # type: ignore # Optional for group creation
     admin: UserCreate
     scopes: str | None
     contract: str | None

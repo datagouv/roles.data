@@ -36,6 +36,6 @@ admin_update_service_account:
 	uv run python -m admin.update-service-account
 
 deploy:
-	@read -p "Enter env (prod,staging, dev): " env && \
+	@read -p "Enter env (www,staging, dev): " env && \
 	read -p "Enter version (minor, major, patch): " version && \
 	SKIP=conventional-pre-commit git commit -m "[$$env:$$version]"

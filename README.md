@@ -123,7 +123,7 @@ make db_start
 make test
 ```
 
-## Environnements et déploiements
+## Déploiements
 
 L'application est déployées sur différents environnements :
 

@@ -147,6 +147,8 @@ make deploy_prod
 make deploy
 ```
 
+NB : ces commandes déploient la branche `main` uniquement.
+
 ## Conventions de code
 
 ### Pre-commit

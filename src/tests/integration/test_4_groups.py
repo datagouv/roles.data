@@ -42,7 +42,7 @@ def test_create_group(client):
     del new_group_no_siret["organisation_siret"]
 
     response = client.post("/groups/", json=new_group_no_siret)
-    # invalid siret should return 400
+    # no siret should return 422
     assert response.status_code == 422
 
     new_group_empty_siret = create_group(client)

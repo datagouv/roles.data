@@ -142,9 +142,6 @@ make deploy_preprod
 
 # deploy on roles.data.gouv.fr
 make deploy_prod
-
-# alternatively, select ENV and VERSION using
-make deploy
 ```
 
 NB : ces commandes déploient la branche `main` uniquement.

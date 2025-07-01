@@ -35,24 +35,17 @@ admin_create_service_account:
 admin_update_service_account:
 	uv run python -m admin.update-service-account
 
-deploy:
-	git checkout main && \
-	@read -p "Enter env (www,staging, dev): " env && \
-	read -p "Enter version (minor, major, patch): " version && \
-	SKIP=conventional-pre-commit git commit -m "[$$env:$$version]"  && \
-	git push origin main
-
 deploy_prod:
 	git checkout main && \
-	SKIP=conventional-pre-commit git commit -m "[www:minor]"  && \
+	SKIP=conventional-pre-commit git commit --allow-empty -m "[www:minor]"  && \
 	git push origin main
 
 deploy_preprod:
 	git checkout main && \
-	SKIP=conventional-pre-commit git commit -m "[preprod:minor]"  && \
+	SKIP=conventional-pre-commit git commit --allow-empty -m "[preprod:minor]"  && \
 	git push origin main
 
 deploy_dev:
 	git checkout main && \
-	SKIP=conventional-pre-commit git commit -m "[dev:minor]"  && \
+	SKIP=conventional-pre-commit git commit --allow-empty -m "[dev:minor]"  && \
 	git push origin main

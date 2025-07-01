@@ -6,8 +6,8 @@
 BEGIN;
 
 -- Create an organization for the group
-INSERT INTO :schema_name.organisations (id, name, siren)
-VALUES (1, 'DINUM', '130020649') ON CONFLICT (id) DO NOTHING;
+INSERT INTO :schema_name.organisations (id, name, siret)
+VALUES (1, 'DINUM', '13002526500013') ON CONFLICT (id) DO NOTHING;
 
 -- Create the "stack technique" group
 INSERT INTO :schema_name.groups (id, name, orga_id)

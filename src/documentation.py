@@ -14,7 +14,7 @@ Tous les utilisateurs du groupe de John héritent du scope `ecriture` sur ma-sta
 
 **Groupe** : un ensemble d’utilisateurs, appartenant a une organisation
 
-**Organisation** : une structure identifiée par son numéro SIREN (ex: DINUM, `130025265`)
+**Organisation** : une structure identifiée par son numéro SIRET (ex: DINUM, `13002526500013`)
 
 **Rôle** : le rôle d’un utilisateur au sein d'un groupe. (ex: `administrateur` ou `utilisateur`)
 

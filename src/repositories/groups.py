@@ -32,7 +32,7 @@ class GroupsRepository:
     ) -> GroupWithUsersAndScopesResponse | None:
         async with self.db_session.transaction():
             query = """
-            SELECT G.id, G.name, organisations.siren as organisation_siren
+            SELECT G.id, G.name, organisations.siret as organisation_siret
             FROM groups as G
             INNER JOIN organisations ON organisations.id = G.orga_id
             INNER JOIN group_service_provider_relations AS GSPR ON GSPR.group_id = G.id AND  GSPR.service_provider_id = :service_provider_id
@@ -45,7 +45,7 @@ class GroupsRepository:
     async def list_groups(self, service_provider_id: int) -> list[GroupResponse]:
         async with self.db_session.transaction():
             query = """
-            SELECT G.id, G.name, O.siren as organisation_siren
+            SELECT G.id, G.name, O.siret as organisation_siret
             FROM groups as G
             INNER JOIN organisations AS O ON G.orga_id = O.id
             INNER JOIN group_service_provider_relations AS GSPR ON GSPR.group_id = G.id AND GSPR.service_provider_id = :service_provider_id
@@ -62,7 +62,7 @@ class GroupsRepository:
     ) -> list[GroupWithUsersAndScopesResponse]:
         async with self.db_session.transaction():
             query = """
-            SELECT G.id, G.name, O.siren as organisation_siren, GSPR.scopes, GSPR.contract
+            SELECT G.id, G.name, O.siret as organisation_siret, GSPR.scopes, GSPR.contract
             FROM groups as G
             INNER JOIN organisations AS O ON G.orga_id = O.id
             INNER JOIN group_user_relations AS GUR ON GUR.group_id = G.id

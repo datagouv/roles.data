@@ -44,9 +44,9 @@ class GroupsService:
         self.service_provider_id = service_provider_id
 
     async def validate_group_data(self, group_data: GroupCreate) -> None:
-        if not group_data.organisation_siren:
+        if not group_data.organisation_siret:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail="Siren is required."
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Siret is required."
             )
 
     async def verify_acting_user_rights(
@@ -82,7 +82,7 @@ class GroupsService:
         await self.validate_group_data(group_data)
 
         orga_id = await self.organisations_service.get_or_create_organisation(
-            OrganisationCreate(siren=group_data.organisation_siren)
+            OrganisationCreate(siret=group_data.organisation_siret)
         )
 
         admin_user = await self.users_service.create_user_if_doesnt_exist(

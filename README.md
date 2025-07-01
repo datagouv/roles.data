@@ -125,9 +125,9 @@ make test
 
 ## Déploiements
 
-L'application est déployées sur différents environnements :
+L'application est déployée sur différents environnements :
 
-- [dev] https://roles.dev.data.gouv.fr : données de test. À utiliser pour de l’intégration.
+- [dev] https://roles.dev.data.gouv.fr : données de test. À utiliser pour en intégration.
 - [preprod] https://roles.preprod.data.gouv.fr : à vocation à être iso prod (pull & replace avec les données de prod quotidiennement)
 - [prod] https://roles.data.gouv.fr
 

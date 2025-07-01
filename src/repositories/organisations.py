@@ -52,7 +52,7 @@ class OrganisationsRepository:
         """
         Update the name of an organisation based on its SIREN.
         If the organisation is not found, it will default to "Organisation inconnue".
-        If the API calls fails, we will retry later
+        If the API calls fails, we will retry later.
         """
         name = await self.fetch_organisation_name(siren)
 

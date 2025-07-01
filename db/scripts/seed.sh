@@ -9,7 +9,7 @@ echo "Seeding database..."
 ENV=${DB_ENV:-dev}
 
 # Validate environment
-valid_envs=("dev" "test" "preprod")
+valid_envs=("dev" "test")
 is_valid=false
 
 for valid_env in "${valid_envs[@]}"; do

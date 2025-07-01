@@ -39,3 +39,12 @@ deploy:
 	@read -p "Enter env (www,staging, dev): " env && \
 	read -p "Enter version (minor, major, patch): " version && \
 	SKIP=conventional-pre-commit git commit -m "[$$env:$$version]"
+
+deploy_prod:
+	SKIP=conventional-pre-commit git commit -m "[www:minor]"
+
+deploy_preprod:
+	SKIP=conventional-pre-commit git commit -m "[preprod:minor]"
+
+deploy_dev:
+	SKIP=conventional-pre-commit git commit -m "[dev:minor]"

@@ -12,7 +12,7 @@ class OrganisationsService:
         self, organisation_data: OrganisationCreate
     ) -> int:
         """
-        Get an organisation based on siren
+        Get an organisation based on siret
 
         Create it if it doesn't exist
         """
@@ -28,7 +28,7 @@ class OrganisationsService:
         if not organisation.name:
             asyncio.create_task(
                 self.organisations_repository.update_name(
-                    organisation.id, organisation.siren
+                    organisation.id, organisation.siret
                 )
             )
 

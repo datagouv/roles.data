@@ -2,14 +2,14 @@ import random
 import string
 from uuid import uuid4
 
-DINUM_SIREN = "130025265"
+DINUM_SIRET = "13002526500013"
 
 
 def random_group():
     """Generate random group data."""
     return {
         "name": f"Test Group {''.join(random.choices(string.ascii_lowercase, k=5))}",
-        "organisation_siren": DINUM_SIREN,
+        "organisation_siret": DINUM_SIRET,
         "admin": {"email": f"admin_{random.randint(1000, 9999)}@example.com"},
         "scopes": "read maintain",
         "contract": "datapass_test",

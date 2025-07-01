@@ -6,13 +6,13 @@ from fastapi import HTTPException, status
 from pydantic import BaseModel, BeforeValidator, ConfigDict, EmailStr, Field
 
 
-def validate_siren(v: str) -> str:
-    if not isinstance(v, str) or not v.isdigit() or len(v) != 9:
+def validate_siret(v: str) -> str:
+    if not isinstance(v, str) or not v.isdigit() or len(v) != 14:
         raise HTTPException(
-            status.HTTP_400_BAD_REQUEST, "Siren must be a 9-digit string"
+            status.HTTP_400_BAD_REQUEST, "Siret must be a 14-digit string"
         )
 
-    if v == "356000000":
+    if v.startswith("356000000"):
         # La poste
         return v
 
@@ -29,23 +29,23 @@ def validate_siren(v: str) -> str:
     if total % 10 != 0:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid SIREN: fails Luhn checksum",
+            detail="Invalid SIRET: fails Luhn checksum",
         )
 
     return v
 
 
 # Type annotation with validation
-Siren = Annotated[
+Siret = Annotated[
     str,
-    BeforeValidator(validate_siren),
-    Field(description="A valid Siren"),
+    BeforeValidator(validate_siret),
+    Field(description="A valid Siret"),
 ]
 
 
 # --- Organisation ---
 class OrganisationBase(BaseModel):
-    siren: Siren
+    siret: Siret
 
 
 class OrganisationCreate(OrganisationBase):
@@ -91,7 +91,7 @@ class GroupBase(BaseModel):
 
 
 class GroupCreate(GroupBase):
-    organisation_siren: Siren  # type: ignore # Optional for group creation
+    organisation_siret: Siret  # type: ignore # Optional for group creation
     admin: UserCreate
     scopes: str | None
     contract: str | None
@@ -105,7 +105,7 @@ class GroupResponse(GroupBase):
 
 
 class GroupWithUsersAndScopesResponse(GroupResponse):
-    organisation_siren: Siren
+    organisation_siret: Siret
     users: list[UserWithRoleResponse]
     scopes: str
     contract: str

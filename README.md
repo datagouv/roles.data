@@ -11,6 +11,7 @@ API de gestion des droits utilisateurs pour les outils du pôle DATA
 - [Configuration docker](#configuration-docker)
 - [Base de données](#base-de-données)
 - [Tests](#tests)
+- [Déploiements](#déploiements)
 - [Conventions de code](#conventions-de-code)
 
 ## Installation
@@ -44,21 +45,6 @@ make start
 
 NB : en mode developpement rapide, l'application n’est pas dockerisée. Seuls les containers de la base de donnée le sont.
 
-### Administration et création de comptes de service
-
-Only a devops with admin rights can run these
-
-```bash
-# create a new service provider
-make admin_create_service_provider
-
-# create a new service account
-make admin_create_service_account
-
-# reset service account password or deactivate it
-make admin_update_service_account
-```
-
 ## Configuration docker
 
 Pour tester la configuration docker complète de l'application :
@@ -91,7 +77,7 @@ psql -h localhost -p 5432 -U d-roles -d d-roles
 make db_scripts
 ```
 
-### Structure des scripts de la base de données
+### Scripts de provisionnement de la base de données
 
 Les scripts appliqués à la base de donnée sont executés dans cet ordre :
 
@@ -107,6 +93,21 @@ Ajouter un fichier `db/migrations/{YYYYMMDD}_{description}.sql` avec le SQL néc
 
 Mettre a jour le fichier seeds (selon l'environnement) dans `db/seeds/{environnement}/seed.sql`
 
+### Actions d’administration et création de comptes de service
+
+Seul un administrateur peut executer ces scripts
+
+```bash
+# crée un nouveau service provider
+make admin_create_service_provider
+
+# crée un nouveau compte de service service
+make admin_create_service_account
+
+# reset le jeton d'un compte de service
+make admin_update_service_account
+```
+
 ## Tests
 
 Les tests d'intégration tournent sur pytest. La DB postgres-test est une DB différent de la DB de dev, pré-stubbé et isolée.
@@ -121,6 +122,32 @@ make db_start
 # lancer les tests
 make test
 ```
+
+## Déploiements
+
+L'application est déployée sur différents environnements :
+
+- [dev] https://roles.dev.data.gouv.fr : données de test. À utiliser pour en intégration.
+- [preprod] https://roles.preprod.data.gouv.fr : à vocation à être iso prod (pull & replace avec les données de prod quotidiennement)
+- [prod] https://roles.data.gouv.fr
+
+Les déploiement se font via un message de commit formaté de la manière suivante : [ENV:VERSION].
+
+```
+# deploy on roles.dev.data.gouv.fr
+make deploy_dev
+
+# deploy on roles.preprod.data.gouv.fr
+make deploy_preprod
+
+# deploy on roles.data.gouv.fr
+make deploy_prod
+
+# alternatively, select ENV and VERSION using
+make deploy
+```
+
+NB : ces commandes déploient la branche `main` uniquement.
 
 ## Conventions de code
 

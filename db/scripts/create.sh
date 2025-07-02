@@ -5,10 +5,10 @@ set -e
 echo ""
 echo ""
 echo "=========================="
-echo "Creating database schema..."
+echo "Creating database ..."
 
 # Check if schema exists and has tables
-echo "Checking if database schema '$DB_SCHEMA' already exists"
+echo "Checking if database schema '$DB_SCHEMA' already exists and is not empty"
 
 # Query to check if schema exists and count tables in it
 TABLE_COUNT=$(PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -t -c "
@@ -29,6 +29,7 @@ fi
 
 echo "🐣 Schema '$DB_SCHEMA' is empty or doesn't exist"
 echo "Proceeding with schema creation..."
+
 
 # Run the schema creation SQL file
 PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -v DB_SCHEMA=$DB_SCHEMA -f ./db/initdb/schema.sql

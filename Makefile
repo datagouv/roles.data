@@ -9,7 +9,7 @@ start:
 	uv run fastapi dev src/main.py
 
 test:
-	uv run python -m pytest -s src/tests/integration/
+	DB_ENV=test uv run python -m pytest -s src/tests/integration/
 
 lint:
 	python -m ruff check .

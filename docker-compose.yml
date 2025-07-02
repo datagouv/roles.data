@@ -32,6 +32,7 @@ services:
       - DB_PASSWORD=$DB_PASSWORD
       - DB_SCHEMA=$DB_SCHEMA
       - DB_PORT=5432
+      - DB_ENV=dev
     depends_on:
       - postgres-dev
 

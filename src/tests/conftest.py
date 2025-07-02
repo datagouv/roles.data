@@ -8,7 +8,11 @@ from ..database import DatabaseWithSchema, get_db
 from ..main import app
 
 # Create a test database instance
-test_db = Database(settings.DATABASE_TEST_URL)
+test_db = Database(settings.DATABASE_URL)
+
+if settings.DB_ENV != "test":
+    # Use a different port for the test database
+    raise ValueError("DB_ENV must be set to 'test' for testing purposes.")
 
 
 async def test_db_startup():

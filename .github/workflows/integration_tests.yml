@@ -50,6 +50,7 @@ jobs:
           DB_USER=d-roles
           DB_PASSWORD=d-roles
           DB_SCHEMA=d_roles
+          DB_ENV=test
           DB_PORT: 5433
           EOL
 

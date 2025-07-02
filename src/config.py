@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     DB_USER: str = ""
     DB_PASSWORD: str = ""
     DB_SCHEMA: str = ""
+    DB_ENV: str = "prod"  # Default to development environment
 
     SECRET_KEY: str = ""
 
@@ -23,11 +24,7 @@ class Settings(BaseSettings):
 
     @property
     def DATABASE_URL(self) -> str:
-        return f"postgresql://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"  # type: ignore
-
-    @property
-    def DATABASE_TEST_URL(self) -> str:
-        return f"postgresql://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT_TEST}/{self.DB_NAME}"  # type: ignore
+        return f"postgresql://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT_TEST if self.DB_ENV=='test' else self.DB_PORT}/{self.DB_NAME}"  # type: ignore
 
     # Add other settings as needed
     DEBUG: bool = False

@@ -2,6 +2,8 @@
 # filepath: /Users/xavierjouppe/Documents/Code_projects/d-roles/db/scripts/seed.sh
 set -e
 
+echo ""
+echo ""
 echo "==================="
 echo "Seeding database..."
 
@@ -41,3 +43,5 @@ fi
 
 echo "Database seeding completed."
 echo "==========================="
+echo ""
+echo ""

@@ -62,6 +62,7 @@ jobs:
           DB_USER: d-roles
           DB_PASSWORD: d-roles
           DB_SCHEMA: d_roles
+          DB_ENV: test
         run: |
           sh ./db/entrypoint.sh
           make test

@@ -1,5 +1,5 @@
 import sentry_sdk
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.openapi.utils import get_openapi
 
 from src.routers import groups_admin, groups_scopes
@@ -18,6 +18,18 @@ if settings.SENTRY_DSN != "":
     )
 
 app = FastAPI(redirect_slashes=True, redoc_url="/")
+
+
+@app.middleware("http")
+async def debug_headers(request: Request, call_next):
+    print(f"Host: {request.headers.get('host')}")
+    print(f"X-Forwarded-Host: {request.headers.get('x-forwarded-host')}")
+    print(f"X-Forwarded-Proto: {request.headers.get('x-forwarded-proto')}")
+    print(f"URL: {request.url}")
+
+    response = await call_next(request)
+    return response
+
 
 # Register startup and shutdown events
 app.add_event_handler("startup", startup)

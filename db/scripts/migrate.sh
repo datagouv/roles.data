@@ -2,6 +2,8 @@
 # filepath: /Users/xavierjouppe/Documents/Code_projects/d-roles/db/scripts/migrate.sh
 set -e
 
+echo ""
+echo ""
 echo "================================"
 echo "Running database migrations..."
 
@@ -21,13 +23,13 @@ if [ -d "./db/migrations" ]; then
 
   # Loop through all SQL files in the migrations directory in alphabetical order
   for migration in $(find ./db/migrations -name "*.sql" | sort); do
-    echo "Applying migration: $(basename $migration)"
+    echo "‣ Migration: $(basename $migration)"
 
     # Check if this migration has already been applied
     if echo "$applied_migrations" | grep -q "$migration"; then
-      echo "Skipping already applied migration: $migration"
+      echo "⚠ Skipping already applied migration: $migration"
     else
-      echo "Applying new migration: $migration"
+      echo "🐣 Applying new migration: $migration"
 
       # Start a transaction
       PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -c "BEGIN;"
@@ -59,3 +61,5 @@ SELECT filename, applied_at FROM ${DB_SCHEMA}.migrations ORDER BY applied_at;"
 
 echo "Migrations completed."
 echo "====================="
+echo ""
+echo ""

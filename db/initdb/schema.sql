@@ -7,10 +7,9 @@ DECLARE
     schema_name_var text := current_setting('temp.schema_name');
 BEGIN
     EXECUTE 'CREATE SCHEMA IF NOT EXISTS ' || quote_ident(schema_name_var);
-    RAISE NOTICE 'Schema "%" created or already exists.', schema_name_var;
 EXCEPTION
     WHEN insufficient_privilege THEN
-        RAISE NOTICE 'Schema already exists or insufficient privileges to create it.';
+        RAISE NOTICE 'Insufficient privileges to create schema. In this case we assume it has been created by the administrator.';
     WHEN OTHERS THEN
         RAISE EXCEPTION 'An error occurred while creating the schema: %', SQLERRM;
 END

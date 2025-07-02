@@ -5,8 +5,14 @@ set -e
 echo "==================="
 echo "Seeding database..."
 
-# Get environment (dev is default)
-ENV=${DB_ENV:-dev}
+# Check if DB_ENV is set
+if [ -z "${DB_ENV:-}" ]; then
+    echo "❌ Error: DB_ENV environment variable is required"
+    echo "Valid values: dev, test, preprod, prod"
+    exit 1
+fi
+
+ENV=$DB_ENV
 
 # Validate environment
 valid_envs=("dev" "test")

@@ -28,7 +28,7 @@ db_start: # only run DB container
 admin_create_service_provider:
 	uv run python -m admin.create-service-provider
 
-admin_create_service_account:@
+admin_create_service_account:
 	uv run python -m admin.create-service-account
 
 admin_update_service_account:

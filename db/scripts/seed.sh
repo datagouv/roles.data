@@ -7,17 +7,11 @@ echo ""
 echo "==================="
 echo "Seeding database..."
 
-# Check if DB_ENV is set
-if [ -z "${DB_ENV:-}" ]; then
-    echo "❌ Error: DB_ENV environment variable is required"
-    echo "Valid values: dev, test, preprod, prod"
-    exit 1
-fi
 
 ENV=$DB_ENV
 
 # Validate environment
-valid_envs=("dev" "test")
+valid_envs=("local" "dev" "test")
 is_valid=false
 
 for valid_env in "${valid_envs[@]}"; do
@@ -30,7 +24,7 @@ done
 if [ "$is_valid" = false ]; then
   echo "No seed for '$ENV' env"
   echo "======================"
-  exit 1
+  exit 0
 fi
 
 # Check if seed file exists

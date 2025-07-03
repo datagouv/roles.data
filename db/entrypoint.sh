@@ -19,8 +19,17 @@ wait_for_postgres
 # If DB_* environment variables are set, use them
 if [ -n "localhost" ] && [ -n "$DB_USER" ] && [ -n "$DB_PASSWORD" ] && [ -n "$DB_NAME" ]; then
 
+
+  # Check if DB_ENV is set
+  if [ -z "${DB_ENV:-}" ]; then
+      echo "❌ Error: DB_ENV environment variable is required"
+      echo "Valid values: local, dev, test, preprod, prod"
+      exit 1
+  fi
+
   # Run database scripts in order (with absolute paths)
   SCRIPT_DIR="$(dirname "$0")/scripts"
+  $SCRIPT_DIR/schema.sh
   $SCRIPT_DIR/create.sh
   $SCRIPT_DIR/migrate.sh
   $SCRIPT_DIR/seed.sh

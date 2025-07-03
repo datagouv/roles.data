@@ -23,7 +23,7 @@ db_scripts:
 	DB_HOST='localhost' DB_PASSWORD='d-roles' DB_PORT=5433 DB_NAME='d-roles' sh ./db/entrypoint.sh
 
 db_start: # only run DB container
-	docker-compose up postgres-dev postgres-test
+	docker-compose up postgres-local postgres-test
 
 admin_create_service_provider:
 	uv run python -m admin.create-service-provider

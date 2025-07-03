@@ -57,7 +57,7 @@ La commande lance 4 containers :
 
 - nginx (cf `./nginx.conf`)
 - app
-- postgres-dev
+- postgres-local
 - postgres-test
 
 Ce mode permet de tester la conf nginx, le dockerfile et la logique de migration.
@@ -67,7 +67,7 @@ Ce mode permet de tester la conf nginx, le dockerfile et la logique de migration
 ### local
 
 ```
-# lancer les DB de dev et test
+# lancer les DB local et test
 docker-compose-up
 
 # se connecter
@@ -81,10 +81,10 @@ make db_scripts
 
 Les scripts appliqués à la base de donnée sont executés dans cet ordre :
 
-- `schema.sql` - tentative de creation du schema
+- `schema.sql` - creation du schema (local, test)
 - `create.sql` - création de la base de données
 - `migrations/*` - migrations successives
-- `seed.sql` - données de tests, par environnement (test, preprod, dev)
+- `seed.sql` - données de tests, par environnement (local, test, dev)
 
 #### Migrations
 

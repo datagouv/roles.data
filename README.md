@@ -64,10 +64,20 @@ Ce mode permet de tester la conf nginx, le dockerfile et la logique de migration
 
 ## Base de données
 
+### environnements
+
+La variable `DB_ENV` est utilisée pour distinguer les différents environnements :
+
+- `local` : environnement de developpement local
+- `test` : pour les test d'intégration
+- `dev` : utilisé d'intégration
+- `preprod` : environnement iso prod pour tester les migrations et autres opérations de maintenance
+- `prod` environnement de production
+
 ### local
 
 ```
-# lancer les DB local et test
+# lancer les DB pour les environnements local et test
 docker-compose-up
 
 # se connecter
@@ -81,10 +91,10 @@ make db_scripts
 
 Les scripts appliqués à la base de donnée sont executés dans cet ordre :
 
-- `schema.sql` - creation du schema (local, test)
+- `schema.sql` - creation du schema (uniquement les environnements local, test)
 - `create.sql` - création de la base de données
 - `migrations/*` - migrations successives
-- `seed.sql` - données de tests, par environnement (local, test, dev)
+- `seed.sql` - données de tests (uniquement les environnements local, test, dev)
 
 #### Migrations
 

@@ -1,20 +1,5 @@
 \set schema_name :DB_SCHEMA
 
-
-SET temp.schema_name = :'schema_name';
-DO $$
-DECLARE
-    schema_name_var text := current_setting('temp.schema_name');
-BEGIN
-    EXECUTE 'CREATE SCHEMA IF NOT EXISTS ' || quote_ident(schema_name_var);
-EXCEPTION
-    WHEN insufficient_privilege THEN
-        RAISE NOTICE 'Insufficient privileges to create schema. In this case we assume it has been created by the administrator.';
-    WHEN OTHERS THEN
-        RAISE EXCEPTION 'An error occurred while creating the schema: %', SQLERRM;
-END
-$$;
-
 BEGIN;
 
 -- Create the database tables

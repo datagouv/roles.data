@@ -81,7 +81,8 @@ make db_scripts
 
 Les scripts appliqués à la base de donnée sont executés dans cet ordre :
 
-- `schema.sql` - création de la base de données
+- `schema.sql` - tentative de creation du schema
+- `create.sql` - création de la base de données
 - `migrations/*` - migrations successives
 - `seed.sql` - données de tests, par environnement (test, preprod, dev)
 

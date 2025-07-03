@@ -30,19 +30,30 @@ fi
 echo "🐣 Schema '$DB_SCHEMA' is empty or doesn't exist"
 echo "Proceeding with schema creation..."
 
+# Temporarily disable exit on error to handle it manually
+set +e
+
 # Create the schema
 PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -c "CREATE SCHEMA IF NOT EXISTS \"$DB_SCHEMA\";"
 PSQL_EXIT_CODE=$?
 
-if [ $PSQL_EXIT_CODE -eq 0 ]; then
-    echo "Schema created successfully."
-elif [ $PSQL_EXIT_CODE -eq 3 ]; then
-    echo "❌ Error: Schema '$DB_SCHEMA' does not exist and cannot be created due to insufficient privileges"
-    exit 1
-else
-    echo "❌ Error: Failed to create schema (exit code: $PSQL_EXIT_CODE)"
-    exit $PSQL_EXIT_CODE
-fi
+# Re-enable exit on error
+set -e
+
+case $PSQL_EXIT_CODE in
+    0)
+        echo "✅ Schema created successfully."
+        ;;
+    3)
+        echo "❌ Error: Insufficient privileges to create schema '$DB_SCHEMA'"
+        echo "💡 Try running with a user that has CREATE privileges"
+        exit 1
+        ;;
+    *)
+        echo "❌ Error: Failed to create schema (exit code: $PSQL_EXIT_CODE)"
+        exit $PSQL_EXIT_CODE
+        ;;
+esac
 
 # Create tables
 PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -v DB_SCHEMA=$DB_SCHEMA -f ./db/initdb/create.sql

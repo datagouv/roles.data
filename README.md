@@ -68,9 +68,9 @@ Ce mode permet de tester la conf nginx, le dockerfile et la logique de migration
 
 La variable `DB_ENV` est utilisée pour distinguer les différents environnements :
 
-- `local` : environnement de developpement local
-- `test` : pour les test d'intégration
-- `dev` : utilisé d'intégration
+- `local` : developpement local (seedé)
+- `test` : CI (seedé)
+- `dev` : intégration (seedé)
 - `preprod` : environnement iso prod pour tester les migrations et autres opérations de maintenance
 - `prod` environnement de production
 

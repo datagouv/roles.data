@@ -1,7 +1,5 @@
 \set schema_name :DB_SCHEMA
 
-CREATE SCHEMA :schema_name;
-
 BEGIN;
 
 -- Create the database tables

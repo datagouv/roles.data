@@ -19,7 +19,6 @@ docker: # run application in docker
 
 db_scripts:
 	echo "Using DB_SCHEMA: ${DB_SCHEMA}"
-
 	DB_HOST='localhost' DB_PORT=5432 sh ./db/entrypoint.sh
 	DB_HOST='localhost' DB_PASSWORD='d-roles' DB_PORT=5433 DB_NAME='d-roles' sh ./db/entrypoint.sh
 

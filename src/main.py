@@ -1,8 +1,9 @@
 import sentry_sdk
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
+from fastapi.staticfiles import StaticFiles
 
-from src.routers import groups_admin, groups_scopes
+from src.routers import admin, groups_admin, groups_scopes
 
 from .config import settings
 from .database import shutdown, startup
@@ -19,6 +20,9 @@ if settings.SENTRY_DSN != "":
 
 app = FastAPI(redirect_slashes=True, redoc_url="/")
 
+# Add template and static file support
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 # Register startup and shutdown events
 app.add_event_handler("startup", startup)
 app.add_event_handler("shutdown", shutdown)
@@ -31,6 +35,7 @@ app.include_router(roles.router)
 app.include_router(groups.router)
 app.include_router(groups_admin.router)
 app.include_router(groups_scopes.router)
+app.include_router(admin.router, include_in_schema=False)
 
 
 def custom_openapi():

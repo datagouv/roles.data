@@ -3,12 +3,18 @@ from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 from fastapi.staticfiles import StaticFiles
 
-from src.routers import admin, groups_admin, groups_scopes
+from src.routers import groups_admin, groups_scopes
 
 from .config import settings
 from .database import shutdown, startup
 from .documentation import api_description, api_summary, api_tags_metadata
+
+# API routers
 from .routers import auth, groups, health, roles, service_providers, users
+from .routers.auth import auth, pro_connect
+
+# web routers
+from .routers.web import admin
 
 if settings.SENTRY_DSN != "":
     sentry_sdk.init(
@@ -27,8 +33,10 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 app.add_event_handler("startup", startup)
 app.add_event_handler("shutdown", shutdown)
 
-app.include_router(auth.router)
 app.include_router(health.router)
+
+app.include_router(auth.router)
+app.include_router(pro_connect.router, include_in_schema=False)
 app.include_router(service_providers.router)
 app.include_router(users.router)
 app.include_router(roles.router)

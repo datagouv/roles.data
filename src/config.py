@@ -22,6 +22,12 @@ class Settings(BaseSettings):
 
     DB_PORT_TEST: int = 5433
 
+    PROCONNECT_CLIENT_ID: str = ""
+    PROCONNECT_CLIENT_SECRET: str = ""
+    PROCONNECT_URL_DISCOVER: str = ""
+    PROCONNECT_REDIRECT_URI: str = ""
+    PROCONNECT_POST_LOGOUT_REDIRECT_URI: str = ""
+
     @property
     def DATABASE_URL(self) -> str:
         return f"postgresql://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT_TEST if self.DB_ENV=='test' else self.DB_PORT}/{self.DB_NAME}"  # type: ignore

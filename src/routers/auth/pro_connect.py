@@ -11,7 +11,6 @@ from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.responses import RedirectResponse
 
 from src.config import Settings, settings
-from src.routers.auth.utils.state_cache import store_state, validate_and_remove_state
 
 if TYPE_CHECKING:
     from authlib.integrations.starlette_client.apps import StarletteOAuth2App
@@ -117,15 +116,13 @@ async def logout(request: Request):
     post_logout_redirect_uri = settings.PROCONNECT_POST_LOGOUT_REDIRECT_URI
 
     state = secrets.token_urlsafe(32)
-    store_state(state)
+    request.session["state"] = state
+
     logout_params = {
         "post_logout_redirect_uri": post_logout_redirect_uri,
         "id_token_hint": id_token,
         "state": state,
     }
-
-    print("session on /logout")
-    print(request.session)
 
     return RedirectResponse(
         url=f"{logout_url}?{urlencode(logout_params)}", status_code=302
@@ -140,12 +137,20 @@ async def logout_callback(request: Request):
     ProConnect seems to interfere with our session (Starlette session are cookies-based ?) so storing state in session is not an option
     Instead, this quick in-memory cache is used to validate the state parameter.
     """
-    state = request.query_params.get("state")
 
-    if not state or not validate_and_remove_state(state):
+    state = request.query_params.get("state")
+    initial_state = request.session.get("state")
+
+    if not state or not initial_state:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid or expired state parameter",
+            detail="Missing state parameter",
+        )
+
+    if not state == initial_state:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Possible CSRF attack: state does not match",
         )
 
     request.session.clear()

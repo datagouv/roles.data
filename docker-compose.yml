@@ -1,12 +1,12 @@
 services:
-  postgres-dev:
+  postgres-local:
     image: "postgres:15.7"
     environment:
       - POSTGRES_DB=$DB_NAME
       - POSTGRES_USER=$DB_USER
       - POSTGRES_PASSWORD=$DB_PASSWORD
       - POSTGRES_SCHEMA=$DB_SCHEMA
-      - DB_ENV=dev
+      - DB_ENV=local
     ports:
       - "5432:5432"
 
@@ -26,15 +26,15 @@ services:
   app:
     build: .
     environment:
-      - DB_HOST=postgres-dev
+      - DB_HOST=postgres-local
       - DB_NAME=$DB_NAME
       - DB_USER=$DB_USER
       - DB_PASSWORD=$DB_PASSWORD
       - DB_SCHEMA=$DB_SCHEMA
       - DB_PORT=5432
-      - DB_ENV=dev
+      - DB_ENV=local
     depends_on:
-      - postgres-dev
+      - postgres-local
 
   nginx:
     image: "nginx:alpine-slim"

@@ -57,17 +57,27 @@ La commande lance 4 containers :
 
 - nginx (cf `./nginx.conf`)
 - app
-- postgres-dev
+- postgres-local
 - postgres-test
 
 Ce mode permet de tester la conf nginx, le dockerfile et la logique de migration.
 
 ## Base de données
 
+### environnements
+
+La variable `DB_ENV` est utilisée pour distinguer les différents environnements :
+
+- `local` : developpement local (seedé)
+- `test` : CI (seedé)
+- `dev` : intégration (seedé)
+- `preprod` : environnement iso prod pour tester les migrations et autres opérations de maintenance
+- `prod` environnement de production
+
 ### local
 
 ```
-# lancer les DB de dev et test
+# lancer les DB pour les environnements local et test
 docker-compose-up
 
 # se connecter
@@ -81,9 +91,10 @@ make db_scripts
 
 Les scripts appliqués à la base de donnée sont executés dans cet ordre :
 
-- `schema.sql` - création de la base de données
+- `schema.sql` - creation du schema (uniquement les environnements local, test)
+- `create.sql` - création de la base de données
 - `migrations/*` - migrations successives
-- `seed.sql` - données de tests, par environnement (test, preprod, dev)
+- `seed.sql` - données de tests (uniquement les environnements local, test, dev)
 
 #### Migrations
 

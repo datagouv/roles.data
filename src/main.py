@@ -2,6 +2,7 @@ import sentry_sdk
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.sessions import SessionMiddleware
 
 from src.routers import groups_admin, groups_scopes
 
@@ -10,7 +11,7 @@ from .database import shutdown, startup
 from .documentation import api_description, api_summary, api_tags_metadata
 
 # API routers
-from .routers import auth, groups, health, roles, service_providers, users
+from .routers import groups, health, roles, service_providers, users
 from .routers.auth import auth, pro_connect
 
 # web routers
@@ -25,6 +26,15 @@ if settings.SENTRY_DSN != "":
     )
 
 app = FastAPI(redirect_slashes=True, redoc_url="/")
+
+# Add session middleware for web app /admin
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=settings.SECRET_KEY,
+    max_age=3600,
+    same_site="lax",
+    https_only=False,  # Set to True in production
+)
 
 # Add template and static file support
 app.mount("/static", StaticFiles(directory="static"), name="static")

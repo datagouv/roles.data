@@ -133,9 +133,6 @@ async def logout(request: Request):
 async def logout_callback(request: Request):
     """
     Logout from application and compare state to ensure security
-
-    ProConnect seems to interfere with our session (Starlette session are cookies-based ?) so storing state in session is not an option
-    Instead, this quick in-memory cache is used to validate the state parameter.
     """
 
     state = request.query_params.get("state")

@@ -8,12 +8,6 @@ from jwt.exceptions import InvalidTokenError
 
 from src.config import settings
 
-# to get a string like this run:
-# openssl rand -hex 32
-ALGORITHM = "HS256"
-
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
-
 
 class OAuth2ClientCredentials(OAuth2):
     """
@@ -70,15 +64,21 @@ oauth2_scheme = OAuth2ClientCredentials(
 
 def create_access_token(data: dict):
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.now(timezone.utc) + timedelta(
+        minutes=settings.API_ACCESS_TOKEN_EXPIRE_MINUTES
+    )
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=ALGORITHM)
+    encoded_jwt = jwt.encode(
+        to_encode, settings.API_SECRET_KEY, algorithm=settings.API_ALGORITHM
+    )
     return encoded_jwt
 
 
 def decode_access_token(token: str = Depends(oauth2_scheme)):
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(
+            token, settings.API_SECRET_KEY, algorithms=[settings.API_ALGORITHM]
+        )
         return payload
     except InvalidTokenError:
         raise HTTPException(

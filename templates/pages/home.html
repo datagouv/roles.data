@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="fr-container">
+    <h1>Bienvenue sur l’admin de D-Roles</h1>
+
+    {% if user_email %}
+        <p>Bonjour, {{ user_email }}!</p>
+
+
+        <a href="/auth/pro-connect/logout" class="fr-btn fr-btn--secondary">
+            Déconnexion
+        </a>
+    {% else %}
+        <a href="/auth/pro-connect/login" class="fr-btn fr-btn--primary">
+            Connexion avec ProConnect
+        </a>
+    {% endif %}
+</div>
+{% endblock %}

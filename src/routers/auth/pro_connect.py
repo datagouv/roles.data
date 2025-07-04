@@ -70,7 +70,7 @@ class ProConnectOAuth(OAuth):
         return jwt.decode(userinfo_jwt, options={"verify_signature": False})
 
 
-oauth = ProConnectOAuth(Settings())
+oauth = ProConnectOAuth(settings)
 
 
 @router.get("/login")
@@ -92,11 +92,7 @@ async def callback(request: Request):
         # Store the user info in the session, it'll be used when logging out from ProConnect.
         request.session["id_token"] = token["id_token"]
         userinfo = await oauth.userinfo(token=token)
-        request.session["user"] = {
-            "email": userinfo["email"],
-            "name": userinfo.get("name", "Unknown"),
-        }
-
+        request.session["user_email"] = userinfo["email"]
         return RedirectResponse(url="/admin", status_code=302)
 
     except OAuthError as e:

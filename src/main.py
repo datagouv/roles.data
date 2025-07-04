@@ -4,6 +4,7 @@ from fastapi.openapi.utils import get_openapi
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
+from src.middleware.security_headers import SecurityHeadersMiddleware
 from src.routers import groups_admin, groups_scopes
 
 from .config import settings
@@ -15,7 +16,7 @@ from .routers import groups, health, roles, service_providers, users
 from .routers.auth import auth, pro_connect
 
 # web routers
-from .routers.web import admin
+from .routers.web.admin import home as admin_home
 
 if settings.SENTRY_DSN != "":
     sentry_sdk.init(
@@ -30,11 +31,13 @@ app = FastAPI(redirect_slashes=True, redoc_url="/")
 # Add session middleware for web app /admin
 app.add_middleware(
     SessionMiddleware,
-    secret_key=settings.SECRET_KEY,
+    secret_key=settings.SESSION_SECRET_KEY,
     max_age=3600,
     same_site="lax",
-    https_only=False,  # Set to True in production
+    https_only=settings.IS_PRODUCTION,
 )
+
+app.add_middleware(SecurityHeadersMiddleware)
 
 # Add template and static file support
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -47,13 +50,16 @@ app.include_router(health.router)
 
 app.include_router(auth.router)
 app.include_router(pro_connect.router, include_in_schema=False)
+
 app.include_router(service_providers.router)
 app.include_router(users.router)
 app.include_router(roles.router)
 app.include_router(groups.router)
 app.include_router(groups_admin.router)
 app.include_router(groups_scopes.router)
-app.include_router(admin.router, include_in_schema=False)
+
+# admin interface
+app.include_router(admin_home.router, include_in_schema=False)
 
 
 def custom_openapi():

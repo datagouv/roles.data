@@ -33,6 +33,13 @@ services:
       - DB_SCHEMA=$DB_SCHEMA
       - DB_PORT=5432
       - DB_ENV=dev
+      - API_SECRET_KEY=random-secret-key-here
+      - SESSION_SECRET_KEY=another-random-secret-key-here
+      - PROCONNECT_CLIENT_ID=foo
+      - PROCONNECT_CLIENT_SECRET=bar
+      - PROCONNECT_URL_DISCOVER=foo
+      - PROCONNECT_REDIRECT_URI=bar
+      - PROCONNECT_POST_LOGOUT_REDIRECT_URI=foo
     depends_on:
       - postgres-dev
 

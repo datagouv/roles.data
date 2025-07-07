@@ -77,13 +77,6 @@ oauth = ProConnectOAuth(settings)
 async def login(request: Request):
     """Redirect to ProConnect login"""
     redirect_uri = request.url_for("callback")
-
-    generated_url = request.url_for("callback")
-    settings_url = settings.PROCONNECT_REDIRECT_URI
-
-    print(f"Generated URL: {generated_url}")
-    print(f"Settings URL: {settings_url}")
-
     authorize_url = await oauth.proconnect.authorize_redirect(
         request, redirect_uri, acr_values="eidas1"
     )

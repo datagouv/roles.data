@@ -12,7 +12,26 @@
             Déconnexion
         </a>
     {% else %}
-        <a href="/auth/pro-connect/login" class="fr-btn fr-btn--primary">
+    <div className="fr-connect-group">
+            <a
+            className="fr-connect pro-connect"
+            href="/auth/pro-connect/login"
+            >
+            <span className="fr-connect__login">S’identifier avec</span>
+            <span className="fr-connect__brand">ProConnect</span>
+        </a>
+        <p>
+        <a
+            href="https://www.proconnect.gouv.fr/"
+            target="_blank"
+            rel="noopener"
+            title="Qu'est-ce que ProConnect ? - nouvelle fenêtre"
+        >
+            Qu’est-ce que ProConnect ?
+        </a>
+        </p>
+      </div>
+        <a " class="fr-btn fr-btn--primary">
             Connexion avec ProConnect
         </a>
     {% endif %}

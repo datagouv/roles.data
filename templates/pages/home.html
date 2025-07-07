@@ -4,7 +4,7 @@
 <div class="fr-container">
     <h1>Bienvenue sur l’admin de D-Roles</h1>
 
-    {% if user_email %}
+    {% if is_authenticated %}
         <p>Bonjour, {{ user_email }}!</p>
 
 

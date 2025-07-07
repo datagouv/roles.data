@@ -218,3 +218,16 @@ class LOG_RESOURCE_TYPES(Enum):
     GROUP = "group"
     ORGANISATION = "organisation"
     GROUP_SERVICE_PROVIDER_RELATION = "group_service_provider_relation"
+
+
+class LogResponse(BaseModel):
+    id: int
+    action_type: LOG_ACTIONS
+    resource_type: LOG_RESOURCE_TYPES
+    resource_id: int | None = None
+    service_account_id: int | None = None
+    service_provider_id: int | None = None
+    new_values: str
+    created_at: str  # ISO format string
+
+    model_config = ConfigDict(from_attributes=True)

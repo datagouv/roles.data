@@ -9,13 +9,13 @@ from src.model import Token
 from src.services.auth import AuthService
 
 router = APIRouter(
-    prefix="/auth",
+    prefix="/token",
     tags=["Authentification"],
     responses={404: {"description": "Not found"}, 400: {"description": "Bad request"}},
 )
 
 
-@router.post("/token", response_model=Token)
+@router.post("/", response_model=Token)
 async def get_token(
     request: Request,
     authorization: str | None = Header(None),

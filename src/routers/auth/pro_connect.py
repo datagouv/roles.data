@@ -75,6 +75,12 @@ oauth = ProConnectOAuth(settings)
 
 @router.get("/login")
 async def login(request: Request):
+    if not settings.PROCONNECT_ENABLED:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="ProConnect authentication is not enabled.",
+        )
+
     """Redirect to ProConnect login"""
     redirect_uri = request.url_for("callback")
     authorize_url = await oauth.proconnect.authorize_redirect(
@@ -90,8 +96,15 @@ async def callback(request: Request):
         token = await oauth.proconnect.authorize_access_token(request)
 
         # Store the user info in the session, it'll be used when logging out from ProConnect.
-        request.session["id_token"] = token["id_token"]
         userinfo = await oauth.userinfo(token=token)
+
+        if userinfo["email"] not in settings.SUPER_ADMIN_EMAILS:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You are not authorized to access this resource.",
+            )
+
+        request.session["id_token"] = token["id_token"]
         request.session["user_email"] = userinfo["email"]
         return RedirectResponse(url="/admin", status_code=302)
 

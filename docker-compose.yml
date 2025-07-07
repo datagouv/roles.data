@@ -40,7 +40,6 @@ services:
       - PROCONNECT_URL_DISCOVER=foo
       - PROCONNECT_REDIRECT_URI=bar
       - PROCONNECT_POST_LOGOUT_REDIRECT_URI=foo
-      - PROCONNECT_ENABLED=False
     depends_on:
       - postgres-local
 

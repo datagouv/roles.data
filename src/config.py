@@ -30,7 +30,6 @@ class Settings(BaseSettings):
     # No algorithm needed - uses symmetric encryption
     SESSION_SECRET_KEY: str
 
-    PROCONNECT_ENABLED: bool = False
     PROCONNECT_CLIENT_ID: str
     PROCONNECT_CLIENT_SECRET: str
     PROCONNECT_URL_DISCOVER: str
@@ -39,7 +38,9 @@ class Settings(BaseSettings):
 
     DB_PORT_TEST: int = 5433
 
-    SUPER_ADMIN_EMAILS: str
+    # ProConnect and /admin settings
+    PROCONNECT_ENABLED: bool = False
+    SUPER_ADMIN_EMAILS: str = ""
 
     @property
     def DATABASE_URL(self) -> str:

@@ -16,14 +16,22 @@ router.include_router(groups_view.router, include_in_schema=False)
 
 
 @router.get("/", response_class=HTMLResponse)
-async def home(request: Request):
+async def home_page(request: Request):
     return template_manager.render(
         request,
         "home.html",
+        "Accueil",
+        enforce_authentication=True,
+        context={},
+    )
+
+
+@router.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request):
+    return template_manager.render(
+        request,
+        "connexion.html",
         "Connexion",
         enforce_authentication=False,
-        context={
-            "request": request,
-            "user_email": request.session.get("user_email", None),
-        },
+        context={},
     )

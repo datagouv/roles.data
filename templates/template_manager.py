@@ -34,7 +34,7 @@ class TemplateManager:
         is_authenticated = bool(user_email)
 
         if enforce_authentication and not is_authenticated:
-            return RedirectResponse(url="/admin", status_code=303)
+            return RedirectResponse(url="/admin/login", status_code=303)
 
         # Add common context
         context.update(

@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="fr-container">
-    {% if user_email %}
+    {% if is_authenticated %}
         <p>Bonjour, {{ user_email }}!</p>
         <a href="/auth/pro-connect/logout" class="fr-btn fr-btn--secondary">
             Déconnexion

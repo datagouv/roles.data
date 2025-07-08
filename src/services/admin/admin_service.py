@@ -16,7 +16,6 @@ class AdminService:
         users = await self.admin_repository.retrieve_group_users(group_id)
         scopes = await self.admin_repository.retrieve_group_scopes(group_id)
 
-        print([dict(s) for s in scopes])  # Debugging line to check scopes)
         return {
             "details": group_details,
             "users": users,

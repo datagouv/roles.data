@@ -2,12 +2,8 @@
 
 {% block content %}
 <div class="fr-container">
-    <h1>Espace admin de D-Roles</h1>
-
     {% if is_authenticated %}
         <p>Bonjour, {{ user_email }}!</p>
-
-
         <a href="/auth/pro-connect/logout" class="fr-btn fr-btn--secondary">
             Déconnexion
         </a>

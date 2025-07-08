@@ -20,6 +20,7 @@ async def logs_explorer(request: Request, admin_service=Depends(get_admin_servic
     return template_manager.render(
         request,
         "logs.html",
+        "Explorateur de logs",
         enforce_authentication=True,
         context={"logs": logs},
     )

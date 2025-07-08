@@ -3,8 +3,6 @@
 
 from databases import Database
 
-from src.model import LOG_RESOURCE_TYPES, LogResponse
-
 
 class AdminRepository:
     """
@@ -17,11 +15,7 @@ class AdminRepository:
 
     async def read_logs(
         self,
-        service_account_id: int | None = None,
-        service_provider_id: int | None = None,
-        resource_type: LOG_RESOURCE_TYPES | None = None,
-        resource_id: int | None = None,
-    ) -> list[LogResponse]:
+    ) -> list[dict]:
         async with self.db_session.transaction():
             query = """
                 SELECT *
@@ -32,3 +26,48 @@ class AdminRepository:
                 query,
                 values={},
             )
+
+    async def retrieve_all_groups(self) -> list[dict]:
+        async with self.db_session.transaction():
+            query = """
+                SELECT G.*, O.siret AS organisation_siret, O.name AS organisation_name, COUNT(GUR.user_id) AS user_count
+                FROM groups as G
+                INNER JOIN organisations AS O ON O.id = G.orga_id
+                INNER JOIN group_user_relations AS GUR ON GUR.group_id = G.id
+                GROUP BY G.id, O.siret, O.name
+                ORDER BY id
+            """
+            return await self.db_session.fetch_all(query)
+
+    async def retrieve_group(self, group_id: int) -> dict:
+        async with self.db_session.transaction():
+            query = """
+                SELECT G.*, O.siret AS organisation_siret, O.name AS organisation_name
+                FROM groups as G
+                INNER JOIN organisations AS O ON O.id = G.orga_id
+                INNER JOIN group_user_relations AS GUR ON GUR.group_id = G.id
+                WHERE G.id = :group_id
+                ORDER BY id
+            """
+            return await self.db_session.fetch_one(query, values={"group_id": group_id})
+
+    async def retrieve_group_users(self, group_id: int) -> list[dict]:
+        async with self.db_session.transaction():
+            query = """
+                SELECT U.*, R.role_name as role, GUR.created_at
+                FROM group_user_relations AS GUR
+                INNER JOIN users as U ON U.id = GUR.user_id
+                INNER JOIN roles AS R ON R.id = GUR.role_id
+                WHERE GUR.group_id = :group_id
+            """
+            return await self.db_session.fetch_all(query, values={"group_id": group_id})
+
+    async def retrieve_group_scopes(self, group_id: int) -> list[dict]:
+        async with self.db_session.transaction():
+            query = """
+                SELECT GSR.*, SP.name AS service_provider_name
+                FROM group_service_provider_relations AS GSR
+                INNER JOIN service_providers AS SP ON SP.id = GSR.service_provider_id
+                WHERE GSR.group_id = :group_id
+            """
+            return await self.db_session.fetch_all(query, values={"group_id": group_id})

@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 
-from routers.web.admin.pages import groups_view
-from src.routers.web.admin.pages import logs_view
 from templates.template_manager import template_manager
+
+from .pages import groups_view, logs_view
 
 router = APIRouter(
     prefix="/admin",

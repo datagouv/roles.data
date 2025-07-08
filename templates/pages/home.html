@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="fr-container">
+    <h1>Espace admin de D-Roles</h1>
+
+    {% if is_authenticated %}
+        <p>Bonjour, {{ user_email }}!</p>
+
+
+        <a href="/auth/pro-connect/logout" class="fr-btn fr-btn--secondary">
+            Déconnexion
+        </a>
+    {% else %}
+    <p>
+        Bienvenue sur l'espace admin de D-roles. Seuls les administrateurs peuvent y accèder.
+    </p>
+    <div class="fr-connect-group">
+        <a class="fr-connect" type="button" href="/auth/pro-connect/login">
+            <span class="fr-connect__login">S’identifier avec</span>
+            <span class="fr-connect__brand">ProConnect</span>
+        </a>
+        <p>
+            <a
+                href="https://www.proconnect.gouv.fr/"
+                target="_blank"
+                rel="noopener"
+                title="Qu'est-ce que ProConnect ? - nouvelle fenêtre"
+            >
+                Qu’est-ce que ProConnect ?
+            </a>
+        </p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,23 +1,21 @@
 import base64
 
 from fastapi import APIRouter, Depends, Form, Header, HTTPException, Request, status
-from fastapi.security import HTTPBasic
 
-from src.auth import ACCESS_TOKEN_EXPIRE_MINUTES, create_access_token
+from src.auth import create_access_token
+from src.config import settings
 from src.dependencies import get_auth_service
 from src.model import Token
 from src.services.auth import AuthService
 
 router = APIRouter(
-    prefix="/auth",
+    prefix="/token",
     tags=["Authentification"],
     responses={404: {"description": "Not found"}, 400: {"description": "Bad request"}},
 )
 
-security = HTTPBasic(auto_error=False)
 
-
-@router.post("/token", response_model=Token)
+@router.post("/", response_model=Token)
 async def get_token(
     request: Request,
     authorization: str | None = Header(None),
@@ -83,7 +81,8 @@ async def get_token(
         return {
             "access_token": access_token,
             "token_type": "bearer",
-            "expires_in": ACCESS_TOKEN_EXPIRE_MINUTES * 60,  # 1 hour in seconds
+            "expires_in": settings.API_ACCESS_TOKEN_EXPIRE_MINUTES
+            * 60,  # 1 hour in seconds
         }
 
     except HTTPException as e:

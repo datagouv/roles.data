@@ -2,10 +2,12 @@ from databases import Database
 from fastapi import Depends
 
 from src.auth import decode_access_token
+from src.repositories.admin.admin_repository import AdminRepository
 from src.repositories.auth import AuthRepository
 from src.repositories.logs import LogsRepository
 from src.repositories.scopes import ScopesRepository
 from src.repositories.service_providers import ServiceProvidersRepository
+from src.services.admin.admin_service import AdminService
 from src.services.auth import AuthService
 from src.services.logs import LogsService
 from src.services.scopes import ScopesService
@@ -138,3 +140,13 @@ async def get_groups_service(
         scopes_service,
         service_provider_id,
     )
+
+
+async def get_admin_service(
+    db: Database = Depends(get_db),
+) -> AdminService:
+    """
+    Dependency function that provides an AdminService instance.
+    """
+    admin_repository = AdminRepository(db)
+    return AdminService(admin_repository)

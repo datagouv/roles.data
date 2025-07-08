@@ -3,6 +3,14 @@ from typing import Any
 from fastapi import Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
+from pydantic import BaseModel, ConfigDict
+
+
+class Breadcrumb(BaseModel):
+    path: str
+    label: str
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TemplateManager:
@@ -13,8 +21,10 @@ class TemplateManager:
         self,
         request: Request,
         template_name: str,
+        title: str,
         enforce_authentication: bool = True,
         context: dict[str, Any] | None = None,
+        breadcrumbs: list[Breadcrumb] = [],
     ):
         """Render template with automatic context enhancement"""
         if context is None:
@@ -29,9 +39,12 @@ class TemplateManager:
         # Add common context
         context.update(
             {
+                "title": title,
                 "request": request,
                 "user_email": user_email,
                 "is_authenticated": is_authenticated,
+                "breadcrumb_items": [Breadcrumb(path="/admin", label="Accueil")]
+                + breadcrumbs,
             }
         )
 

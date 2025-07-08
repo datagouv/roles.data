@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>D-Roles Dashboard</title>
+    <title>D-Roles interface d’administration</title>
     <script src="/static/htmx.min.js"></script>
     <link href="/static/dsfr.min.css" rel="stylesheet">
     <script type="module" src="/static/core.module.min.js"></script>
@@ -57,6 +57,9 @@
                         <li class="fr-nav__item">
                             <a type="link" href="/admin/logs" class="fr-nav__link">Logs</a>
                         </li>
+                        <li class="fr-nav__item">
+                            <a type="link" href="/admin/groups" class="fr-nav__link">Groupes</a>
+                        </li>
                     </ul>
                 </nav>
             </div>
@@ -64,6 +67,28 @@
         {% endif %}
         </header>
         <main>
+            <div class="fr-container">
+                <nav role="navigation" class="fr-breadcrumb" aria-label="vous êtes ici :">
+                    <button class="fr-breadcrumb__button" aria-expanded="false" aria-controls="breadcrumb-1">
+                        Voir le fil d’Ariane
+                    </button>
+                    <div class="fr-collapse" id="breadcrumb-1">
+                        <ol class="fr-breadcrumb__list">
+                            {% if breadcrumb_items %}
+                                {% for item in breadcrumb_items %}
+                                    <li>
+                                        <a class="fr-breadcrumb__link" href="{{ item.path }}">{{ item.label }}</a>
+                                    </li>
+                                {% endfor %}
+                            {% endif %}
+                            <li>
+                                <a class="fr-breadcrumb__link" aria-current="page">{{title}}</a>
+                            </li>
+                        </ol>
+                    </div>
+                </nav>
+                <h1>{{ title }}</h1>
+            </div>
             {% block content %}{% endblock %}
         </main>
         <footer class="fr-footer" role="contentinfo">

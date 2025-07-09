@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% from "components/logs_table.html" import logs_table %}
+{% from "components/table.html" import data_table %}
+
+{% set headers = ['Création', 'ID', 'Client ID', 'Compte actif', 'Actions'] %}
+{% macro formatter(sa) %}
+<tr>
+    <td>{{ sa.created_at.strftime('%d/%m/%Y') }}</td>
+    <td>{{ sa.id }}</td>
+    <td>{{ sa.name }}</td>
+    <td>
+      {% if sa.is_active %}
+        <span class="fr-badge fr-badge--success">
+            Actif
+        </span>
+      {% else %}
+        <span class="fr-badge fr-badge--error">
+            Inactif
+        </span>
+      {% endif %}
+    </td>
+    <td><a>Désactiver le compte</a><br/><a>Reset le secret</a></td>
+</tr>
+{% endmacro %}
+
+
+
+{% block content %}
+<div class="fr-container">
+  <h2>Comptes de service</h2>
+  {{ data_table(headers, service_accounts, formatter) }}
+
+  <h2>Logs</h2>
+  {{ logs_table(logs) }}
+
+  <br/>
+{% endblock %}

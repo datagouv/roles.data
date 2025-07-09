@@ -1,8 +1,41 @@
 {% extends "base.html" %}
+{% from "components/logs_table.html" import logs_table %}
+{% from "components/table.html" import data_table %}
+
+{% set users_headers = ['Date d’ajout', 'Email', 'Role'] %}
+{% macro user_formatter(user) %}
+<tr>
+    <td>{{ user.created_at.strftime('%d/%m/%Y') }}</td>
+    <td>{{ user.email }}</td>
+    <td>{{ user.role }}</td>
+</tr>
+{% endmacro %}
+
+{% set scopes_headers = ['Creation', 'MAJ', 'Service', 'Scopes'] %}
+{% macro scope_formatter(scope) %}
+{% set scopes_list = scope.scopes.split(' ') %}
+<tr>
+    <td>{{ scope.created_at.strftime('%d/%m/%Y') }}</td>
+    <td>{{ scope.updated_at.strftime('%d/%m/%Y') }} {{ scope.updated_at.strftime('%H:%M:%S') }}</td>
+    <td>{{scope.service_provider_name}} ({{ scope.service_provider_id }})</td>
+    <td>
+      {% if scopes_list %}
+        {% for s in scopes_list %}
+            <span class="fr-badge fr-badge--sm">
+                {{ s }}
+            </span>
+        {% endfor %}
+      {% else %}
+          <i>Aucune valeur</i>
+      {% endif %}
+    </td>
+</tr>
+{% endmacro %}
+
 
 {% block content %}
 <div class="fr-container">
-  <h2>General info</h2>
+  <h2>Informations générales</h2>
   <ul>
     <li>Name : {{ details.name }}</li>
     <li>Creation : {{ details.created_at.strftime('%d/%m/%Y')}} {{ details.created_at.strftime('%H:%M:%S') }}</li>
@@ -10,59 +43,14 @@
     <li>Orga : {{details.organisation_name}} ({{ details.organisation_siret }})</li>
   </ul>
 
-    <h2>Rights</h2>
-  <div class="fr-table">
-      <div class="fr-table__wrapper">
-          <div class="fr-table__container">
-              <div class="fr-table__content">
-                   <table>
-              <thead>
-                  <tr>
-                      <th>Creation</th>
-                      <th>Maj</th>
-                      <th>Service</th>
-                      <th>Scopes</th>
-                  </tr>
-              </thead>
-              <tbody>
-                  {% for scope in scopes %}
-                      <tr>
-                          <td>{{ scope.created_at.strftime('%d/%m/%Y') }}</td>
-                          <td>{{ scope.updated_at.strftime('%d/%m/%Y') }} {{ scope.updated_at.strftime('%H:%M:%S') }}</td>
-                          <td>{{scope.service_provider_name}} ({{ scope.service_provider_id }})</td>
-                          <td>{{ scope.scopes }}</td>
-                      </tr>
-                  {% endfor %}
-              </tbody>
-          </table>
-          </div></div>
-          </div></div>
+  <h2>Droits (scopes)</h2>
+  {{ data_table(scopes_headers, scopes, scope_formatter) }}
 
+  <h2>Utilisateurs</h2>
+  {{ data_table(users_headers, users, user_formatter) }}
 
-  <h2>Users ({{  users | length }})</h2>
-    <div class="fr-table">
-      <div class="fr-table__wrapper">
-          <div class="fr-table__container">
-              <div class="fr-table__content">
-                   <table>
-              <thead>
-                <tr>
-                      <th>Since</th>
-                      <th>Email</th>
-                      <th>Role</th>
-                  </tr>
-              </thead>
-              <tbody>
-                  {% for user in users %}
-                      <tr>
-                          <td>{{ user.created_at.strftime('%d/%m/%Y') }}</td>
-                          <td>{{ user.email }}</td>
-                          <td>{{ user.role }}</td>
-                      </tr>
-                  {% endfor %}
-              </tbody>
-          </table>
-          </div></div>
-          </div></div>
-</div>
+  <h2>Logs</h2>
+  {{ logs_table(logs) }}
+
+  <br/>
 {% endblock %}

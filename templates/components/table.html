@@ -1,0 +1,42 @@
+{% macro data_table(
+    headers,
+    data,
+    formatter
+) %}
+    <div class="table-component">
+        {% if data %}
+            <div class="fr-mb-2w">
+                <span class="fr-badge fr-badge--info">
+                    {{ data|length }} entrée(s)
+                </span>
+            </div>
+
+            <div class="fr-table">
+                <div class="fr-table__wrapper">
+                    <div class="fr-table__container">
+                        <div class="fr-table__content">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        {% for header in headers %}
+                                            <th>{{ header }}</th>
+                                        {% endfor %}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in data %}
+                                        {{ formatter(item)|safe }}
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="fr-alert fr-alert--info">
+                <p>Aucun résultats</p>
+            </div>
+        {% endif %}
+    </div>
+{% endmacro %}

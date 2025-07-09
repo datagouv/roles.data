@@ -1,44 +1,8 @@
 {% extends "base.html" %}
+{% from "components/logs_table.html" import logs_table %}
 
 {% block content %}
 <div class="fr-container">
-    {% if logs|length > 0 %}
-        <div class="fr-table">
-    <div class="fr-table__wrapper">
-        <div class="fr-table__container">
-            <div class="fr-table__content">
-                 <table>
-            <thead>
-                <tr>
-                    <th>Day</th>
-                    <th>Hour</th>
-                    <th>Resource</th>
-                    <th>ID</th>
-                    <th>Action</th>
-                    <th>Service</th>
-                    <th>Value</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for log in logs %}
-                    <tr>
-                        <td>{{ log.created_at.strftime('%d/%m/%Y') }}</td>
-                        <td>{{ log.created_at.strftime('%H:%M:%S') }}</td>
-                        <td>{{ log.resource_type }}</td>
-                        <td>{{ log.resource_id }}</td>
-                        <td>{{ log.action_type }}</td>
-                        <td>{{ log.service_provider_id }} (account: {{ log.service_account_id }})</td>
-                        <td>{{ log.new_values }}</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        </div></div>
-        </div></div>
-    {% else %}
-        <div class="fr-alert fr-alert--info">
-            <p>Aucun log trouvé.</p>
-        </div>
-    {% endif %}
+    {{ logs_table(logs) }}
 </div>
 {% endblock %}

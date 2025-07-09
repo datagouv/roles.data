@@ -16,7 +16,7 @@ async def logs_explorer(request: Request, admin_service=Depends(get_admin_servic
     """
     Allow admin to explore the logs of any groups for any service provider. Debug purpose only
     """
-    logs = await admin_service.retrieve_logs()
+    logs = await admin_service.get_logs()
     return template_manager.render(
         request,
         "logs.html",

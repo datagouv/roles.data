@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 
+from routers.web.admin.pages import service_providers_view
 from templates.template_manager import template_manager
 
 from .pages import groups_view, logs_view
@@ -13,6 +14,7 @@ router = APIRouter(
 
 router.include_router(logs_view.router, include_in_schema=False)
 router.include_router(groups_view.router, include_in_schema=False)
+router.include_router(service_providers_view.router, include_in_schema=False)
 
 
 @router.get("/", response_class=HTMLResponse)

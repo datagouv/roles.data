@@ -1,0 +1,44 @@
+{% from "components/table.html" import data_table %}
+
+{% macro log_formatter(log) %}
+    <tr class="log-row" data-log-id="{{ log.id }}">
+        <td>
+            <span class="fr-text--bold">{{ log.created_at.strftime('%d/%m/%Y') }}</span>
+        </td>
+        <td>
+            <span class="fr-text--xs">{{ log.created_at.strftime('%H:%M:%S') }}</span>
+        </td>
+        <td>
+            <span class="fr-badge fr-badge--sm fr-badge--blue-france">
+                {{ log.resource_type }}
+            </span>
+        </td>
+        <td>
+            <code class="fr-text--xs">{{ log.resource_id }}</code>
+        </td>
+        <td>
+            {{ log.action_type }}
+        </td>
+        <td>
+            {{ log.service_provider_id }}
+        </td>
+        <td>{{ log.service_account_id }}</td>
+        <td>
+            {% if log.parsed_values %}
+                {% for key, value in log.parsed_values.items() %}
+                    <span class="fr-badge fr-badge--sm fr-badge--blue-france">
+                        <strong>{{ key }}&nbsp;:</strong>&nbsp;{{ value }}
+                    </span>
+                {% endfor %}
+            {% else %}
+                <i>Aucune valeur</i>
+            {% endif %}
+        </td>
+    </tr>
+{% endmacro %}
+
+{% macro logs_table(logs) %}
+    {% set headers = ['Date', 'Heure', 'Resource', 'ID', 'Action', 'Service', 'Compte', 'Valeurs'] %}
+
+    {{ data_table(headers, logs, log_formatter) }}
+{% endmacro %}

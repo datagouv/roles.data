@@ -29,8 +29,8 @@ async def list_groups(
 
 @router.get("/search", response_model=list[GroupWithUsersAndScopesResponse])
 async def search(
-    email: EmailStr = Query(..., description="Mail de l’utilisateur"),
-    acting_user_sub: UUID4 | None = Query(
+    user_email: EmailStr = Query(..., description="Mail de l’utilisateur"),
+    user_sub: UUID4 | None = Query(
         None, description="Sub de l’utilisateur (facultatif)"
     ),
     users_service: UsersService = Depends(get_users_service),
@@ -39,15 +39,15 @@ async def search(
     """
     Recherche les équipes d’un utilisateur vérifié, avec son adresse e-mail.
 
-    Si l'utilisateur n'est pas encore vérifié, l’appel échouera et vous devrez vérifier l'utilisateur (cf. `/users/verify`).
-
-    NB : il est possible de vérifier automatiquement l’utilisateur en passant en argument `acting_user_sub`.
+    Si l'utilisateur n'est pas encore vérifié, l’appel échouera et vous devrez vérifier l'utilisateur
+    - Soit en appelant la route dédiée : `/users/verify`
+    - Soit en passant le sub ProConnect de l'utilisateur dans les paramètres de la requête (`user_sub`)
     """
 
-    if acting_user_sub:
-        await users_service.verify_user(user_sub=acting_user_sub, user_email=email)
+    if user_sub:
+        await users_service.verify_user(user_sub=user_sub, user_email=user_email)
 
-    return await group_service.search_groups(email=email)
+    return await group_service.search_groups(user_email=user_email)
 
 
 @router.get("/{group_id}", response_model=GroupWithUsersAndScopesResponse)
@@ -64,6 +64,10 @@ async def by_id(
 @router.post("/", response_model=GroupResponse, status_code=201)
 async def create(
     group: GroupCreate,
+    # sub de l'utilisateur, utilisé par les dépendances
+    acting_user_sub: UUID4 | bool = Query(
+        description="Sub ProConnect de l’utilisateur effectuant la demande de création de groupe. Peut être mis a False dans le cas ou le groupe n’est pas crée a l’initiative d’un utilisateur mais directement par le compte de service."
+    ),
     groups_service: GroupsService = Depends(get_groups_service),
 ):
     """

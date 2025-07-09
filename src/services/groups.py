@@ -106,7 +106,7 @@ class GroupsService:
         return await self.groups_repository.list_groups(self.service_provider_id)
 
     async def search_groups(
-        self, email: EmailStr
+        self, user_email: EmailStr
     ) -> list[GroupWithUsersAndScopesResponse]:
         """
         Search for groups by user email.
@@ -115,7 +115,7 @@ class GroupsService:
         """
 
         user = await self.users_service.get_user_by_email(
-            email, only_verified_user=True
+            user_email, only_verified_user=True
         )
         groups = await self.groups_repository.search_groups_by_user(
             user.id, self.service_provider_id

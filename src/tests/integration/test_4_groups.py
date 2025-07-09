@@ -78,15 +78,15 @@ def test_search_group_by_user(client):
     random_sub = random_sub_pro_connect()
 
     responseNotVerified = client.get(
-        "/groups/search", params={"email": new_group_data["admin"]["email"]}
+        "/groups/search", params={"user_email": new_group_data["admin"]["email"]}
     )
     assert responseNotVerified.status_code == 423
 
     response = client.get(
         "/groups/search",
         params={
-            "email": new_group_data["admin"]["email"],
-            "acting_user_sub": random_sub,
+            "user_email": new_group_data["admin"]["email"],
+            "user_sub": random_sub,
         },
     )
 
@@ -110,7 +110,7 @@ def test_search_group_by_user(client):
     # Test non-existent user
     response404 = client.get(
         "/groups/search",
-        params={"email": "hey@test.fr", "acting_user_sub": random_sub_pro_connect()},
+        params={"user_email": "hey@test.fr", "user_sub": random_sub_pro_connect()},
     )
     assert response404.status_code == 404
 
@@ -118,8 +118,8 @@ def test_search_group_by_user(client):
     responseEmpty = client.get(
         "/groups/search",
         params={
-            "email": "user-not-in-group@beta.gouv.fr",
-            "acting_user_sub": random_sub_pro_connect(),
+            "user_email": "user-not-in-group@beta.gouv.fr",
+            "user_sub": random_sub_pro_connect(),
         },
     )
     assert responseEmpty.status_code == 200

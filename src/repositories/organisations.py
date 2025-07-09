@@ -41,7 +41,7 @@ class OrganisationsRepository:
                 resource_type=LOG_RESOURCE_TYPES.ORGANISATION,
                 db_session=self.db_session,
                 resource_id=orga["id"],
-                new_values=organisation_data,
+                new_values={"name": orga["name"], "siret": orga["siret"]},
             )
 
             return orga

@@ -104,6 +104,11 @@ class GroupResponse(GroupBase):
     model_config = ConfigDict(from_attributes=True)
 
 
+class UserInGroupCreate(BaseModel):
+    email: EmailStr
+    role_id: int
+
+
 class GroupWithUsersAndScopesResponse(GroupResponse):
     organisation_siret: Siret
     users: list[UserWithRoleResponse]

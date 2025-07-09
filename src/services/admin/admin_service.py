@@ -19,7 +19,9 @@ class AdminService:
     async def get_logs(
         self, group_id: int | None = None, service_provider_id: int | None = None
     ):
-        log_records = await self.admin_repository.read_logs()
+        log_records = await self.admin_repository.read_logs(
+            group_id, service_provider_id
+        )
 
         logs = [dict(log) for log in log_records]
         for log in logs:

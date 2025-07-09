@@ -42,7 +42,7 @@ class AdminRepository:
             if where_conditions:
                 query += " WHERE " + " AND ".join(where_conditions)
 
-            query += " ORDER BY created_at DESC"
+            query += " ORDER BY created_at"
 
             return await self.db_session.fetch_all(
                 query,

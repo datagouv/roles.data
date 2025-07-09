@@ -5,7 +5,7 @@ from pydantic import UUID4
 from src.auth import decode_access_token
 from src.dependencies import get_groups_service
 
-from ..model import GroupResponse
+from ..model import GroupResponse, UserInGroupCreate
 from ..services.groups import GroupsService
 
 router = APIRouter(
@@ -33,23 +33,27 @@ async def update_name(
 
 
 # Group’s users manipulation
-@router.put("/{group_id}/users/{user_id}", status_code=201)
+@router.post("/{group_id}/users", status_code=201)
 async def add_user(
+    user_in_group: UserInGroupCreate,
     group_id: int = Path(..., description="ID de l’équipe"),
-    user_id: int = Path(..., description="ID de l’utilisateur"),
     acting_user_sub: UUID4 = Query(
         ..., description="Sub ProConnect de l’utilisateur effectuant la requête"
     ),
-    role_id: int = Query(..., description="ID du rôle"),
     groups_service: GroupsService = Depends(get_groups_service),
 ):
     """
     Ajout d’un utilisateur
 
-    Si le groupe, l’utilisateur ou le rôle n’existe pas, une erreur 404 sera levée.
+    Si l’utilisateur n’existe pas, il est automatiquement créé dans la base de données.
+
+    Si le groupe ou le rôle n’existe pas, une erreur 404 sera levée.
     """
     await groups_service.verify_acting_user_rights(acting_user_sub, group_id)
-    return await groups_service.add_user_to_group(group_id, user_id, role_id)
+
+    return await groups_service.add_user_to_group(
+        group_id, user_email=user_in_group.email, role_id=user_in_group.role_id
+    )
 
 
 @router.patch("/{group_id}/users/{user_id}", status_code=200)

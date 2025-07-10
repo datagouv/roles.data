@@ -2,12 +2,13 @@
 {% from "components/logs_table.html" import logs_table %}
 {% from "components/table.html" import data_table %}
 
-{% set headers = ['Date d’ajout', 'Email', 'Role'] %}
-{% macro formatter(user) %}
+{% set headers = ['Date d’ajout', 'id', 'Role', 'Nom du groupe'] %}
+{% macro formatter(group) %}
 <tr>
-    <td>{{ user.created_at.strftime('%d/%m/%Y') }}</td>
-    <td>{{ user.email }}</td>
-    <td>{{ user.role }}</td>
+    <td>{{ group.created_at.strftime('%d/%m/%Y') }}</td>
+    <td>{{ group.id }}</td>
+    <td>{{ group.role }}</td>
+    <td><a href="/admin/groups/{{group.id}}">{{ group.name }}</a></td>
 </tr>
 {% endmacro %}
 
@@ -15,7 +16,7 @@
 {% block content %}
 <div class="fr-container">
   <h2>Groupes</h2>
-  {{ data_table(groups_headers, groups, formatter) }}
+  {{ data_table(headers, groups, formatter) }}
 
   <h2>Logs</h2>
   {{ logs_table(logs) }}

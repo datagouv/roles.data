@@ -17,10 +17,13 @@ class AdminService:
         self.admin_repository = admin_repository
 
     async def get_logs(
-        self, group_id: int | None = None, service_provider_id: int | None = None
+        self,
+        group_id: int | None = None,
+        user_id: int | None = None,
+        service_provider_id: int | None = None,
     ):
         log_records = await self.admin_repository.read_logs(
-            group_id, service_provider_id
+            group_id, user_id, service_provider_id
         )
 
         logs = [dict(log) for log in log_records]
@@ -60,7 +63,10 @@ class AdminService:
         }
 
     async def get_users(self):
-        groups = await self.admin_repository.read_group_users(group_id)
+        return await self.admin_repository.read_users()
+
+    async def get_user_details(self, user_id: int):
+        groups = await self.admin_repository.read_user_groups(user_id)
         logs = await self.get_logs(user_id=user_id)
 
         return {

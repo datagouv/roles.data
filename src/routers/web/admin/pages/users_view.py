@@ -34,9 +34,10 @@ async def user_explorer(
     Allow admin to explore the detail of one specific group
     """
     group = await admin_service.get_user_details(user_id)
+
     return template_manager.render(
         request,
-        "utilisateurs.html",
+        "utilisateur.html",
         f"Utilisateur {user_id}",
         enforce_authentication=True,
         context=group,

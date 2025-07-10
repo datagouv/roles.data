@@ -84,8 +84,9 @@ def test_add_user_to_group_and_update_roles(client):
     role_1 = roles_response.json()[0]
     role_2 = roles_response.json()[1]
 
-    responseNotVerified = client.put(
-        f"/groups/{new_group_data["id"]}/users/{user_id}?acting_user_sub={admin_sub}&role_id={role_1['id']}"
+    responseNotVerified = client.post(
+        f"/groups/{new_group_data["id"]}/users?acting_user_sub={admin_sub}",
+        json={"email": user_data["email"], "role_id": role_1["id"]},
     )
 
     # sub is unknown, so the request should fail
@@ -94,14 +95,17 @@ def test_add_user_to_group_and_update_roles(client):
     verify_user(client, admin_email, admin_sub)
 
     # Add user to group with role
-    response = client.put(
-        f"/groups/{new_group_data["id"]}/users/{user_id}?acting_user_sub={admin_sub}&role_id={role_1['id']}"
+    response = client.post(
+        f"/groups/{new_group_data["id"]}/users?acting_user_sub={admin_sub}",
+        json={"email": user_data["email"], "role_id": role_1["id"]},
     )
+
     assert response.status_code == 201
 
     # Cannot add the same user again
-    response_add_user_again = client.put(
-        f"/groups/{new_group_data["id"]}/users/{user_id}?acting_user_sub={admin_sub}&role_id={role_1['id']}"
+    response_add_user_again = client.post(
+        f"/groups/{new_group_data["id"]}/users?acting_user_sub={admin_sub}",
+        json={"email": user_data["email"], "role_id": role_1["id"]},
     )
     assert response_add_user_again.status_code == 403
 

@@ -17,7 +17,7 @@ class UsersRepository:
         self.db_session = db_session
         self.logs_service = logs_service
 
-    async def verify_user(self, user_email: str, user_sub: UUID4):
+    async def mark_user_as_verified(self, user_email: str, user_sub: UUID4):
         async with self.db_session.transaction():
             query = """
             UPDATE users SET sub_pro_connect = :sub_pro_connect, is_verified = TRUE
@@ -34,6 +34,13 @@ class UsersRepository:
                 resource_id=user_response["id"],
                 new_values=values,
             )
+
+    async def get_user_sub(self, email: str) -> str:
+        async with self.db_session.transaction():
+            query = """
+            SELECT U.sub_pro_connect FROM users as U WHERE U.email = :email
+            """
+            return await self.db_session.fetch_one(query, {"email": email})
 
     async def get_user_by_email(self, email: str) -> UserResponse:
         async with self.db_session.transaction():

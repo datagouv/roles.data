@@ -1,4 +1,10 @@
-from src.tests.helpers import create_group, random_sub_pro_connect
+from src.tests.helpers import (
+    create_group,
+    random_group,
+    random_sub_pro_connect,
+    random_user,
+    verify_user,
+)
 
 
 def test_list_groups(client):
@@ -8,6 +14,27 @@ def test_list_groups(client):
     groups = response.json()
     assert isinstance(groups, list)
     assert any(group for group in groups if group["name"] == "stack technique")
+
+
+def test_create_group_no_acting_user(client):
+    """Test creating a new group without an acting user."""
+
+    new_group_data = random_group()
+
+    # missing acting_user_sub or no_acting_user, should return 400
+    response = client.post("/groups", json=new_group_data)
+    assert response.status_code == 400
+
+    # invalid UUID acting_user_sub, should return 400
+    response = client.post("/groups/?acting_user_sub=abc", json=new_group_data)
+    assert response.status_code == 400
+
+    # valid UUID acting_user_sub, should return 200
+    response = client.post(
+        "/groups/?acting_user_sub=2c5aa869-80be-48be-b7cc-0f3f5521e1f7",
+        json=new_group_data,
+    )
+    assert response.status_code == 201
 
 
 def test_create_group(client):
@@ -78,15 +105,15 @@ def test_search_group_by_user(client):
     random_sub = random_sub_pro_connect()
 
     responseNotVerified = client.get(
-        "/groups/search", params={"email": new_group_data["admin"]["email"]}
+        "/groups/search", params={"user_email": new_group_data["admin"]["email"]}
     )
-    assert responseNotVerified.status_code == 423
+    assert responseNotVerified.status_code == 422
 
     response = client.get(
         "/groups/search",
         params={
-            "email": new_group_data["admin"]["email"],
-            "acting_user_sub": random_sub,
+            "user_email": new_group_data["admin"]["email"],
+            "user_sub": random_sub,
         },
     )
 
@@ -110,22 +137,44 @@ def test_search_group_by_user(client):
     # Test non-existent user
     response404 = client.get(
         "/groups/search",
-        params={"email": "hey@test.fr", "acting_user_sub": random_sub_pro_connect()},
+        params={"user_email": "hey@test.fr", "user_sub": random_sub_pro_connect()},
     )
     assert response404.status_code == 404
+
+    userResponse = client.post("/users", json=random_user())
+    assert userResponse.status_code == 201
+    user = userResponse.json()
 
     # Test non-existent group
     responseEmpty = client.get(
         "/groups/search",
         params={
-            "email": "user-not-in-group@beta.gouv.fr",
-            "acting_user_sub": random_sub_pro_connect(),
+            "user_email": user["email"],
+            "user_sub": random_sub_pro_connect(),
         },
     )
     assert responseEmpty.status_code == 200
     group = responseEmpty.json()
     assert isinstance(group, list)
     assert len(group) == 0
+
+
+def test_get_group_verify_conflict(client):
+    new_group_data = create_group(client)
+
+    admin = new_group_data["admin"]["email"]
+    verify_user(client, admin, random_sub_pro_connect())
+
+    random_sub = random_sub_pro_connect()
+    response = client.get(
+        "/groups/search",
+        params={
+            "user_email": new_group_data["admin"]["email"],
+            "user_sub": random_sub,
+        },
+    )
+    # Verify user with a different sub should return 406
+    assert response.status_code == 406
 
 
 def test_get_group_not_found(client):

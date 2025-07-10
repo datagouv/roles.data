@@ -60,10 +60,9 @@ async def confirm_user(
     users_service: UsersService = Depends(get_users_service),
 ) -> None:
     """
-    Vérifie un utilisateur en enregistrant son sub ProConnect
+    Enregistre le sub ProConnect d’un utilisateur et permet de "vérifier" l’utilisateur.
 
-    Un utilisateur est non vérifié lors de sa création.
-
-    Attention, il est impossible de récupérer les groupes d’un utilisateur non vérifié
+    À sa création, seul le mail de l'utilisateur est connu.
+    L’utilisateur n’est alors pas vérifié et certaines actions impliquant cet utilisateur sont impossibles.
     """
     return await users_service.verify_user(user_email, user_sub)

@@ -2,6 +2,7 @@
 
 
 from databases import Database
+from pydantic import UUID4
 
 from src.model import LOG_ACTIONS, LOG_RESOURCE_TYPES
 
@@ -13,9 +14,15 @@ class LogsRepository:
     Does not rely on its own database session, but uses the one provided by the current transaction
     """
 
-    def __init__(self, service_provider_id: int, service_account_id: int):
+    def __init__(
+        self,
+        service_provider_id: int,
+        service_account_id: int,
+        acting_user_sub: UUID4 | None = None,
+    ) -> None:
         self.service_provider_id = service_provider_id
         self.service_account_id = service_account_id
+        self.acting_user_sub = acting_user_sub
 
     async def save(
         self,
@@ -28,10 +35,10 @@ class LogsRepository:
         query = """
                     INSERT INTO audit_logs (
                         service_account_id, service_provider_id, action_type, resource_type, resource_id,
-                        new_values
+                        new_values, acting_user_sub
                     ) VALUES (
                         :service_account_id, :service_provider_id, :action_type, :resource_type, :resource_id,
-                        :new_values
+                        :new_values, :acting_user_sub
                     )
                 """
 
@@ -43,6 +50,7 @@ class LogsRepository:
                 "action_type": str(action_type),
                 "resource_type": str(resource_type),
                 "resource_id": resource_id,
+                "acting_user_sub": self.acting_user_sub,
                 "new_values": new_values,
             },
         )

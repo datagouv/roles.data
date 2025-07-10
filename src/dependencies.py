@@ -1,5 +1,8 @@
+from uuid import UUID
+
 from databases import Database
-from fastapi import Depends
+from fastapi import Depends, HTTPException, Request
+from pydantic import EmailStr
 
 from src.auth import decode_access_token
 from src.repositories.admin.admin_repository import AdminRepository
@@ -43,11 +46,28 @@ def get_service_account_id(access_token: dict = Depends(decode_access_token)):
 
 
 def get_logs_service(
+    request: Request,
     service_provider_id=Depends(get_service_provider_id),
     service_account_id=Depends(get_service_account_id),
 ) -> LogsService:
     """Dependency to get LogsService instance."""
-    logs_repository = LogsRepository(service_provider_id, service_account_id)
+
+    acting_user_sub = request.query_params.get("acting_user_sub")
+
+    if acting_user_sub is not None:
+        try:
+            # Cast string to UUID4
+            acting_user_sub = UUID(acting_user_sub)
+        except (ValueError, TypeError):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid UUID format for acting_user_sub: {acting_user_sub}",
+            )
+
+    logs_repository = LogsRepository(
+        service_provider_id, service_account_id, acting_user_sub
+    )
+
     return LogsService(logs_repository)
 
 
@@ -142,11 +162,24 @@ async def get_groups_service(
     )
 
 
+# ================================
+# Admin (web) related dependencies
+# ================================
+
+
+async def get_proconnected_user_email(request: Request):
+    """
+    Dependency function that extracts the ProConnect user email from the request.
+    """
+    return request.session.get("user_email", None)
+
+
 async def get_admin_service(
+    user_email: EmailStr = Depends(get_proconnected_user_email),
     db: Database = Depends(get_db),
 ) -> AdminService:
     """
     Dependency function that provides an AdminService instance.
     """
-    admin_repository = AdminRepository(db)
+    admin_repository = AdminRepository(db, admin_email=user_email)
     return AdminService(admin_repository)

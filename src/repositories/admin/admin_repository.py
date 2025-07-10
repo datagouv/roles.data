@@ -2,6 +2,10 @@
 
 
 from databases import Database
+from fastapi import HTTPException, status
+from pydantic import EmailStr
+
+from config import settings
 
 
 class AdminRepository:
@@ -12,8 +16,15 @@ class AdminRepository:
     Should only be called from the web interface !
     """
 
-    def __init__(self, db_session: Database):
+    def __init__(self, db_session: Database, admin_email: EmailStr):
         self.db_session = db_session
+        self.admin_email = admin_email
+
+        if not self.admin_email or self.admin_email not in settings.SUPER_ADMIN_EMAILS:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="User is not authorized to perform admin operations.",
+            )
 
     async def read_logs(
         self,

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% from "components/logs_table.html" import logs_table %}
+{% from "components/table.html" import data_table %}
+
+{% set headers = ['Date d’ajout', 'Email', 'Role'] %}
+{% macro formatter(user) %}
+<tr>
+    <td>{{ user.created_at.strftime('%d/%m/%Y') }}</td>
+    <td>{{ user.email }}</td>
+    <td>{{ user.role }}</td>
+</tr>
+{% endmacro %}
+
+
+{% block content %}
+<div class="fr-container">
+  <h2>Groupes</h2>
+  {{ data_table(groups_headers, groups, formatter) }}
+
+  <h2>Logs</h2>
+  {{ logs_table(logs) }}
+
+  <br/>
+{% endblock %}

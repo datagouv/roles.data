@@ -57,6 +57,15 @@ class AdminService:
             "logs": logs,
         }
 
+    async def get_users(self):
+        groups = await self.admin_repository.read_group_users(group_id)
+        logs = await self.get_logs(user_id=user_id)
+
+        return {
+            "groups": groups,
+            "logs": logs,
+        }
+
     async def get_service_providers(self):
         return await self.admin_repository.read_service_providers()
 

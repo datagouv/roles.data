@@ -86,7 +86,7 @@ class AdminRepository:
                 INNER JOIN roles AS R ON R.id = GUR.role_id
                 WHERE GUR.group_id = :group_id
             """
-            return await self.db_session.fetch_all(query, values={"group_id": group_id})
+            return await self.db_session.fetch_all(query, values)
 
     async def read_group_scopes(self, group_id: int) -> list[dict]:
         async with self.db_session.transaction():
@@ -118,3 +118,11 @@ class AdminRepository:
             return await self.db_session.fetch_all(
                 query, values={"service_provider_id": service_provider_id}
             )
+
+    async def read_users(self) -> list[dict]:
+        async with self.db_session.transaction():
+            query = """
+                SELECT *
+                FROM users AS U
+            """
+            return await self.db_session.fetch_all(query, {})

@@ -64,6 +64,7 @@ def test_user_not_admin(client):
     response = client.put(
         f"/groups/{new_group_data["id"]}?acting_user_sub={random_sub}&group_name={new_name}"
     )
+
     assert response.status_code == 403
 
 

@@ -18,8 +18,15 @@ class UsersService:
 
     async def verify_user(self, user_email: str, user_sub: UUID4):
         user = await self.get_user_by_email(user_email, only_verified_user=False)
-        if user and not user.is_verified:
-            await self.user_repository.verify_user(user_email, user_sub)
+        if user.is_verified:
+            verified_user_sub = await self.user_repository.get_user_sub(user_email)
+            if verified_user_sub != user_sub:
+                raise HTTPException(
+                    status_code=status.HTTP_406_NOT_ACCEPTABLE,
+                    detail="User is already verified with a different sub.",
+                )
+        else:
+            await self.user_repository.mark_user_as_verified(user_email, user_sub)
 
     async def get_user_by_email(
         self, email: str, only_verified_user: boolean = True

@@ -8,7 +8,7 @@
         <td>{{ group.id }}</td>
         <td>{{ group.created_at.strftime('%d/%m/%Y') }}</td>
         <td>{{ group.updated_at.strftime('%d/%m/%Y') }} {{ group.updated_at.strftime('%H:%M:%S') }}</td>
-        <td>{{group.organisation_name}} ({{ group.organisation_siret }})</td>
+        <td title="{{group.organisation_name}}">{{ group.organisation_siret }}</td>
         <td>{{ group.user_count }}</td>
         <td><a href='/admin/groups/{{group.id}}'>{{ group.name }}</a></td>
     </tr>

@@ -2,7 +2,7 @@
 {% from "components/logs_table.html" import logs_table %}
 {% from "components/table.html" import data_table %}
 
-{% set users_headers = ['Date d’ajout', 'id', 'Role' 'Email'] %}
+{% set users_headers = ['Date d’ajout', 'id', 'Role', 'Email'] %}
 {% macro user_formatter(user) %}
 <tr>
     <td>{{ user.created_at.strftime('%d/%m/%Y') }}</td>

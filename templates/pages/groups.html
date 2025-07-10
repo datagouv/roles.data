@@ -8,7 +8,7 @@
         <td>{{ group.id }}</td>
         <td>{{ group.created_at.strftime('%d/%m/%Y') }}</td>
         <td>{{ group.updated_at.strftime('%d/%m/%Y') }} {{ group.updated_at.strftime('%H:%M:%S') }}</td>
-        <td title="{{group.organisation_name}}">{{ group.organisation_siret }}</td>
+        <td><a title="{{group.organisation_name}}" target="_blank" rel="noreferrer noopener" href="https://annuaire-entreprises.data.gouv.fr/etablissement/{{group.organisation_siret}}">{{ group.organisation_siret }}</a></td>
         <td>{{ group.user_count }}</td>
         <td><a href='/admin/groups/{{group.id}}'>{{ group.name }}</a></td>
     </tr>

@@ -34,8 +34,9 @@ class AdminRepository:
     ) -> list[dict]:
         async with self.db_session.transaction():
             query = """
-                SELECT *
+                SELECT A.*, U.id AS acting_user_id, U.email AS acting_user_email
                 FROM audit_logs as A
+                LEFT JOIN users as U ON U.sub_pro_connect = A.acting_user_sub
                     """
 
             where_conditions = []

@@ -9,22 +9,32 @@
             <span class="fr-text--xs">{{ log.created_at.strftime('%H:%M:%S') }}</span>
         </td>
         <td>
-            <span class="fr-badge fr-badge--sm fr-badge--blue-france">
-                {{ log.resource_type }}
+            <span title="{{log.resource_type}}" class="fr-badge fr-badge--sm fr-badge--blue-france">
+                {{ log.resource_type | truncate(15) }}
             </span>
         </td>
         <td>
             <code class="fr-text--xs">{{ log.resource_id }}</code>
         </td>
-        <td>
-            {{ log.action_type }}
+        <td title="{{ log.action_type }}">
+            {{ log.action_type | truncate(15) }}
         </td>
         <td>
-            {{ log.service_provider_id }}
+            <a href="/admin/service-providers/{{log.service_provider_id}}">SP {{ log.service_provider_id }}
+            | Compte {{ log.service_account_id }}</a>
         </td>
-        <td>{{ log.service_account_id }}</td>
         <td>
-            {{ log.acting_user_sub | truncate(5) }}
+            {% if log.acting_user_sub %}
+                {% if log.acting_user_email %}
+                    <a href="/admin/users/{{ log.acting_user_id }}">{{log.acting_user_email}} </a>
+                {% else %}
+                    <code>{{ log.acting_user_sub | truncate(11) }}</code>
+                {% endif %}
+                <br/>
+            {% else %}
+                <i>Non renseigné</i>
+            {% endif %}
+
         </td>
         <td>
             {% if log.parsed_values %}
@@ -41,7 +51,7 @@
 {% endmacro %}
 
 {% macro logs_table(logs) %}
-    {% set headers = ['Date', 'Heure', 'Resource', 'ID', 'Action', 'Service', 'Compte', 'Utilisateur', 'Valeurs'] %}
+    {% set headers = ['Date', 'Heure', 'Resource', 'ID', 'Action', 'SP', 'Responsable', 'Valeurs'] %}
 
     {{ data_table(headers, logs, log_formatter) }}
 {% endmacro %}

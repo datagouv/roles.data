@@ -5,7 +5,7 @@ from databases import Database
 from fastapi import HTTPException, status
 from pydantic import EmailStr
 
-from config import settings
+from ...config import settings
 
 
 class AdminRepository:

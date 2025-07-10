@@ -47,7 +47,7 @@ class ScopesRepository:
                 resource_type=LOG_RESOURCE_TYPES.GROUP_SERVICE_PROVIDER_RELATION,
                 db_session=self.db_session,
                 resource_id=response["id"],
-                new_values=response,
+                new_values={"scopes": scopes, "contract": contract},
             )
 
             return response

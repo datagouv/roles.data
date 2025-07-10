@@ -8,6 +8,7 @@ from ..model import (
     GroupResponse,
     GroupWithUsersAndScopesResponse,
     OrganisationCreate,
+    UserCreate,
 )
 from ..repositories import groups
 from . import organisations, roles, scopes, users
@@ -93,12 +94,12 @@ class GroupsService:
             group_data, orga_id, self.service_provider_id
         )
 
-        await self.add_user_to_group(new_group.id, admin_user.id, role_id=1)
+        await self.add_user_to_group(new_group.id, user_id=admin_user.id, role_id=1)
 
         if group_data.members:
             for member in group_data.members:
                 user = await self.users_service.create_user_if_doesnt_exist(member)
-                await self.add_user_to_group(new_group.id, user.id, role_id=2)
+                await self.add_user_to_group(new_group.id, user_id=user.id, role_id=2)
 
         return new_group
 
@@ -156,17 +157,34 @@ class GroupsService:
         return await self.groups_repository.update_group(group.id, group_name)
 
     # user management
-    async def add_user_to_group(self, group_id: int, user_id: int, role_id: int):
+    async def add_user_to_group(
+        self,
+        group_id: int,
+        role_id: int,
+        user_email: EmailStr | None = None,
+        user_id: int | None = None,
+    ):
+        if user_email is not None:
+            user = await self.users_service.create_user_if_doesnt_exist(
+                UserCreate(email=user_email)
+            )
+        elif user_id is not None:
+            user = await self.users_service.get_user_by_id(
+                user_id, only_verified_user=False
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="You must provide either user_email or user_id.",
+            )
+
         role = await self.roles_service.get_roles_by_id(role_id)
-        user = await self.users_service.get_user_by_id(
-            user_id, only_verified_user=False
-        )
         group = await self.get_group_with_users_and_scopes(group_id)
 
-        if self.is_user_in_group(group, user_id):
+        if self.is_user_in_group(group, user.id):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"User with ID {user_id} is already in group {group_id}",
+                detail=f"User with ID {user.id} is already in group {group_id}",
             )
 
         return await self.groups_repository.add_user_to_group(

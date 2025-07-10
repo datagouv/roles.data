@@ -1,5 +1,5 @@
 # ------- USER ROUTER FILE -------
-from fastapi import APIRouter, Depends, Path, Query
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
 from pydantic import UUID4, EmailStr
 
 from src.auth import decode_access_token
@@ -29,25 +29,20 @@ async def list_groups(
 
 @router.get("/search", response_model=list[GroupWithUsersAndScopesResponse])
 async def search(
-    email: EmailStr = Query(..., description="Mail de l’utilisateur"),
-    acting_user_sub: UUID4 | None = Query(
-        None, description="Sub de l’utilisateur (facultatif)"
-    ),
+    user_email: EmailStr = Query(..., description="Mail de l’utilisateur"),
+    user_sub: UUID4 = Query(..., description="Sub de l’utilisateur (facultatif)"),
     users_service: UsersService = Depends(get_users_service),
     group_service: GroupsService = Depends(get_groups_service),
 ):
     """
-    Recherche les équipes d’un utilisateur vérifié, avec son adresse e-mail.
+    Recherche les équipes d’un utilisateur, avec son adresse e-mail et son sub ProConnect.
 
-    Si l'utilisateur n'est pas encore vérifié, l’appel échouera et vous devrez vérifier l'utilisateur (cf. `/users/verify`).
-
-    NB : il est possible de vérifier automatiquement l’utilisateur en passant en argument `acting_user_sub`.
+    Cet appel agit comme une verification (cf route `/users/verify`), et permet de "vérifier" le compte de l’utilisateur.
     """
 
-    if acting_user_sub:
-        await users_service.verify_user(user_sub=acting_user_sub, user_email=email)
+    await users_service.verify_user(user_sub=user_sub, user_email=user_email)
 
-    return await group_service.search_groups(email=email)
+    return await group_service.search_groups(user_email=user_email)
 
 
 @router.get("/{group_id}", response_model=GroupWithUsersAndScopesResponse)
@@ -64,6 +59,15 @@ async def by_id(
 @router.post("/", response_model=GroupResponse, status_code=201)
 async def create(
     group: GroupCreate,
+    # sub de l'utilisateur, utilisé par les dépendances
+    acting_user_sub: UUID4 = Query(
+        None,
+        description="Sub ProConnect de l’utilisateur effectuant la demande de création de groupe. Si l’appel est executé côté serveur, signalez-le avec le paramètre `no_acting_user`",
+    ),
+    no_acting_user: bool = Query(
+        False,
+        description="Indique si l'appel est effectué côté serveur. Permet de créer un groupe sans l'intervention d’un utilisateur ProConnecté. Si mis à `True`, `acting_user_sub` n'est pas requis.",
+    ),
     groups_service: GroupsService = Depends(get_groups_service),
 ):
     """
@@ -71,4 +75,11 @@ async def create(
 
     Si l’organisation n’existe pas encore, elle est créée automatiquement.
     """
+
+    if not no_acting_user and not acting_user_sub:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Either provide an acting_user_sub or make the call from the server side",
+        )
+
     return await groups_service.create_group(group)

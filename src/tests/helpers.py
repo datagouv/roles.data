@@ -35,7 +35,7 @@ def random_name():
 def create_group(client):
     """Create a group for testing."""
     new_group_data = random_group()
-    response = client.post("/groups/", json=new_group_data)
+    response = client.post("/groups/?no_acting_user=True", json=new_group_data)
     assert response.status_code == 201
     group = response.json()
     assert group["name"] == new_group_data["name"]

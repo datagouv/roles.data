@@ -24,6 +24,9 @@
         </td>
         <td>{{ log.service_account_id }}</td>
         <td>
+            {{ log.acting_user_sub | truncate(5) }}
+        </td>
+        <td>
             {% if log.parsed_values %}
                 {% for key, value in log.parsed_values.items() %}
                     <span class="fr-badge fr-badge--sm fr-badge--blue-france">
@@ -38,7 +41,7 @@
 {% endmacro %}
 
 {% macro logs_table(logs) %}
-    {% set headers = ['Date', 'Heure', 'Resource', 'ID', 'Action', 'Service', 'Compte', 'Valeurs'] %}
+    {% set headers = ['Date', 'Heure', 'Resource', 'ID', 'Action', 'Service', 'Compte', 'Utilisateur', 'Valeurs'] %}
 
     {{ data_table(headers, logs, log_formatter) }}
 {% endmacro %}

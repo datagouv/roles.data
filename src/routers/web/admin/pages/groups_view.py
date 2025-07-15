@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 
 from src.dependencies import get_admin_service
 from templates.template_manager import Breadcrumb, template_manager
@@ -41,3 +41,15 @@ async def group_explorer(
         context=group,
         breadcrumbs=[Breadcrumb(path="/admin/groups", label="Liste des groupes")],
     )
+
+
+@router.get("/{group_id}/set-admin/{user_id}", response_class=HTMLResponse)
+async def set_admin(
+    group_id: int, user_id: int, admin_service=Depends(get_admin_service)
+):
+    """
+    Allow admin to name a user admin of a specific group
+    """
+    await admin_service.set_admin(group_id, user_id)
+
+    return RedirectResponse(url=f"/admin/groups/{group_id}", status_code=303)

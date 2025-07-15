@@ -117,3 +117,13 @@ class AdminService:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Invalid action: {action}",
             )
+
+    async def set_admin(
+        self,
+        group_id: int,
+        user_id: int,
+    ):
+        """
+        Set a user as admin of a specific group.
+        """
+        return await self.admin_repository.set_admin(group_id, user_id)

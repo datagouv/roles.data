@@ -189,11 +189,20 @@ class AdminRepository:
                 values,
             )
 
-            # # Log the action
-            # await self.logs_service.log_action(
-            #     resource_type="SERVICE_ACCOUNT",
-            #     resource_id=str(account_id),
-            #     action_type="DEACTIVATED",
-            #     service_provider_id=service_provider_id,
-            #     new_values={"is_active": False, "deactivated_by": self.admin_repository.admin_email}
-            # )
+    async def set_admin(
+        self,
+        group_id: int,
+        user_id: int,
+    ) -> None:
+        async with self.db_session.transaction():
+            await self.db_session.execute(
+                """
+                    UPDATE group_user_relations
+                    SET role_id = 1
+                    WHERE group_id = :group_id AND user_id = :user_id
+                    """,
+                values={
+                    "group_id": group_id,
+                    "user_id": user_id,
+                },
+            )

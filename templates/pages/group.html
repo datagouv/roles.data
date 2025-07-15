@@ -2,12 +2,18 @@
 {% from "components/logs_table.html" import logs_table %}
 {% from "components/table.html" import data_table %}
 
-{% set users_headers = ['Date d’ajout', 'id', 'Role', 'Etat', 'Email'] %}
+{% set users_headers = ['Date d’ajout', 'id', 'Role', 'Etat', 'Email', 'Action'] %}
 {% macro user_formatter(user) %}
 <tr>
     <td>{{ user.created_at.strftime('%d/%m/%Y') }}</td>
     <td>{{ user.id }}</td>
-    <td>{{ user.role }}</td>
+    <td>
+      {% if user.role == 'administrateur' %}
+      <span class="fr-badge fr-badge--new">{{user.role}}</span>
+      {% else %}
+      <strong>{{ user.role | upper }}</strong>
+      {% endif %}
+    </td>
     <td>
         {% if user.is_verified %}
         <span class="fr-badge fr-badge--success">
@@ -18,8 +24,17 @@
           Non vérifié
         </span>
         {% endif %}
+      </td>
+      <td><a href="/admin/users/{{user.id}}">{{user.email}}</a></td>
+      <td>
+        {% if user.role != 'administrateur' %}
+          <form method="GET" action="/admin/groups/{{ details.id }}/set-admin/{{ user.id }}" style="display: inline;">
+              <button type="submit" class="fr-btn fr-btn--sm fr-btn--secondary" onclick="return confirm('Êtes-vous sûr de vouloir nommer cet utilisateur administrateur ? Attention, cette action n’est pas logguée et ne peut pas être annulée.')">
+                  Set admin
+              </button>
+          </form>
+        {% endif %}
     </td>
-    <td><a href="/admin/users/{{user.id}}">{{user.email}}</a></td>
 </tr>
 {% endmacro %}
 

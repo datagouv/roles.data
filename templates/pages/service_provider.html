@@ -13,7 +13,7 @@
           hx-get="/admin/service-providers/{{ service_provider_id }}/accounts/{{ sa.id }}/reset-secret"
           hx-target="#secret-cell-{{ sa.id }}"
           hx-swap="innerHTML"
-          hx-confirm="Êtes-vous sûr de vouloir réinitialiser le secret ? Cette action est irréversible."
+          hx-confirm="Êtes-vous sûr de vouloir réinitialiser le secret ? Cette action est irréversible. Attention, cette action n’est pas logguée et ne peut pas être annulée."
           hx-indicator="#loading-{{ sa.id }}">
           Reset
         </button>

@@ -4,26 +4,28 @@ from databases import Database
 from fastapi import Depends, HTTPException, Request
 from pydantic import EmailStr
 
-from src.auth import decode_access_token
-from src.repositories.admin.admin_repository import AdminRepository
-from src.repositories.auth import AuthRepository
-from src.repositories.logs import LogsRepository
-from src.repositories.scopes import ScopesRepository
-from src.repositories.service_providers import ServiceProvidersRepository
-from src.services.admin.admin_service import AdminService
-from src.services.auth import AuthService
-from src.services.logs import LogsService
-from src.services.scopes import ScopesService
-from src.services.services_provider import ServiceProvidersService
+from repositories.admin.admin_read_repository import AdminReadRepository
 
+from .auth import decode_access_token
 from .database import get_db
+from .repositories.admin.admin_write_repository import AdminWriteRepository
+from .repositories.auth import AuthRepository
 from .repositories.groups import GroupsRepository
+from .repositories.logs import LogsRepository
 from .repositories.organisations import OrganisationsRepository
 from .repositories.roles import RolesRepository
+from .repositories.scopes import ScopesRepository
+from .repositories.service_providers import ServiceProvidersRepository
 from .repositories.users import UsersRepository
+from .services.admin.read_service import AdminReadService
+from .services.admin.write_service import AdminWriteService
+from .services.auth import AuthService
 from .services.groups import GroupsService
+from .services.logs import LogsService
 from .services.organisations import OrganisationsService
 from .services.roles import RolesService
+from .services.scopes import ScopesService
+from .services.services_provider import ServiceProvidersService
 from .services.users import UsersService
 
 # =========================
@@ -171,20 +173,32 @@ async def get_proconnected_user_email(request: Request):
     """
     Dependency function that extracts the ProConnect user email from the request.
     """
-    return request.session.get("user_email", None)
-
-
-async def get_admin_service(
-    user_email: EmailStr = Depends(get_proconnected_user_email),
-    db: Database = Depends(get_db),
-) -> AdminService:
-    """
-    Dependency function that provides an AdminService instance.
-    """
+    user_email = request.session.get("user_email", None)
     if not user_email:
         raise HTTPException(
             status_code=403,
             detail="User is not authenticated or does not have admin privileges.",
         )
-    admin_repository = AdminRepository(db, admin_email=user_email)
-    return AdminService(admin_repository)
+    return user_email
+
+
+async def get_admin_read_service(
+    user_email: EmailStr = Depends(get_proconnected_user_email),
+    db: Database = Depends(get_db),
+):
+    """
+    Dependency function that provides an AdminReadService instance.
+    """
+    admin_read_repository = AdminReadRepository(db, admin_email=user_email)
+    return AdminReadService(admin_read_repository)
+
+
+async def get_admin_write_service(
+    user_email: EmailStr = Depends(get_proconnected_user_email),
+    db: Database = Depends(get_db),
+):
+    """
+    Dependency function that provides an AdminWriteService instance.
+    """
+    admin_write_repository = AdminWriteRepository(db, admin_email=user_email)
+    return AdminWriteService(admin_write_repository)

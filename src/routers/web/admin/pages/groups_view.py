@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
-from src.dependencies import get_admin_service
 from templates.template_manager import Breadcrumb, template_manager
+
+from .....dependencies import get_admin_read_service, get_admin_write_service
 
 router = APIRouter(
     prefix="/groups",
@@ -11,7 +12,9 @@ router = APIRouter(
 
 
 @router.get("/", response_class=HTMLResponse)
-async def groups_explorer(request: Request, admin_service=Depends(get_admin_service)):
+async def groups_explorer(
+    request: Request, admin_service=Depends(get_admin_read_service)
+):
     """
     Allow admin to explore all groups
     """
@@ -27,7 +30,7 @@ async def groups_explorer(request: Request, admin_service=Depends(get_admin_serv
 
 @router.get("/{group_id}", response_class=HTMLResponse)
 async def group_explorer(
-    request: Request, group_id: int, admin_service=Depends(get_admin_service)
+    request: Request, group_id: int, admin_service=Depends(get_admin_read_service)
 ):
     """
     Allow admin to explore the detail of one specific group
@@ -45,7 +48,7 @@ async def group_explorer(
 
 @router.get("/{group_id}/set-admin/{user_id}", response_class=HTMLResponse)
 async def set_admin(
-    group_id: int, user_id: int, admin_service=Depends(get_admin_service)
+    group_id: int, user_id: int, admin_service=Depends(get_admin_write_service)
 ):
     """
     Allow admin to name a user admin of a specific group

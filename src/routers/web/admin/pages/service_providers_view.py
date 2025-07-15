@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
-from src.dependencies import get_admin_service
 from templates.template_manager import Breadcrumb, template_manager
+
+from .....dependencies import get_admin_read_service, get_admin_write_service
 
 router = APIRouter(
     prefix="/service-providers",
@@ -12,7 +13,7 @@ router = APIRouter(
 
 @router.get("/", response_class=HTMLResponse)
 async def all_service_providers(
-    request: Request, admin_service=Depends(get_admin_service)
+    request: Request, admin_service=Depends(get_admin_read_service)
 ):
     """
     Allow admin to see the list of service providers
@@ -29,7 +30,9 @@ async def all_service_providers(
 
 @router.get("/{service_provider_id}", response_class=HTMLResponse)
 async def service_provider(
-    request: Request, service_provider_id: int, admin_service=Depends(get_admin_service)
+    request: Request,
+    service_provider_id: int,
+    admin_service=Depends(get_admin_read_service),
 ):
     """
     Allow admin to see the detail of a specific service provider
@@ -56,8 +59,10 @@ async def service_provider(
     "/{service_provider_id}/accounts/{account_id}/reset-secret",
     response_class=HTMLResponse,
 )
-async def show_new_secret(
-    service_provider_id: int, account_id: int, admin_service=Depends(get_admin_service)
+async def reset_secret(
+    service_provider_id: int,
+    account_id: int,
+    admin_service=Depends(get_admin_write_service),
 ):
     """Reset and return the secret"""
     try:
@@ -87,7 +92,7 @@ async def deactivate_service_account(
     service_provider_id: int,
     account_id: int,
     state: bool,
-    admin_service=Depends(get_admin_service),
+    admin_service=Depends(get_admin_write_service),
 ):
     if not isinstance(service_provider_id, int) or service_provider_id <= 0:
         raise HTTPException(

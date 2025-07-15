@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from src.dependencies import get_admin_service
@@ -69,10 +69,11 @@ async def show_new_secret(
                 <code >{new_secret}</code>
             </div>
             """)
-    except Exception as e:
+    except Exception:
         import logging
+
         logging.error("Error while resetting the secret", exc_info=True)
-        return HTMLResponse(f"""
+        return HTMLResponse("""
         <div class="error-display">
             <span class="fr-badge fr-badge--error fr-badge--sm">
                 Une erreur est survenue lors de la réinitialisation du secret.
@@ -88,6 +89,12 @@ async def deactivate_service_account(
     state: bool,
     admin_service=Depends(get_admin_service),
 ):
+    if not isinstance(service_provider_id, int) or service_provider_id <= 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid service_provider_id. It must be a positive integer.",
+        )
+
     await admin_service.update_service_account(
         service_provider_id, account_id, action="activate" if state else "deactivate"
     )

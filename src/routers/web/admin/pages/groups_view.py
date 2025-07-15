@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from src.dependencies import get_admin_service
@@ -50,10 +50,11 @@ async def set_admin(
     """
     Allow admin to name a user admin of a specific group
     """
-    # Validate group_id
     if not isinstance(group_id, int) or group_id <= 0:
-        # Redirect to a safe default page if validation fails
-        return RedirectResponse(url="/admin/groups", status_code=303)
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid group ID. It must be a positive integer.",
+        )
 
     await admin_service.set_admin(group_id, user_id)
 

@@ -4,12 +4,12 @@ from fastapi.openapi.utils import get_openapi
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
-from middleware.force_admin_auth import ForceAdminAuthenticationMiddleware
 from src.routers import groups_admin, groups_scopes
 
 from .config import settings
 from .database import shutdown, startup
 from .documentation import api_description, api_summary, api_tags_metadata
+from .middleware.force_admin_auth import ForceAdminAuthenticationMiddleware
 
 # API routers
 from .routers import groups, health, roles, service_providers, users

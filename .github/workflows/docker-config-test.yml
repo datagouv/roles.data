@@ -31,11 +31,11 @@ jobs:
     - name: Run health checks
       run: |
         # Test postgres connection
-        docker-compose exec -T postgres-local psql -U d-roles -d d-roles -c "SELECT hey FROM d_roles.group_service_provider_relations;"
+        docker compose exec -T postgres-local psql -U d-roles -d d-roles -c "SELECT hey FROM d_roles.group_service_provider_relations;"
 
         # Test app health endpoint
         curl -f http://localhost/health/
 
     - name: Cleanup
       if: always()
-      run: docker-compose down -v
+      run: docker compose down -v

@@ -10,7 +10,6 @@ router = APIRouter(
 )
 
 
-# Add HTML routes alongside your existing API routes
 @router.get("/", response_class=HTMLResponse)
 async def groups_explorer(request: Request, admin_service=Depends(get_admin_service)):
     """

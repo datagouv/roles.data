@@ -20,6 +20,7 @@ class AdminRepository:
         self.db_session = db_session
         self.admin_email = admin_email
 
+        # extra safety check. AdminRepository should never be instantiated without an admin email
         if not self.admin_email or self.admin_email not in settings.SUPER_ADMIN_EMAILS:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -156,3 +157,43 @@ class AdminRepository:
                 WHERE GUR.user_id = :user_id
             """
             return await self.db_session.fetch_all(query, values={"user_id": user_id})
+
+    async def update_service_account(
+        self,
+        service_provider_id: int,
+        service_account_id: int,
+        is_active: bool | None = None,
+        new_hashed_password: str | None = None,
+    ) -> None:
+        async with self.db_session.transaction():
+            set = []
+            values: dict[str, int | str] = {
+                "service_account_id": service_account_id,
+                "service_provider_id": service_provider_id,
+            }
+
+            if is_active is not None:
+                set.append("is_active = :is_active")
+                values["is_active"] = is_active
+
+            if new_hashed_password is not None:
+                set.append("hashed_password = :hashed_password")
+                values["hashed_password"] = new_hashed_password
+
+            await self.db_session.execute(
+                f"""
+                    UPDATE service_accounts
+                    SET {', '.join(set)}, updated_at = CURRENT_TIMESTAMP
+                    WHERE id = :service_account_id AND service_provider_id = :service_provider_id
+                    """,
+                values,
+            )
+
+            # # Log the action
+            # await self.logs_service.log_action(
+            #     resource_type="SERVICE_ACCOUNT",
+            #     resource_id=str(account_id),
+            #     action_type="DEACTIVATED",
+            #     service_provider_id=service_provider_id,
+            #     new_values={"is_active": False, "deactivated_by": self.admin_repository.admin_email}
+            # )

@@ -4,6 +4,7 @@ from fastapi.openapi.utils import get_openapi
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
+from middleware.force_admin_auth import ForceAdminAuthenticationMiddleware
 from src.routers import groups_admin, groups_scopes
 
 from .config import settings
@@ -27,15 +28,6 @@ if settings.SENTRY_DSN != "":
 
 app = FastAPI(redirect_slashes=True, redoc_url="/")
 
-# Add session middleware for web app /admin
-app.add_middleware(
-    SessionMiddleware,
-    secret_key=settings.SESSION_SECRET_KEY,
-    max_age=3600,
-    same_site="lax",
-    https_only=settings.IS_PRODUCTION,
-)
-
 # Add template and static file support
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
@@ -55,7 +47,19 @@ app.include_router(groups_admin.router)
 app.include_router(groups_scopes.router)
 
 # admin interface
+
 app.include_router(admin_home.router, include_in_schema=False)
+
+# In FastAPI/Starlette, middleware is processed in reverse order of how it's added,
+# so the last middleware added is executed first.
+app.add_middleware(ForceAdminAuthenticationMiddleware)
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=settings.SESSION_SECRET_KEY,
+    max_age=3600,
+    same_site="lax",
+    https_only=settings.IS_PRODUCTION,
+)
 
 
 def custom_openapi():

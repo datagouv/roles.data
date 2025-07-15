@@ -2,12 +2,25 @@
 {% from "components/logs_table.html" import logs_table %}
 {% from "components/table.html" import data_table %}
 
-{% set headers = ['Création', 'ID', 'Client ID', 'Compte actif', 'Actions'] %}
+{% set headers = ['Création', 'ID', 'Client ID', 'Client secret', 'Compte actif', 'Activer/désactiver'] %}
 {% macro formatter(sa) %}
 <tr>
     <td>{{ sa.created_at.strftime('%d/%m/%Y') }}</td>
     <td>{{ sa.id }}</td>
     <td>{{ sa.name }}</td>
+    <td id="secret-cell-{{ sa.id }}">
+        <button class="fr-btn fr-btn--sm fr-btn--tertiary"
+          hx-get="/admin/service-providers/{{ service_provider_id }}/accounts/{{ sa.id }}/reset-secret"
+          hx-target="#secret-cell-{{ sa.id }}"
+          hx-swap="innerHTML"
+          hx-confirm="Êtes-vous sûr de vouloir réinitialiser le secret ? Cette action est irréversible."
+          hx-indicator="#loading-{{ sa.id }}">
+          Reset
+        </button>
+        <span id="loading-{{ sa.id }}" class="htmx-indicator">
+            <i>Chargement...</i>
+        </span>
+    </td>
     <td>
       {% if sa.is_active %}
         <span class="fr-badge fr-badge--success">
@@ -19,7 +32,20 @@
         </span>
       {% endif %}
     </td>
-    <td><a>Désactiver le compte</a><br/><a>Reset le secret</a></td>
+    <td>{% if sa.is_active %}
+        <form method="POST" action="/admin/service-providers/{{ service_provider_id }}/accounts/{{ sa.id }}/activate/false" style="display: inline;">
+            <button type="submit" class="fr-btn fr-btn--sm fr-btn--secondary">
+                Désactiver
+            </button>
+        </form>
+    {% else %}
+        <form method="POST" action="/admin/service-providers/{{ service_provider_id }}/accounts/{{ sa.id }}/activate/true" style="display: inline;">
+            <button type="submit" class="fr-btn fr-btn--sm fr-btn--secondary" >
+                Activer
+            </button>
+        </form>
+    {% endif %}
+  </td>
 </tr>
 {% endmacro %}
 

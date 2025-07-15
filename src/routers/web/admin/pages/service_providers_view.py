@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 
 from src.dependencies import get_admin_service
 from templates.template_manager import Breadcrumb, template_manager
@@ -10,7 +10,6 @@ router = APIRouter(
 )
 
 
-# Add HTML routes alongside your existing API routes
 @router.get("/", response_class=HTMLResponse)
 async def all_service_providers(
     request: Request, admin_service=Depends(get_admin_service)
@@ -28,7 +27,6 @@ async def all_service_providers(
     )
 
 
-# Add HTML routes alongside your existing API routes
 @router.get("/{service_provider_id}", response_class=HTMLResponse)
 async def service_provider(
     request: Request, service_provider_id: int, admin_service=Depends(get_admin_service)
@@ -51,4 +49,47 @@ async def service_provider(
                 label="Liste de fournisseurs de service",
             )
         ],
+    )
+
+
+@router.get(
+    "/{service_provider_id}/accounts/{account_id}/reset-secret",
+    response_class=HTMLResponse,
+)
+async def show_new_secret(
+    service_provider_id: int, account_id: int, admin_service=Depends(get_admin_service)
+):
+    """Reset and return the secret"""
+    try:
+        new_secret = await admin_service.update_service_account(
+            service_provider_id, account_id, action="reset_secret"
+        )
+        return HTMLResponse(f"""
+            <div style="background:#eee; padding: 0 10px">
+                <code >{new_secret}</code>
+            </div>
+            """)
+    except Exception as e:
+        return HTMLResponse(f"""
+        <div class="error-display">
+            <span class="fr-badge fr-badge--error fr-badge--sm">
+                Erreur lors de la réinitialisation du secret : {str(e)}
+            </span>
+        </div>
+        """)
+
+
+@router.post("/{service_provider_id}/accounts/{account_id}/activate/{state}")
+async def deactivate_service_account(
+    service_provider_id: int,
+    account_id: int,
+    state: bool,
+    admin_service=Depends(get_admin_service),
+):
+    await admin_service.update_service_account(
+        service_provider_id, account_id, action="activate" if state else "deactivate"
+    )
+
+    return RedirectResponse(
+        url=f"/admin/service-providers/{service_provider_id}", status_code=303
     )

@@ -50,6 +50,11 @@ async def set_admin(
     """
     Allow admin to name a user admin of a specific group
     """
+    # Validate group_id
+    if not isinstance(group_id, int) or group_id <= 0:
+        # Redirect to a safe default page if validation fails
+        return RedirectResponse(url="/admin/groups", status_code=303)
+
     await admin_service.set_admin(group_id, user_id)
 
     return RedirectResponse(url=f"/admin/groups/{group_id}", status_code=303)

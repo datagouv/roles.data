@@ -70,10 +70,12 @@ async def show_new_secret(
             </div>
             """)
     except Exception as e:
+        import logging
+        logging.error("Error while resetting the secret", exc_info=True)
         return HTMLResponse(f"""
         <div class="error-display">
             <span class="fr-badge fr-badge--error fr-badge--sm">
-                Erreur lors de la réinitialisation du secret : {str(e)}
+                Une erreur est survenue lors de la réinitialisation du secret.
             </span>
         </div>
         """)

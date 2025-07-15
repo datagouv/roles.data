@@ -16,7 +16,7 @@ def hash_password(password):
     return pwd_context.hash(password)
 
 
-def generate_random_password(length=16):
+def generate_random_password(length=32):
     """Generate a random password with letters, digits, and special characters."""
     alphabet = string.ascii_letters + string.digits + "!@$%^&*"
     return "".join(secrets.choice(alphabet) for _ in range(length))

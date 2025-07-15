@@ -181,5 +181,10 @@ async def get_admin_service(
     """
     Dependency function that provides an AdminService instance.
     """
+    if not user_email:
+        raise HTTPException(
+            status_code=403,
+            detail="User is not authenticated or does not have admin privileges.",
+        )
     admin_repository = AdminRepository(db, admin_email=user_email)
     return AdminService(admin_repository)

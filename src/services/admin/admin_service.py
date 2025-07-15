@@ -4,6 +4,7 @@ from os import error
 from fastapi import HTTPException, status
 
 from src.repositories.admin.admin_repository import AdminRepository
+from utils.security import generate_random_password, hash_password
 
 
 class AdminService:
@@ -82,4 +83,47 @@ class AdminService:
         service_accounts = await self.admin_repository.read_service_accounts(
             service_provider_id=service_provider_id
         )
-        return {"service_accounts": service_accounts, "logs": logs}
+        return {
+            "service_provider_id": service_provider_id,
+            "service_accounts": service_accounts,
+            "logs": logs,
+        }
+
+    async def update_service_account(
+        self,
+        service_provider_id: int,
+        service_account_id: int,
+        action: str,
+    ) -> str | None:
+        if action == "activate":
+            await self.admin_repository.update_service_account(
+                service_provider_id, service_account_id, is_active=True
+            )
+        elif action == "deactivate":
+            await self.admin_repository.update_service_account(
+                service_provider_id, service_account_id, is_active=False
+            )
+        elif action == "reset_secret":
+            new_password = generate_random_password()
+            new_hashed_password = hash_password(new_password)
+            await self.admin_repository.update_service_account(
+                service_provider_id,
+                service_account_id,
+                new_hashed_password=new_hashed_password,
+            )
+            return new_password
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid action: {action}",
+            )
+
+    async def set_admin(
+        self,
+        group_id: int,
+        user_id: int,
+    ):
+        """
+        Set a user as admin of a specific group.
+        """
+        return await self.admin_repository.set_admin(group_id, user_id)

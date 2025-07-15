@@ -39,7 +39,27 @@
                                 <button data-fr-opened="false" aria-controls="modal-header" title="Menu" type="button" id="button-header" class="fr-btn--menu fr-btn">Menu</button>
                             </div>
                         </div>
+                        <div class="fr-header__service">
+                            <a href="/admin" title="Accueil D-Roles">
+                                <p class="fr-header__service-title">D-Roles</p>
+                            </a>
+                            <p class="fr-header__service-tagline">Interface d'administration</p>
+                        </div>
                     </div>
+
+                <!-- ✅ Add tools section for user info -->
+                {% if is_authenticated %}
+                <div class="fr-header__tools">
+                    <div class="fr-header__tools-links">
+                        <ul class="fr-btns-group">
+                            <li>
+                                <a class="fr-nav__link" href="/auth/pro-connect/logout">Se déconnecter ({{user_email}})</a>
+                            </li>
+                        </ul>
+
+                    </div>
+                </div>
+                {% endif %}
                 </div>
             </div>
         </div>

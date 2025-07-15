@@ -15,7 +15,7 @@ lint:
 	python -m ruff check .
 
 docker: # run application in docker
-	docker-compose up
+	docker-compose up postgres-local app nginx
 
 db_scripts:
 	echo "Using DB_SCHEMA: ${DB_SCHEMA}"

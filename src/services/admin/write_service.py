@@ -1,5 +1,6 @@
 from fastapi import HTTPException, status
 
+from model import ServiceProviderResponse
 from repositories.admin.admin_write_repository import AdminWriteRepository
 from utils.security import generate_random_password, hash_password
 
@@ -49,6 +50,20 @@ class AdminWriteService:
                 detail=f"Invalid action: {action}",
             )
 
+    async def create_service_account(
+        self,
+        service_provider_id: int,
+        client_id: str,
+    ) -> None:
+        """
+        Create a new service account.
+        """
+        new_password = generate_random_password()
+        new_hashed_password = hash_password(new_password)
+        return await self.admin_write_repository.create_service_account(
+            client_id, service_provider_id, new_hashed_password
+        )
+
     async def set_admin(
         self,
         group_id: int,
@@ -58,3 +73,12 @@ class AdminWriteService:
         Set a user as admin of a specific group.
         """
         return await self.admin_write_repository.set_admin(group_id, user_id)
+
+    async def create_service_provider(
+        self,
+        name: str,
+    ) -> ServiceProviderResponse:
+        """
+        Create a new service provider.
+        """
+        return await self.admin_write_repository.create_service_provider(name)

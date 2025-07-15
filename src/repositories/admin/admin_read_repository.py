@@ -1,5 +1,4 @@
 # ------- REPOSITORY FILE -------
-from databases import Database
 from fastapi import HTTPException, status
 from pydantic import EmailStr
 
@@ -14,7 +13,7 @@ class AdminReadRepository:
     Should only be called from the web interface !
     """
 
-    def __init__(self, db_session: Database, admin_email: EmailStr):
+    def __init__(self, db_session, admin_email: EmailStr):
         self.db_session = db_session
         self.admin_email = admin_email
 

@@ -65,6 +65,7 @@ app.add_middleware(
     max_age=3600,
     same_site="lax",
     https_only=settings.IS_PRODUCTION,
+    session_cookie="session",  # Consistent cookie name
 )
 
 

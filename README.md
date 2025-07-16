@@ -13,6 +13,7 @@ API de gestion des droits utilisateurs pour les outils du pôle DATA
 - [Tests](#tests)
 - [Déploiements](#déploiements)
 - [Conventions de code](#conventions-de-code)
+- [Contribuer](#contribuer)
 
 ## Installation
 
@@ -58,9 +59,10 @@ La commande lance 4 containers :
 - nginx (cf `./nginx.conf`)
 - app
 - postgres-local
-- postgres-test
 
 Ce mode permet de tester la conf nginx, le dockerfile et la logique de migration.
+
+Cette commande est systématiquement testée dans la CI par la Github Action `docker-config-test`
 
 ## Base de données
 
@@ -173,3 +175,7 @@ Ce projet utilise Ruff pour le formatage et le linting :
 ```
 make lint
 ```
+
+## Contribuer
+
+Cf [documentation contributeur](CONTRIBUTING.md)

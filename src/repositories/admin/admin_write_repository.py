@@ -1,9 +1,9 @@
 # ------- REPOSITORY FILE -------
-from databases import Database
 from fastapi import HTTPException, status
 from pydantic import EmailStr
 
 from src.config import settings
+from src.model import ServiceProviderResponse
 
 
 class AdminWriteRepository:
@@ -14,7 +14,7 @@ class AdminWriteRepository:
     Should only be called from the web interface !
     """
 
-    def __init__(self, db_session: Database, admin_email: EmailStr):
+    def __init__(self, db_session, admin_email: EmailStr):
         self.db_session = db_session
         self.admin_email = admin_email
 
@@ -24,6 +24,29 @@ class AdminWriteRepository:
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="User is not authorized to perform admin operations.",
             )
+
+    async def create_service_account(
+        self,
+        client_id: str,
+        service_provider_id: int,
+        hashed_password: str | None = None,
+    ) -> None:
+        async with self.db_session.transaction():
+            query = """
+            INSERT INTO service_accounts (
+                service_provider_id,
+                name,
+                hashed_password,
+                is_active
+            )
+            VALUES (:service_provider_id, :name, :hashed_password, TRUE)
+            """
+            values = {
+                "name": client_id,
+                "service_provider_id": service_provider_id,
+                "hashed_password": hashed_password,
+            }
+            return await self.db_session.execute(query, values)
 
     async def update_service_account(
         self,
@@ -73,3 +96,16 @@ class AdminWriteRepository:
                     "user_id": user_id,
                 },
             )
+
+    async def create_service_provider(
+        self,
+        name: str,
+    ) -> ServiceProviderResponse:
+        async with self.db_session.transaction():
+            query = """
+                INSERT INTO service_providers (name, created_at, updated_at)
+                VALUES (:name, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                RETURNING *
+            """
+            values = {"name": name}
+            return await self.db_session.fetch_one(query, values)

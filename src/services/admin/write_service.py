@@ -1,8 +1,9 @@
 from fastapi import HTTPException, status
 
-from model import ServiceProviderResponse
+from ...model import ServiceProviderResponse
 from ...repositories.admin.admin_write_repository import AdminWriteRepository
 from ...utils.security import generate_random_password, hash_password
+
 
 class AdminWriteService:
     """

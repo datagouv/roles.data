@@ -97,7 +97,7 @@ class AdminReadRepository:
     async def read_group_users(self, group_id: int) -> list[dict]:
         async with self.db_session.transaction():
             query = """
-                SELECT U.id, U.email, R.role_name as role, GUR.created_at
+                SELECT U.id, U.email, U.is_verified, R.role_name as role, GUR.created_at
                 FROM group_user_relations AS GUR
                 INNER JOIN users as U ON U.id = GUR.user_id
                 INNER JOIN roles AS R ON R.id = GUR.role_id

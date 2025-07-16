@@ -4,6 +4,7 @@ from fastapi.responses import HTMLResponse
 from templates.template_manager import Breadcrumb, template_manager
 
 from .....dependencies import get_admin_read_service
+from .....services.admin.read_service import AdminReadService
 
 router = APIRouter(
     prefix="/users",
@@ -13,7 +14,7 @@ router = APIRouter(
 
 @router.get("/", response_class=HTMLResponse)
 async def users_explorer(
-    request: Request, admin_service=Depends(get_admin_read_service)
+    request: Request, admin_service: AdminReadService = Depends(get_admin_read_service)
 ):
     """
     Allow admin to explore all groups

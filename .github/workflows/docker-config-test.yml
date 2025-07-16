@@ -1,0 +1,60 @@
+name: Docker Compose Test
+
+on:
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  docker-compose-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3  # Overall job timeout
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Create .env file
+      run: |
+        cat > .env << EOF
+        DB_NAME=d-roles
+        DB_USER=d-roles
+        DB_PASSWORD=d-roles
+        DB_SCHEMA=d_roles
+
+    - name: Build and start services
+      run: make docker &
+
+    - name: Wait for services to be ready
+      run: |
+        echo "Waiting for app to be ready..."
+        timeout 3m bash -c 'until curl -f http://localhost:80/health; do sleep 2; done'
+
+    - name: Run health checks
+      run: |
+        # Test postgres connection
+        docker compose exec -T postgres-local psql -U d-roles -d d-roles -c "SELECT contract FROM d_roles.group_service_provider_relations;"
+
+        # Test app health endpoint
+        curl -f http://localhost/health/
+
+    - name: Show logs on failure
+      if: failure()
+      run: |
+        echo "=== Docker Compose Services ==="
+        docker compose ps -a
+
+        echo "=== App Logs ==="
+        docker compose logs app || echo "No app logs available"
+
+        echo "=== PostgreSQL Logs ==="
+        docker compose logs postgres-local || echo "No postgres logs available"
+
+        echo "=== All Services Logs ==="
+        docker compose logs --tail=50
+
+    - name: Cleanup
+      if: always()
+      run: docker compose down -v

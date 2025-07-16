@@ -20,7 +20,7 @@ class UsersService:
         user = await self.get_user_by_email(user_email, only_verified_user=False)
         if user.is_verified:
             verified_user_sub = await self.user_repository.get_user_sub(user_email)
-            if verified_user_sub != user_sub:
+            if str(verified_user_sub["sub_pro_connect"]) != str(user_sub):
                 raise HTTPException(
                     status_code=status.HTTP_406_NOT_ACCEPTABLE,
                     detail="User is already verified with a different sub.",

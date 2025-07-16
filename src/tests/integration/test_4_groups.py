@@ -162,8 +162,9 @@ def test_search_group_by_user(client):
 def test_get_group_verify_conflict(client):
     new_group_data = create_group(client)
 
+    initial_sub = random_sub_pro_connect()
     admin = new_group_data["admin"]["email"]
-    verify_user(client, admin, random_sub_pro_connect())
+    verify_user(client, admin, initial_sub)
 
     random_sub = random_sub_pro_connect()
     response = client.get(
@@ -175,6 +176,16 @@ def test_get_group_verify_conflict(client):
     )
     # Verify user with a different sub should return 406
     assert response.status_code == 406
+
+    response = client.get(
+        "/groups/search",
+        params={
+            "user_email": new_group_data["admin"]["email"],
+            "user_sub": initial_sub,
+        },
+    )
+    # Verify user with a different sub should return 406
+    assert response.status_code == 200
 
 
 def test_get_group_not_found(client):

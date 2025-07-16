@@ -35,7 +35,7 @@ class UsersRepository:
                 new_values=values,
             )
 
-    async def get_user_sub(self, email: str) -> str:
+    async def get_user_sub(self, email: str):
         async with self.db_session.transaction():
             query = """
             SELECT U.sub_pro_connect FROM users as U WHERE U.email = :email

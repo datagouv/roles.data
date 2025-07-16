@@ -10,6 +10,7 @@ permissions:
 jobs:
   docker-compose-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 3  # Overall job timeout
 
     steps:
     - name: Checkout code
@@ -24,7 +25,7 @@ jobs:
         DB_SCHEMA=d_roles
 
     - name: Build and start services
-      run: make docker
+      run: make docker &
 
     - name: Wait for services to be ready
       run: |
@@ -38,6 +39,21 @@ jobs:
 
         # Test app health endpoint
         curl -f http://localhost/health/
+
+    - name: Show logs on failure
+      if: failure()
+      run: |
+        echo "=== Docker Compose Services ==="
+        docker compose ps -a
+
+        echo "=== App Logs ==="
+        docker compose logs app || echo "No app logs available"
+
+        echo "=== PostgreSQL Logs ==="
+        docker compose logs postgres-local || echo "No postgres logs available"
+
+        echo "=== All Services Logs ==="
+        docker compose logs --tail=50
 
     - name: Cleanup
       if: always()

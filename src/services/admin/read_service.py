@@ -3,7 +3,7 @@ from os import error
 
 from fastapi import HTTPException, status
 
-from repositories.admin.admin_read_repository import AdminReadRepository
+from ...repositories.admin.admin_read_repository import AdminReadRepository
 
 
 class AdminReadService:

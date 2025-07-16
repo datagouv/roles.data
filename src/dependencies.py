@@ -4,10 +4,9 @@ from databases import Database
 from fastapi import Depends, HTTPException, Request
 from pydantic import EmailStr
 
-from repositories.admin.admin_read_repository import AdminReadRepository
-
 from .auth import decode_access_token
 from .database import get_db
+from .repositories.admin.admin_read_repository import AdminReadRepository
 from .repositories.admin.admin_write_repository import AdminWriteRepository
 from .repositories.auth import AuthRepository
 from .repositories.groups import GroupsRepository

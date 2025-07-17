@@ -23,12 +23,17 @@ class ScopesRepository:
             )
 
     async def update(
-        self, service_provider_id: int, group_id: int, scopes: str, contract: str
+        self,
+        service_provider_id: int,
+        group_id: int,
+        scopes: str,
+        contract_description: str,
+        contract_url: str,
     ):
         async with self.db_session.transaction():
             query = """
             UPDATE group_service_provider_relations
-            SET scopes = :scopes, contract = :contract
+            SET scopes = :scopes, contract_description = :contract_description, contract_url = :contract_url
             WHERE service_provider_id = :service_provider_id AND group_id = :group_id
             RETURNING *
             """
@@ -38,7 +43,8 @@ class ScopesRepository:
                     "service_provider_id": service_provider_id,
                     "group_id": group_id,
                     "scopes": scopes,
-                    "contract": contract,
+                    "contract_description": contract_description,
+                    "contract_url": contract_url,
                 },
             )
 
@@ -47,7 +53,11 @@ class ScopesRepository:
                 resource_type=LOG_RESOURCE_TYPES.GROUP_SERVICE_PROVIDER_RELATION,
                 db_session=self.db_session,
                 resource_id=response["id"],
-                new_values={"scopes": scopes, "contract": contract},
+                new_values={
+                    "scopes": scopes,
+                    "contract_description": contract_description,
+                    "contract_url": contract_url,
+                },
             )
 
             return response

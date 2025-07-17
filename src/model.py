@@ -94,8 +94,8 @@ class GroupCreate(GroupBase):
     organisation_siret: Siret
     admin: UserCreate
     scopes: str | None
-    contract: str | None
-    description: str | None = None
+    contract_description: str | None
+    contract_url: HttpUrl | None = None
     members: list[UserCreate] | None = None
 
 
@@ -114,7 +114,8 @@ class GroupWithUsersAndScopesResponse(GroupResponse):
     organisation_siret: Siret
     users: list[UserWithRoleResponse]
     scopes: str
-    contract: str
+    contract_description: str | None
+    contract_url: HttpUrl | None = None
 
 
 class ParentChildCreate(BaseModel):
@@ -146,7 +147,8 @@ class RoleResponse(RoleBase):
 # --- Service Provider & scopes ---
 class ScopeBase(BaseModel):
     scopes: str  # Consider using list[str] if representing multiple scopes
-    contract: str
+    contract_description: str | None
+    contract_url: HttpUrl | None = None
 
 
 class ScopeResponse(ScopeBase):

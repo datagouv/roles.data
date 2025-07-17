@@ -148,7 +148,8 @@ class GroupsService:
         )
 
         group_dict["scopes"] = scopes_and_contract.scopes
-        group_dict["contract"] = scopes_and_contract.contract
+        group_dict["contract_description"] = scopes_and_contract.contract_description
+        group_dict["contract_url"] = scopes_and_contract.contract_url
 
         return GroupWithUsersAndScopesResponse(**group_dict)
 
@@ -229,7 +230,9 @@ class GroupsService:
             group.id, user_id, role.id
         )
 
-    async def update_scopes(self, group_id: int, scopes: str, contract: str):
+    async def update_scopes(
+        self, group_id: int, scopes: str, contract_description: str, contract_url: str
+    ):
         group = await self.get_group_by_id(group_id)
         service_provider = (
             await self.service_provider_service.get_service_provider_by_id(
@@ -241,7 +244,7 @@ class GroupsService:
         await self.scopes_service.get_scopes_and_contract(service_provider.id, group.id)
         # check if the group is linked to the service provider
         return await self.scopes_service.update(
-            service_provider.id, group.id, scopes, contract
+            service_provider.id, group.id, scopes, contract_description, contract_url
         )
 
     def is_user_in_group(

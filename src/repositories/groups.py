@@ -62,7 +62,7 @@ class GroupsRepository:
     ) -> list[GroupWithUsersAndScopesResponse]:
         async with self.db_session.transaction():
             query = """
-            SELECT G.id, G.name, O.siret as organisation_siret, GSPR.scopes, GSPR.contract
+            SELECT G.id, G.name, O.siret as organisation_siret, GSPR.scopes, GSPR.contract_description, GSPR.contract_url
             FROM groups as G
             INNER JOIN organisations AS O ON G.orga_id = O.id
             INNER JOIN group_user_relations AS GUR ON GUR.group_id = G.id
@@ -87,14 +87,19 @@ class GroupsRepository:
                 query_create_group, {"name": group_data.name, "orga_id": orga_id}
             )
 
-            query_create_access = "INSERT INTO group_service_provider_relations (service_provider_id, group_id, scopes, contract) VALUES (:service_provider_id, :group_id, :scopes, :contract)"
+            query_create_access = "INSERT INTO group_service_provider_relations (service_provider_id, group_id, scopes, contract_description, contract_url) VALUES (:service_provider_id, :group_id, :scopes, :contract_description, :contract_url)"
             await self.db_session.execute(
                 query_create_access,
                 {
                     "service_provider_id": service_provider_id,
                     "group_id": new_group.id,
                     "scopes": group_data.scopes if group_data.scopes else "",
-                    "contract": group_data.contract if group_data.contract else "",
+                    "contract_description": group_data.contract_description
+                    if group_data.contract_description
+                    else "",
+                    "contract_url": group_data.contract_url
+                    if group_data.contract_url
+                    else "",
                 },
             )
 
@@ -107,7 +112,12 @@ class GroupsRepository:
                     "name": new_group.name,
                     "orga_id": orga_id,
                     "scopes": group_data.scopes if group_data.scopes else "",
-                    "contract": group_data.contract if group_data.contract else "",
+                    "contract_description": group_data.contract_description
+                    if group_data.contract_description
+                    else "",
+                    "contract_url": group_data.contract_url
+                    if group_data.contract_url
+                    else "",
                 },
             )
 

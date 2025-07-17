@@ -48,7 +48,8 @@ def test_create_group(client):
     assert group["name"] == new_group["name"]
     assert group["organisation_siret"] == new_group["organisation_siret"]
     assert group["scopes"] == new_group["scopes"]
-    assert group["contract"] == new_group["contract"]
+    assert group["contract_description"] == new_group["contract_description"]
+    assert group["contract_url"] == new_group["contract_url"]
 
     assert any(
         user for user in group["users"] if user["email"] == new_group["admin"]["email"]
@@ -124,7 +125,8 @@ def test_search_group_by_user(client):
     assert group[0]["name"] == new_group_data["name"]
     assert group[0]["organisation_siret"] == new_group_data["organisation_siret"]
     assert group[0]["scopes"] == new_group_data["scopes"]
-    assert group[0]["contract"] == new_group_data["contract"]
+    assert group[0]["contract_description"] == new_group_data["contract_description"]
+    assert group[0]["contract_url"] == new_group_data["contract_url"]
 
     assert any(
         (

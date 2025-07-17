@@ -12,7 +12,8 @@ def random_group():
         "organisation_siret": DINUM_SIRET,
         "admin": {"email": f"admin_{random.randint(1000, 9999)}@example.com"},
         "scopes": "read maintain",
-        "contract": "datapass_test",
+        "contract_description": "datapass_test",
+        "contract_url": "https://example.com/contract",
         "members": [{"email": f"member_{random.randint(1000, 9999)}@example.com"}],
     }
 

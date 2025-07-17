@@ -18,7 +18,8 @@ router = APIRouter(
 async def update_group_scopes(
     group_id: int,
     scopes: str | None = "",
-    contract: str | None = "",
+    contract_description: str | None = "",
+    contract_url: str | None = "",
     groups_service: GroupsService = Depends(get_groups_service),
 ):
     """
@@ -27,5 +28,8 @@ async def update_group_scopes(
     - le contrat qui lie le groupe à votre fournisseur de service
     """
     return await groups_service.update_scopes(
-        group_id, scopes if scopes else "", contract if contract else ""
+        group_id,
+        scopes if scopes else "",
+        contract_description if contract_description else "",
+        contract_url if contract_url else "",
     )

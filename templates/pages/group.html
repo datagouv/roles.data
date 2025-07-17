@@ -45,8 +45,8 @@
     <td>{{ scope.created_at.strftime('%d/%m/%Y') }}</td>
     <td>{{ scope.updated_at.strftime('%d/%m/%Y') }} {{ scope.updated_at.strftime('%H:%M:%S') }}</td>
     <td>{{scope.service_provider_name}} ({{ scope.service_provider_id }})</td>
-    <td>{{scope.description}}</td>
-    <td>{{scope.contract}}</td>
+    <td>{{scope.contract_description}}</td>
+    <td>{{scope.contract_url}}</td>
     <td>
       {% if scopes_list %}
         {% for s in scopes_list %}

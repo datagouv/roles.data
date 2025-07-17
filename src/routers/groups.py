@@ -22,7 +22,7 @@ async def list_groups(
     group_service: GroupsService = Depends(get_groups_service),
 ):
     """
-    Liste les équipes disponibles pour votre fournisseur de services.
+    Liste les groupes disponibles pour votre fournisseur de services.
     """
     return await group_service.list_groups()
 
@@ -35,7 +35,7 @@ async def search(
     group_service: GroupsService = Depends(get_groups_service),
 ):
     """
-    Recherche les équipes d’un utilisateur, avec son adresse e-mail et son sub ProConnect.
+    Recherche les groupes d’un utilisateur, avec son adresse e-mail et son sub ProConnect.
 
     Cet appel agit comme une verification (cf route `/users/verify`), et permet de "vérifier" le compte de l’utilisateur.
     """
@@ -51,7 +51,7 @@ async def by_id(
     group_service: GroupsService = Depends(get_groups_service),
 ):
     """
-    Récupère une équipe par son ID. Inclut les utilisateurs, leurs rôles et les droits du groupes sur le fournisseur de service.
+    Récupère un groupe par son ID. Inclut les utilisateurs, leurs rôles et les droits du groupes sur le fournisseur de service.
     """
     return await group_service.get_group_with_users_and_scopes(group_id)
 
@@ -71,7 +71,7 @@ async def create(
     groups_service: GroupsService = Depends(get_groups_service),
 ) -> GroupResponse:
     """
-    Crée une nouvelle équipe.
+    Crée un nouveau groupe.
 
     Si l’organisation n’existe pas encore, elle est créée automatiquement.
     """

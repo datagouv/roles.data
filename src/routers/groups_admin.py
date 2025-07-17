@@ -10,7 +10,7 @@ from ..services.groups import GroupsService
 
 router = APIRouter(
     prefix="/groups",
-    tags=["Administration d’une équipe"],
+    tags=["Administration d’un groupe"],
     dependencies=[Depends(decode_access_token)],
     responses={404: {"description": "Not found"}, 400: {"description": "Bad request"}},
 )
@@ -18,7 +18,7 @@ router = APIRouter(
 
 @router.put("/{group_id}", response_model=GroupResponse)
 async def update_name(
-    group_id: int = Path(..., description="ID de l’équipe"),
+    group_id: int = Path(..., description="ID du groupe"),
     group_name: str = Query(..., description="Nouveau nom"),
     acting_user_sub: UUID4 = Query(
         ..., description="Sub ProConnect de l’utilisateur effectuant la requête"
@@ -26,7 +26,7 @@ async def update_name(
     groups_service: GroupsService = Depends(get_groups_service),
 ):
     """
-    Mise à jour du nom d’une équipe.
+    Mise à jour du nom d’un groupe.
     """
     await groups_service.verify_acting_user_rights(acting_user_sub, group_id)
     return await groups_service.update_group(group_id, group_name)
@@ -36,7 +36,7 @@ async def update_name(
 @router.post("/{group_id}/users", status_code=201)
 async def add_user(
     user_in_group: UserInGroupCreate,
-    group_id: int = Path(..., description="ID de l’équipe"),
+    group_id: int = Path(..., description="ID du groupe"),
     acting_user_sub: UUID4 = Query(
         ..., description="Sub ProConnect de l’utilisateur effectuant la requête"
     ),
@@ -58,7 +58,7 @@ async def add_user(
 
 @router.patch("/{group_id}/users/{user_id}", status_code=200)
 async def update_user_role(
-    group_id: int = Path(..., description="ID de l’équipe"),
+    group_id: int = Path(..., description="ID du groupe"),
     user_id: int = Path(..., description="ID de l’utilisateur"),
     acting_user_sub: UUID4 = Query(
         ..., description="Sub ProConnect de l’utilisateur effectuant la requête"
@@ -67,7 +67,7 @@ async def update_user_role(
     groups_service: GroupsService = Depends(get_groups_service),
 ):
     """
-    Met à jour le rôle d’un utilisateur dans une équipe
+    Met à jour le rôle d’un utilisateur dans un groupe
 
     Si le groupe, l’utilisateur ou le rôle n’existe pas, une erreur 404 sera levée.
     """
@@ -77,7 +77,7 @@ async def update_user_role(
 
 @router.delete("/{group_id}/users/{user_id}", status_code=204)
 async def remove_user(
-    group_id: int = Path(..., description="ID de l’équipe"),
+    group_id: int = Path(..., description="ID du groupe"),
     user_id: int = Path(..., description="ID de l’utilisateur"),
     acting_user_sub: UUID4 = Query(
         ..., description="Sub ProConnect de l’utilisateur effectuant la requête"
@@ -85,7 +85,7 @@ async def remove_user(
     groups_service: GroupsService = Depends(get_groups_service),
 ):
     """
-    Retire un utilisateur d’une équipe.
+    Retire un utilisateur d’un groupe.
 
     Si le groupe, ou l’utilisateur, une erreur 404 sera levée.
     """

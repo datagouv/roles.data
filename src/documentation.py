@@ -53,15 +53,15 @@ api_tags_metadata = [
         "description": "Les rôles disponibles pour les utilisateurs (les utilisateurs sont indépendants du fournisseur de service)",
     },
     {
-        "name": "Équipes",
-        "description": "Création, et récupération des équipes",
+        "name": "Groupes",
+        "description": "Création, et récupération des groupes",
     },
     {
-        "name": "Administration d’une équipe",
-        "description": "Doit nécessairement être executé par un administrateur de l’équipe",
+        "name": "Administration d’une groupe",
+        "description": "Doit nécessairement être executé par un administrateur de l’groupe",
     },
     {
-        "name": "Gestion des droits d’une équipe",
-        "description": "Permet de gérer les droits d’accès d’une équipe sur un fournisseur de service",
+        "name": "Gestion des droits d’une groupe",
+        "description": "Permet de gérer les droits d’accès d’une groupe sur un fournisseur de service",
     },
 ]

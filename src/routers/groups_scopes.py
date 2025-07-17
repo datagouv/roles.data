@@ -8,7 +8,7 @@ from ..services.groups import GroupsService
 
 router = APIRouter(
     prefix="/groups",
-    tags=["Gestion des droits d’une équipe"],
+    tags=["Gestion des droits d’un groupe"],
     dependencies=[Depends(decode_access_token)],
     responses={404: {"description": "Not found"}, 400: {"description": "Bad request"}},
 )
@@ -23,8 +23,8 @@ async def update_group_scopes(
 ):
     """
     Met à jour :
-    - les droits ou `scopes` d’une équipe sur votre fournisseur de service
-    - le contrat qui lie l’équipe à votre fournisseur de service
+    - les droits ou `scopes` d’un groupe sur votre fournisseur de service
+    - le contrat qui lie le groupe à votre fournisseur de service
     """
     return await groups_service.update_scopes(
         group_id, scopes if scopes else "", contract if contract else ""

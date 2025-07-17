@@ -151,7 +151,7 @@ def test_remove_user_from_group(client):
 
     verify_user(client, admin_email, admin_sub)
 
-    # Add user to group
+    # change user role
     client.patch(
         f"/groups/{new_group_data['id']}/users/{user_id}?acting_user_sub={admin_sub}&role_id={role_id}"
     )

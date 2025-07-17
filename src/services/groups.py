@@ -187,9 +187,9 @@ class GroupsService:
                 detail=f"User with ID {user.id} is already in group {group_id}",
             )
 
-        return await self.groups_repository.add_user_to_group(
-            group.id, user.id, role.id
-        )
+        await self.groups_repository.add_user_to_group(group.id, user.id, role.id)
+
+        return user
 
     async def remove_user_from_group(self, group_id: int, user_id: int):
         user = await self.users_service.get_user_by_id(

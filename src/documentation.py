@@ -20,7 +20,7 @@ Tous les utilisateurs du groupe de John héritent du scope `ecriture` sur ma-sta
 
 **Fournisseur de service** : un produit numérique (ex: une startup d’état)
 
-**Scope** : la description des droits d’accès dont dispose une équipe, sur un fournisseur de service (ex: `ecriture` ou `lecture`)
+**Scope** : la description des droits d’accès dont dispose un groupe, sur un fournisseur de service (ex: `ecriture` ou `lecture`)
 
 
 ## Utilisation

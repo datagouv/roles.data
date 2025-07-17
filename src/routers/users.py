@@ -58,7 +58,7 @@ async def confirm_user(
     user_email: EmailStr,
     user_sub: UUID4,
     users_service: UsersService = Depends(get_users_service),
-) -> None:
+) -> UserResponse:
     """
     Enregistre le sub ProConnect d’un utilisateur et permet de "vérifier" l’utilisateur.
 

@@ -24,8 +24,8 @@ VALUES
   (5, 'amandine.audras@beta.gouv.fr', false) ON CONFLICT (id) DO NOTHING;
 
 -- Create the service provider "test"
-INSERT INTO :schema_name.service_providers (id, name)
-VALUES (1, 'droles-test') ON CONFLICT (id) DO NOTHING;
+INSERT INTO :schema_name.service_providers (id, name, url)
+VALUES (1, 'droles-test', 'https://data.gouv.fr') ON CONFLICT (id) DO NOTHING;
 
 -- Add the users to the group with their respective roles
 -- User 1 is an admin (role_id = 1)
@@ -39,8 +39,8 @@ VALUES
   (1, 5, 2) ON CONFLICT (group_id, user_id) DO NOTHING;
 
 -- Add the "read" scope for the group on the service provider "test"
-INSERT INTO :schema_name.group_service_provider_relations (service_provider_id, group_id, scopes, contract)
-VALUES (1, 1, 'administrateur rne nonDiffusible conformite beneficiaires agent pseudo_opendata effectifs_annuels chiffre_affaires travaux_publics liens_capitalistiques liasses_fiscales bilans_bdf', 'datapass_48') ON CONFLICT (service_provider_id, group_id) DO NOTHING;
+INSERT INTO :schema_name.group_service_provider_relations (service_provider_id, group_id, scopes, contract, description)
+VALUES (1, 1, 'administrateur rne nonDiffusible conformite beneficiaires agent pseudo_opendata effectifs_annuels chiffre_affaires travaux_publics liens_capitalistiques liasses_fiscales bilans_bdf', 'datapass_48', 'Habilitation de test') ON CONFLICT (service_provider_id, group_id) DO NOTHING;
 
 -- Insert a service account for a service provider
 INSERT INTO :schema_name.service_accounts (

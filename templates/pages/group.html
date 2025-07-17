@@ -38,19 +38,22 @@
 </tr>
 {% endmacro %}
 
-{% set scopes_headers = ['Creation', 'MAJ', 'Service', 'Scopes'] %}
+{% set scopes_headers = ['Creation', 'MAJ', 'Service', 'Description', 'Contrat', 'Scopes'] %}
 {% macro scope_formatter(scope) %}
 {% set scopes_list = scope.scopes.split(' ') %}
 <tr>
     <td>{{ scope.created_at.strftime('%d/%m/%Y') }}</td>
     <td>{{ scope.updated_at.strftime('%d/%m/%Y') }} {{ scope.updated_at.strftime('%H:%M:%S') }}</td>
     <td>{{scope.service_provider_name}} ({{ scope.service_provider_id }})</td>
+    <td>{{scope.description}}</td>
+    <td>{{scope.contract}}</td>
     <td>
       {% if scopes_list %}
         {% for s in scopes_list %}
             <span class="fr-badge fr-badge--sm">
                 {{ s }}
             </span>
+            <br/>
         {% endfor %}
       {% else %}
           <i>Aucune valeur</i>

@@ -69,7 +69,7 @@ async def create(
         description="Indique si l'appel est effectué côté serveur. Permet de créer un groupe sans l'intervention d’un utilisateur ProConnecté. Si mis à `True`, `acting_user_sub` n'est pas requis.",
     ),
     groups_service: GroupsService = Depends(get_groups_service),
-):
+) -> GroupResponse:
     """
     Crée une nouvelle équipe.
 

@@ -77,3 +77,4 @@ def test_uuid_format(client):
     )
 
     assert response_verify_ok.status_code == 200
+    assert response_verify_ok.json()["is_verified"] is not False

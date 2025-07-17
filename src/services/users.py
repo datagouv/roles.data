@@ -28,6 +28,8 @@ class UsersService:
         else:
             await self.user_repository.mark_user_as_verified(user_email, user_sub)
 
+        return await self.get_user_by_email(user_email, only_verified_user=True)
+
     async def get_user_by_email(
         self, email: str, only_verified_user: boolean = True
     ) -> UserResponse:

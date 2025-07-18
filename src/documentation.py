@@ -57,11 +57,11 @@ api_tags_metadata = [
         "description": "Création, et récupération des groupes",
     },
     {
-        "name": "Administration d’une groupe",
-        "description": "Doit nécessairement être executé par un administrateur de l’groupe",
+        "name": "Administration d’un groupe",
+        "description": "Doit nécessairement être exécuté par un administrateur du groupe",
     },
     {
-        "name": "Gestion des droits d’une groupe",
-        "description": "Permet de gérer les droits d’accès d’une groupe sur un fournisseur de service",
+        "name": "Gestion des droits d’un groupe",
+        "description": "Permet de gérer les droits d’accès d’un groupe sur un fournisseur de service",
     },
 ]

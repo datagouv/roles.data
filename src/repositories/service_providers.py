@@ -11,6 +11,7 @@ class ServiceProvidersRepository:
             SELECT SP.id, SP.name, SP.url
             FROM service_providers as SP
             WHERE SP.id = :service_provider_id
+            ORDER BY SP.id
             """
             return await self.db_session.fetch_one(
                 query, {"service_provider_id": service_provider_id}

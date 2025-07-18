@@ -30,7 +30,6 @@ class ScopesRepository:
         contract_description: str | None = None,
         contract_url: str | None = None,
     ):
-        print(scopes, contract_description, contract_url)
         async with self.db_session.transaction():
             query = """
             UPDATE group_service_provider_relations

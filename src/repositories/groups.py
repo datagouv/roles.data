@@ -49,6 +49,7 @@ class GroupsRepository:
             FROM groups as G
             INNER JOIN organisations AS O ON G.orga_id = O.id
             INNER JOIN group_service_provider_relations AS GSPR ON GSPR.group_id = G.id AND GSPR.service_provider_id = :service_provider_id
+            ORDER BY G.id
             """
             return await self.db_session.fetch_all(
                 query,
@@ -69,6 +70,7 @@ class GroupsRepository:
             INNER JOIN users AS U ON U.id = GUR.user_id
             INNER JOIN group_service_provider_relations AS GSPR ON GSPR.group_id = G.id AND GSPR.service_provider_id = :service_provider_id
             WHERE U.id = :user_id
+            ORDER BY G.id
             """
             return await self.db_session.fetch_all(
                 query,

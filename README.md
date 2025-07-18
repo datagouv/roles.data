@@ -27,7 +27,7 @@ API de gestion des droits utilisateurs pour les outils du pôle DATA
 
 ```bash
 # Cloner le dépôt
-git clone https://github.com/votre-organisation/d-roles.git
+git clone https://github.com/datagouv/d-roles.git
 cd d-roles
 
 # Installer les dépendances
@@ -103,21 +103,6 @@ Ajouter un fichier `db/migrations/{YYYYMMDD}_{description}.sql` avec le SQL néc
 #### Seed
 
 Mettre a jour le fichier seeds (selon l'environnement) dans `db/seeds/{environnement}/seed.sql`
-
-### Actions d’administration et création de comptes de service
-
-Seul un administrateur peut executer ces scripts
-
-```bash
-# crée un nouveau service provider
-make admin_create_service_provider
-
-# crée un nouveau compte de service service
-make admin_create_service_account
-
-# reset le jeton d'un compte de service
-make admin_update_service_account
-```
 
 ## Tests
 

@@ -3,7 +3,7 @@ from typing import Annotated
 from xmlrpc.client import boolean
 
 from fastapi import HTTPException, status
-from pydantic import BaseModel, BeforeValidator, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, BeforeValidator, ConfigDict, EmailStr, Field, HttpUrl
 
 
 def validate_siret(v: str) -> str:
@@ -91,10 +91,11 @@ class GroupBase(BaseModel):
 
 
 class GroupCreate(GroupBase):
-    organisation_siret: Siret  # type: ignore # Optional for group creation
+    organisation_siret: Siret
     admin: UserCreate
     scopes: str | None
-    contract: str | None
+    contract_description: str | None
+    contract_url: HttpUrl | None = None
     members: list[UserCreate] | None = None
 
 
@@ -113,7 +114,8 @@ class GroupWithUsersAndScopesResponse(GroupResponse):
     organisation_siret: Siret
     users: list[UserWithRoleResponse]
     scopes: str
-    contract: str
+    contract_description: str | None
+    contract_url: HttpUrl | None = None
 
 
 class ParentChildCreate(BaseModel):
@@ -145,7 +147,8 @@ class RoleResponse(RoleBase):
 # --- Service Provider & scopes ---
 class ScopeBase(BaseModel):
     scopes: str  # Consider using list[str] if representing multiple scopes
-    contract: str
+    contract_description: str | None
+    contract_url: HttpUrl | None = None
 
 
 class ScopeResponse(ScopeBase):
@@ -157,6 +160,7 @@ class ScopeResponse(ScopeBase):
 
 class ServiceProviderBase(BaseModel):
     name: str
+    url: HttpUrl | None
 
 
 class ServiceProviderResponse(ServiceProviderBase):

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
+from pydantic import HttpUrl, ValidationError
 
 from templates.template_manager import Breadcrumb, template_manager
 
@@ -41,8 +42,20 @@ async def create_service_provider_form(request: Request):
         enforce_authentication=True,
         context={
             "target": "/admin/service-providers/create",
-            "label": "Nom du FS",
-            "label_hint": "Nom qui sera affiché dans l'interface d'administration",
+            "fields": [
+                {
+                    "label": "Nom du FS",
+                    "label_hint": "Nom qui sera affiché dans l'interface d'administration",
+                    "placeholder": "ex: Data.gouv",
+                    "name": "name",
+                },
+                {
+                    "label": "URL du FS",
+                    "label_hint": "URL du fournisseur de service",
+                    "placeholder": "ex: https://data.gouv.fr",
+                    "name": "url",
+                },
+            ],
         },
         breadcrumbs=[
             Breadcrumb(
@@ -63,7 +76,20 @@ async def create_service_provider(
     """
     form = await request.form()
     name = str(form.get("name", ""))
-    service_provider = await admin_service.create_service_provider(name=name)
+
+    url = ""
+
+    try:
+        url = HttpUrl(str(form.get("url", "")))
+    except ValidationError:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid URL format. Please provide a valid URL.",
+        )
+
+    service_provider = await admin_service.create_service_provider(
+        name=name, url=str(url)
+    )
 
     return RedirectResponse(
         url=f"/admin/service-providers/{service_provider.id}", status_code=303
@@ -145,8 +171,14 @@ async def create_service_account_form(
         enforce_authentication=True,
         context={
             "target": target,
-            "label": "client_id du compte de service",
-            "label_hint": "Identifiant unique du compte de service, utilisé pour l'authentification. Pour obtenir le secret, vous devez réinitialiser le compte de service.",
+            "fields": [
+                {
+                    "label": "client_id du compte de service",
+                    "label_hint": "Identifiant unique du compte de service, utilisé pour l'authentification. Pour obtenir le secret, vous devez réinitialiser le compte de service.",
+                    "placeholder": "ex: data-gouv-service-account",
+                    "name": "name",
+                }
+            ],
         },
         breadcrumbs=[
             Breadcrumb(

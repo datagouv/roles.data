@@ -98,14 +98,13 @@ class AdminWriteRepository:
             )
 
     async def create_service_provider(
-        self,
-        name: str,
+        self, name: str, url: str
     ) -> ServiceProviderResponse:
         async with self.db_session.transaction():
             query = """
-                INSERT INTO service_providers (name, created_at, updated_at)
-                VALUES (:name, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                INSERT INTO service_providers (name, url, created_at, updated_at)
+                VALUES (:name, :url, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
                 RETURNING *
             """
-            values = {"name": name}
+            values = {"name": name, "url": url}  # URL is optional, can be set later
             return await self.db_session.fetch_one(query, values)

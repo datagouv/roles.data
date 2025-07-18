@@ -8,7 +8,7 @@ from ..services.groups import GroupsService
 
 router = APIRouter(
     prefix="/groups",
-    tags=["Gestion des droits d’une équipe"],
+    tags=["Gestion des droits d’un groupe"],
     dependencies=[Depends(decode_access_token)],
     responses={404: {"description": "Not found"}, 400: {"description": "Bad request"}},
 )
@@ -17,15 +17,19 @@ router = APIRouter(
 @router.patch("/{group_id}/scopes", status_code=200)
 async def update_group_scopes(
     group_id: int,
-    scopes: str | None = "",
-    contract: str | None = "",
+    scopes: str | None = None,
+    contract_description: str | None = None,
+    contract_url: str | None = None,
     groups_service: GroupsService = Depends(get_groups_service),
 ):
     """
     Met à jour :
-    - les droits ou `scopes` d’une équipe sur votre fournisseur de service
-    - le contrat qui lie l’équipe à votre fournisseur de service
+    - les droits ou `scopes` d’un groupe sur votre fournisseur de service
+    - le contrat qui lie le groupe à votre fournisseur de service
     """
     return await groups_service.update_scopes(
-        group_id, scopes if scopes else "", contract if contract else ""
+        group_id,
+        scopes,
+        contract_description,
+        contract_url,
     )

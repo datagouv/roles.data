@@ -9,9 +9,10 @@
         <td>{{ sp.updated_at.strftime('%d/%m/%Y') }} {{ sp.updated_at.strftime('%H:%M:%S') }}</td>
         <td>{{sp.id}}</td>
         <td><a href='/admin/service-providers/{{sp.id}}'>{{ sp.name }}</a></td>
+        <td><a href='{{ sp.url }}'>{{ sp.url }}</a></td>
     </tr>
 {% endmacro %}
-{% set headers = ['Creation', 'MAJ', 'ID', 'Nom'] %}
+{% set headers = ['Creation', 'MAJ', 'ID', 'Nom', 'Url'] %}
 
 <div class="fr-container">
     <div class="fr-grid-row fr-grid-row--right">

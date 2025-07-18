@@ -186,7 +186,25 @@ def test_get_group_verify_conflict(client):
             "user_sub": initial_sub,
         },
     )
-    # Verify user with a different sub should return 406
+    assert response.status_code == 200
+
+
+def test_get_group_email_with_plus(client):
+    new_group_data = random_group()
+    user = random_user()
+    user_email = "test+" + user["email"]
+
+    new_group_data["admin"]["email"] = user_email
+    response = client.post("/groups/?no_acting_user=True", json=new_group_data)
+    assert response.status_code == 201
+
+    response = client.get(
+        "/groups/search",
+        params={
+            "user_email": new_group_data["admin"]["email"],
+            "user_sub": random_sub_pro_connect(),
+        },
+    )
     assert response.status_code == 200
 
 

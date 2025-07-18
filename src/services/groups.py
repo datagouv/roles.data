@@ -231,7 +231,11 @@ class GroupsService:
         )
 
     async def update_scopes(
-        self, group_id: int, scopes: str, contract_description: str, contract_url: str
+        self,
+        group_id: int,
+        scopes: str | None = None,
+        contract_description: str | None = None,
+        contract_url: str | None = None,
     ):
         group = await self.get_group_by_id(group_id)
         service_provider = (

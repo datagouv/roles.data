@@ -33,9 +33,9 @@ class ScopesService:
         self,
         service_provider_id: int,
         group_id: int,
-        scopes: str,
-        contract_description: str,
-        contract_url: str,
+        scopes: str | None = None,
+        contract_description: str | None = None,
+        contract_url: str | None = None,
     ) -> None:
         existing_scopes = await self.scopes_repository.get(
             service_provider_id, group_id

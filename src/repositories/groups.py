@@ -97,7 +97,7 @@ class GroupsRepository:
                     "contract_description": group_data.contract_description
                     if group_data.contract_description
                     else "",
-                    "contract_url": group_data.contract_url
+                    "contract_url": str(group_data.contract_url)
                     if group_data.contract_url
                     else "",
                 },

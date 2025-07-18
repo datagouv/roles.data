@@ -17,9 +17,9 @@ router = APIRouter(
 @router.patch("/{group_id}/scopes", status_code=200)
 async def update_group_scopes(
     group_id: int,
-    scopes: str | None = "",
-    contract_description: str | None = "",
-    contract_url: str | None = "",
+    scopes: str | None = None,
+    contract_description: str | None = None,
+    contract_url: str | None = None,
     groups_service: GroupsService = Depends(get_groups_service),
 ):
     """
@@ -29,7 +29,7 @@ async def update_group_scopes(
     """
     return await groups_service.update_scopes(
         group_id,
-        scopes if scopes else "",
-        contract_description if contract_description else "",
-        contract_url if contract_url else "",
+        scopes,
+        contract_description,
+        contract_url,
     )

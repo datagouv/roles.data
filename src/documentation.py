@@ -58,7 +58,7 @@ api_tags_metadata = [
     },
     {
         "name": "Administration d’un groupe",
-        "description": "Doit nécessairement être executé par un administrateur de l’groupe",
+        "description": "Doit nécessairement être exécuté par un administrateur du groupe",
     },
     {
         "name": "Gestion des droits d’une groupe",

@@ -53,7 +53,6 @@ app.include_router(groups_admin.router)
 app.include_router(groups_scopes.router)
 
 # admin interface
-
 app.include_router(admin_home.router, include_in_schema=False)
 
 # In FastAPI/Starlette, middleware is processed in reverse order of how it's added,

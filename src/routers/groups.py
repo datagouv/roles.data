@@ -11,7 +11,7 @@ from ..services.groups import GroupsService
 
 router = APIRouter(
     prefix="/groups",
-    tags=["Équipes"],
+    tags=["Groupes"],
     dependencies=[Depends(decode_access_token)],
     responses={404: {"description": "Not found"}, 400: {"description": "Bad request"}},
 )

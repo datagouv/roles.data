@@ -62,6 +62,6 @@ api_tags_metadata = [
     },
     {
         "name": "Gestion des droits d’un groupe",
-        "description": "Permet de gérer les droits d’accès d’une groupe sur un fournisseur de service",
+        "description": "Permet de gérer les droits d’accès d’un groupe sur un fournisseur de service",
     },
 ]

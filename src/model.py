@@ -169,11 +169,6 @@ class ServiceProviderResponse(ServiceProviderBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-class ServiceAccountProviderPair(BaseModel):
-    service_account_id: int
-    service_provider_id: int
-
-
 class ServiceAccountBase(BaseModel):
     is_active: boolean
     name: str

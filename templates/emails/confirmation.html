@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Activation de votre compte</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+          }
+          h1 {
+            text-align: center;
+          }
+          .content {
+            padding: 20px;
+            border: 2px solid #eee;
+            border-radius: 8px 8px 0 0;
+        }
+        .button {
+            display: inline-block;
+            background: #000091;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 4px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        .footer {
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            background: #eee;
+            border-radius: 0 0 8px 8px;
+        }
+    </style>
+</head>
+<body>
+  <div class="content">
+
+    <h1>Activation de votre compte {{ service_provider_name }}</h1>
+
+    <p>Bonjour,</p>
+
+    <p>Vous avez été ajouté au groupe “<i>{{ group_name }}</i>”, qui vous donne accès à <a href="{{ service_provider_url }}">{{ service_provider_name }}</a>.</p>
+
+    <p>Pour activer votre compte, cliquez sur le bouton ci-dessous et authentifiez-vous avec votre compte ProConnect :</p>
+
+    <div style="text-align: center;">
+      <a href="{{ confirmation_link }}" class="button">Activer mon compte</a>
+    </div>
+
+    <p>Si le bouton ne fonctionne pas, copiez et collez ce lien dans votre navigateur : <a href="{{ confirmation_link }}">{{ confirmation_link }}</a></p>
+    <p>Cordialement,<br>L'équipe {{ service_provider_name }}</p>
+  </div>
+  <div class="footer">
+      <p>Cet email a été envoyé par <a href="https://roles.data.gouv.fr">rôles.data.gouv.fr</a> - République Française</p>
+      <p>🇫🇷 Système de gestion des rôles et permissions</p>
+  </div>
+</body>
+</html>

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
-from templates.template_manager import Breadcrumb, template_manager
+from templates.template_manager import Breadcrumb, admin_template_manager
 
 from .....dependencies import get_admin_read_service, get_admin_write_service
 
@@ -19,11 +19,10 @@ async def groups_explorer(
     Allow admin to explore all groups
     """
     groups = await admin_service.get_groups()
-    return template_manager.render(
+    return admin_template_manager.render(
         request,
         "groups.html",
         "Liste des groupes",
-        enforce_authentication=True,
         context={"groups": groups},
     )
 
@@ -36,11 +35,10 @@ async def group_explorer(
     Allow admin to explore the detail of one specific group
     """
     group = await admin_service.get_group_details(group_id)
-    return template_manager.render(
+    return admin_template_manager.render(
         request,
         "group.html",
         f"Groupe {group_id}",
-        enforce_authentication=True,
         context=group,
         breadcrumbs=[Breadcrumb(path="/admin/groups", label="Liste des groupes")],
     )

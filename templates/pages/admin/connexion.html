@@ -1,0 +1,20 @@
+{% extends "base_admin.html" %}
+{% from "components/pro_connect.html" import pro_connect_button %}
+
+{% block content %}
+<div class="fr-container">
+    <p>
+        Bienvenue sur l'espace admin de <strong>Rôles.data.gouv.fr</strong>. Seuls les <strong>administrateurs</strong> peuvent y accèder.
+    </p>
+    {% if not is_authenticated %}
+        {{ pro_connect_button(path="/auth/pro-connect/login/admin") }}
+    {% else %}
+        <p>
+            Vous êtes connecté en tant que <strong>{{ user_email }}</strong>.
+            {% if not is_super_admin %}
+                Vous n'avez pas les droits d'administrateur.
+            {% endif %}
+        </p>
+    {% endif %}
+</div>
+{% endblock %}

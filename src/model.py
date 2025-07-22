@@ -169,7 +169,7 @@ class ServiceProviderResponse(ServiceProviderBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-class ServiceAccountProviderResponse(BaseModel):
+class ServiceAccountProviderPair(BaseModel):
     service_account_id: int
     service_provider_id: int
 

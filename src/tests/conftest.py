@@ -2,7 +2,7 @@ import pytest
 from databases import Database
 from fastapi.testclient import TestClient
 
-from ..auth import decode_access_token
+from ..auth.o_auth import decode_access_token
 from ..config import settings
 from ..database import DatabaseWithSchema, get_db
 from ..main import app

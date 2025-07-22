@@ -4,11 +4,12 @@ from databases import Database
 from fastapi import Depends, HTTPException, Request
 from pydantic import EmailStr
 
-from .auth import decode_access_token
+from .auth.o_auth import decode_access_token
 from .database import get_db
 from .repositories.admin.admin_read_repository import AdminReadRepository
 from .repositories.admin.admin_write_repository import AdminWriteRepository
 from .repositories.auth import AuthRepository
+from .repositories.email import EmailRepository
 from .repositories.groups import GroupsRepository
 from .repositories.logs import LogsRepository
 from .repositories.organisations import OrganisationsRepository
@@ -19,6 +20,7 @@ from .repositories.users import UsersRepository
 from .services.admin.read_service import AdminReadService
 from .services.admin.write_service import AdminWriteService
 from .services.auth import AuthService
+from .services.email import EmailService
 from .services.groups import GroupsService
 from .services.logs import LogsService
 from .services.organisations import OrganisationsService
@@ -26,6 +28,19 @@ from .services.roles import RolesService
 from .services.scopes import ScopesService
 from .services.services_provider import ServiceProvidersService
 from .services.users import UsersService
+
+# =================
+# Mail dependencies
+# =================
+
+
+async def get_email_service() -> EmailService:
+    """
+    Dependency function that provides an EmailService instance.
+    """
+    email_repository = EmailRepository()
+    return EmailService(email_repository)
+
 
 # =========================
 # Access Token dependencies
@@ -145,6 +160,7 @@ async def get_groups_service(
     ),
     scopes_service: ScopesService = Depends(get_scopes_service),
     service_provider_id=Depends(get_service_provider_id),
+    email_service: EmailService = Depends(get_email_service),
     logs_service=Depends(get_logs_service),
 ) -> GroupsService:
     """
@@ -159,12 +175,13 @@ async def get_groups_service(
         organisations_service,
         service_provider_service,
         scopes_service,
+        email_service,
         service_provider_id,
     )
 
 
 # ================================
-# Admin (web) related dependencies
+# Web (UI) related dependencies
 # ================================
 
 

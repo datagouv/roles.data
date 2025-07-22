@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends
 from pydantic import UUID4, EmailStr
 
-from src.auth import decode_access_token
+from auth.o_auth import decode_access_token
 
 from ..dependencies import get_users_service
 from ..model import UserCreate, UserResponse

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import HttpUrl, ValidationError
 
-from templates.template_manager import Breadcrumb, template_manager
+from templates.template_manager import Breadcrumb, admin_template_manager
 
 from .....dependencies import get_admin_read_service, get_admin_write_service
 from .....services.admin.write_service import AdminWriteService
@@ -21,11 +21,10 @@ async def all_service_providers(
     Allow admin to see the list of service providers
     """
     service_providers = await admin_service.get_service_providers()
-    return template_manager.render(
+    return admin_template_manager.render(
         request,
         "service_providers.html",
         "Liste des fournisseurs de service",
-        enforce_authentication=True,
         context={"service_providers": service_providers},
     )
 
@@ -35,11 +34,10 @@ async def create_service_provider_form(request: Request):
     """
     Create a new service provider form
     """
-    return template_manager.render(
+    return admin_template_manager.render(
         request,
         "service_create_form.html",
         "Nouveau FS",
-        enforce_authentication=True,
         context={
             "target": "/admin/service-providers/create",
             "fields": [
@@ -108,11 +106,10 @@ async def service_provider(
     service_provider = await admin_service.get_service_provider_details(
         service_provider_id
     )
-    return template_manager.render(
+    return admin_template_manager.render(
         request,
         "service_provider.html",
         f"FS n° {service_provider_id}",
-        enforce_authentication=True,
         context=service_provider,
         breadcrumbs=[
             Breadcrumb(
@@ -164,11 +161,10 @@ async def create_service_account_form(
     Create a new service provider form
     """
     target = f"/admin/service-providers/{service_provider_id}/account/create"
-    return template_manager.render(
+    return admin_template_manager.render(
         request,
         "service_create_form.html",
         "Nouveau compte de service",
-        enforce_authentication=True,
         context={
             "target": target,
             "fields": [

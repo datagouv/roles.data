@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 
-from templates.template_manager import template_manager
+from templates.template_manager import admin_template_manager
 
 from .pages import groups_view, logs_view, service_providers_view, users_view
 
@@ -18,21 +18,17 @@ router.include_router(service_providers_view.router, include_in_schema=False)
 
 @router.get("/", response_class=HTMLResponse)
 async def home_page(request: Request):
-    return template_manager.render(
+    return admin_template_manager.render(
         request,
         "home.html",
         "Accueil",
-        enforce_authentication=True,
-        context={},
     )
 
 
 @router.get("/login", response_class=HTMLResponse)
 async def login_page(request: Request):
-    return template_manager.render(
+    return admin_template_manager.render(
         request,
         "connexion.html",
         "Connexion",
-        enforce_authentication=False,
-        context={},
     )

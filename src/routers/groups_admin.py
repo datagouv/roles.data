@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends, Path, Query
 from pydantic import UUID4
 
-from src.auth import decode_access_token
+from auth.o_auth import decode_access_token
 from src.dependencies import get_groups_service
 
 from ..model import GroupResponse, UserInGroupCreate

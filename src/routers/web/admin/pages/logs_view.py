@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
 
-from templates.template_manager import template_manager
+from templates.template_manager import admin_template_manager
 
 from .....dependencies import get_admin_read_service
 
@@ -19,10 +19,9 @@ async def logs_explorer(
     Allow admin to explore the logs of any groups for any service provider. Debug purpose only
     """
     logs = await admin_service.get_logs()
-    return template_manager.render(
+    return admin_template_manager.render(
         request,
         "logs.html",
         "Explorateur de logs",
-        enforce_authentication=True,
         context={"logs": logs},
     )

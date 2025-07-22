@@ -7,7 +7,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from .config import settings
 from .database import shutdown, startup
 from .documentation import api_description, api_summary, api_tags_metadata
-from .middleware.force_admin_auth import ForceAdminAuthenticationMiddleware
+from .middleware.force_web_auth import ForceWebAuthenticationMiddleware
 
 # API routers
 from .routers import (
@@ -21,8 +21,9 @@ from .routers import (
 )
 from .routers.auth import auth
 
-# web routers
+# Web routers
 from .routers.web.admin import view as admin_home
+from .routers.web.ui import view as ui_home
 
 if settings.SENTRY_DSN != "":
     sentry_sdk.init(
@@ -52,12 +53,13 @@ app.include_router(groups.router)
 app.include_router(groups_admin.router)
 app.include_router(groups_scopes.router)
 
-# admin interface
+# web interfaces
 app.include_router(admin_home.router, include_in_schema=False)
+app.include_router(ui_home.router, include_in_schema=False)
 
 # In FastAPI/Starlette, middleware is processed in reverse order of how it's added,
 # so the last middleware added is executed first.
-app.add_middleware(ForceAdminAuthenticationMiddleware)
+app.add_middleware(ForceWebAuthenticationMiddleware)
 app.add_middleware(
     SessionMiddleware,
     secret_key=settings.SESSION_SECRET_KEY,
@@ -72,7 +74,7 @@ def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema
     openapi_schema = get_openapi(
-        title="D-rôles",
+        title="API Rôles.data.gouv.fr",
         version="0.0.1",
         summary=api_summary,
         description=api_description,

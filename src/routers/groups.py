@@ -2,7 +2,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
 from pydantic import UUID4, EmailStr
 
-from src.auth import decode_access_token
+from auth.o_auth import decode_access_token
 from src.dependencies import get_groups_service, get_users_service
 from src.services.users import UsersService
 

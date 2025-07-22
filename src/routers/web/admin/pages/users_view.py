@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
 
-from templates.template_manager import Breadcrumb, template_manager
+from templates.template_manager import Breadcrumb, admin_template_manager
 
 from .....dependencies import get_admin_read_service
 from .....services.admin.read_service import AdminReadService
@@ -20,11 +20,10 @@ async def users_explorer(
     Allow admin to explore all groups
     """
     users = await admin_service.get_users()
-    return template_manager.render(
+    return admin_template_manager.render(
         request,
         "utilisateurs.html",
         "Liste des utilisateurs",
-        enforce_authentication=True,
         context={"users": users},
     )
 
@@ -38,11 +37,10 @@ async def user_explorer(
     """
     group = await admin_service.get_user_details(user_id)
 
-    return template_manager.render(
+    return admin_template_manager.render(
         request,
         "utilisateur.html",
         f"Utilisateur {user_id}",
-        enforce_authentication=True,
         context=group,
         breadcrumbs=[Breadcrumb(path="/admin/users", label="Liste des utilisateurs")],
     )

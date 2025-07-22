@@ -23,6 +23,7 @@ dependencies = [
     "authlib>=1.6.0",
     "requests>=2.32.4",
     "itsdangerous>=2.2.0",
+    "fastapi-mail>=1.5.0",
 ]
 
 [dependency-groups]

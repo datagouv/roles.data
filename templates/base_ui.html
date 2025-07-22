@@ -1,0 +1,17 @@
+{% extends "layout.html" %}
+{% from "components/header.html" import header %}
+{% from "components/footer.html" import footer %}
+
+{% block body_content %}
+{{ header(false, is_authenticated, user_email, is_super_admin) }}
+<main>
+    <br/>
+    <div class="fr-container fr-mt-10w">
+        <h1>{{ title }}</h1>
+    </div>
+    {% block content %}{% endblock %}
+    <br/>
+    <div class="fr-container  fr-mb-10w"></div>
+</main>
+{{ footer() }}
+{% endblock %}

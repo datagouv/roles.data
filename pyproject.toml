@@ -1,5 +1,5 @@
 [project]
-name = "d-roles"
+name = "roles.data.gouv.fr"
 version = "0.1.0"
 description = "Gestion des rôles dans le pôle DATA"
 readme = "README.md"

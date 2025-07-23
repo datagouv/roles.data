@@ -1,8 +1,9 @@
 # Présentation de rôles.data
 
-## Pourquoi rôles.data
+## Pourquoi rôles.data ?
 
 ### Avant
+
 ```mermaid
 flowchart TD
     U(Utilisateur)-->C
@@ -14,14 +15,15 @@ flowchart TD
 ```
 
 Avantages : 
-- contrôle technique sur toute la chaine
+- contrôle technique de toute la chaine
 
-Désavantages
+Désavantages :
 - charge technique de toute la chaine
-- pas de mutualisation des bases utilisateurs 
-- gestion des habilitations/demandes d’accès minimaliste
+- pas de mutualisation des bases utilisateurs (problématique de confiance)
+- gestion des habilitations/demandes d’accès lacunaire
 
 ### Aujourd'hui (outils opérateur)
+
 ```mermaid
 flowchart TD
     U(Utilisateur)-->C
@@ -44,11 +46,11 @@ Avantages :
 - authentification et habilitation mutualisée
 - charge technique réduite
 
-Désavantages
+Désavantages :
 - perte d’ownership et d'agilité pour le FS
 - lourdeur du parcours
   - MCP <> ProConnect
-  - pas de délégation de droits (besoin de faire un datapass par user)
+  - pas de délégation de droits (besoin de faire un datapass par user) ou bien le FS gère la delegation lui-même
 
 ### Demain (avec rôles.data)
 
@@ -77,7 +79,7 @@ Avantages :
 - ouvre la possibilité du partage de groupe entre les produits
 - parcours unifié, centré sur ProConnect
 
-Désavantages
+Désavantages :
 - perte d’ownership et d'agilité pour le FS
 
-NB: possibilité d'aller bien plus loin dans l'intégration ProConnecto, Datapasso et Rolo
+NB: il est possible d'aller bien plus loin dans l'intégration entre ProConnecto, Datapasso et Rolo

@@ -1,9 +1,9 @@
-# D-roles
+# Roles.data
 
-[![Run Integration Tests](https://github.com/datagouv/d-roles/actions/workflows/integration_tests.yml/badge.svg)](https://github.com/datagouv/d-roles/actions/workflows/integration_tests.yml)
-[![Create and deploy a new release](https://github.com/datagouv/d-roles/actions/workflows/create-deploy-release.yml/badge.svg)](https://github.com/datagouv/d-roles/actions/workflows/create-deploy-release.yml)
+[![Run Integration Tests](https://github.com/datagouv/roles.data/actions/workflows/integration_tests.yml/badge.svg)](https://github.com/datagouv/roles.data/actions/workflows/integration_tests.yml)
+[![Create and deploy a new release](https://github.com/datagouv/roles.data/actions/workflows/create-deploy-release.yml/badge.svg)](https://github.com/datagouv/roles.data/actions/workflows/create-deploy-release.yml)
 
-API de gestion des droits utilisateurs pour les outils du pôle DATA
+API de gestion des droits utilisateurs pour les outils du pôle DATA. Pour en savoir plus, [découvrez la présentation](PRESENTATION.md).
 
 ## Table des matières
 
@@ -27,8 +27,8 @@ API de gestion des droits utilisateurs pour les outils du pôle DATA
 
 ```bash
 # Cloner le dépôt
-git clone https://github.com/datagouv/d-roles.git
-cd d-roles
+git clone https://github.com/datagouv/roles.data.git
+cd roles.data
 
 # Installer les dépendances
 uv sync

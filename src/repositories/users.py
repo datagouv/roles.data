@@ -35,7 +35,7 @@ class UsersRepository:
                 new_values=values,
             )
 
-    async def get_user_sub(self, email: str) -> str:
+    async def get_user_sub(self, email: str):
         async with self.db_session.transaction():
             query = """
             SELECT U.sub_pro_connect FROM users as U WHERE U.email = :email
@@ -73,6 +73,7 @@ class UsersRepository:
                 INNER JOIN group_user_relations as TUR ON TUR.user_id = U.id
                 INNER JOIN roles as R ON TUR.role_id = R.id
                 WHERE TUR.group_id = :group_id
+                ORDER BY U.id
                 """
             return await self.db_session.fetch_all(query, {"group_id": group_id})
 

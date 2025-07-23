@@ -20,7 +20,7 @@ Tous les utilisateurs du groupe de John héritent du scope `ecriture` sur ma-sta
 
 **Fournisseur de service** : un produit numérique (ex: une startup d’état)
 
-**Scope** : la description des droits d’accès dont dispose une équipe, sur un fournisseur de service (ex: `ecriture` ou `lecture`)
+**Scope** : la description des droits d’accès dont dispose un groupe, sur un fournisseur de service (ex: `ecriture` ou `lecture`)
 
 
 ## Utilisation
@@ -53,15 +53,15 @@ api_tags_metadata = [
         "description": "Les rôles disponibles pour les utilisateurs (les utilisateurs sont indépendants du fournisseur de service)",
     },
     {
-        "name": "Équipes",
-        "description": "Création, et récupération des équipes",
+        "name": "Groupes",
+        "description": "Création, et récupération des groupes",
     },
     {
-        "name": "Administration d’une équipe",
-        "description": "Doit nécessairement être executé par un administrateur de l’équipe",
+        "name": "Administration d’un groupe",
+        "description": "Doit nécessairement être exécuté par un administrateur du groupe",
     },
     {
-        "name": "Gestion des droits d’une équipe",
-        "description": "Permet de gérer les droits d’accès d’une équipe sur un fournisseur de service",
+        "name": "Gestion des droits d’un groupe",
+        "description": "Permet de gérer les droits d’accès d’un groupe sur un fournisseur de service",
     },
 ]

@@ -8,23 +8,25 @@
 
                   <!-- Form field with proper DSFR structure -->
                   <div class="fr-form-group">
-                      <label for="name" class="fr-label">
-                          {{ label}}
+                    {% for field in fields %}
+                      <label for="{{ field.id }}" class="fr-label">
+                          {{ field.label }}
                           <span class="fr-hint-text">
                               {{ label_hint }}
                           </span>
                       </label>
                       <input type="text"
                               autocomplete="off"
-                              id="name"
-                              name="name"
+                              id="{{ field.name }}"
+                              name="{{ field.name }}"
                               class="fr-input"
-                              placeholder="Ex: Mon Service API"
+                              placeholder="{{ field.placeholder }}"
                               required
-                              aria-describedby="name-messages">
-                      <div class="fr-messages-group" id="name-messages" aria-live="assertive">
+                              aria-describedby="{{ field.name }}-messages">
+                      <div class="fr-messages-group" id="{{ field.name }}-messages" aria-live="assertive">
                           <!-- Error messages will appear here -->
                       </div>
+                    {% endfor %}
                   </div>
 
                   <br/>

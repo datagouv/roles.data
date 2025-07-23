@@ -48,7 +48,8 @@ def test_create_group(client):
     assert group["name"] == new_group["name"]
     assert group["organisation_siret"] == new_group["organisation_siret"]
     assert group["scopes"] == new_group["scopes"]
-    assert group["contract"] == new_group["contract"]
+    assert group["contract_description"] == new_group["contract_description"]
+    assert group["contract_url"] == new_group["contract_url"]
 
     assert any(
         user for user in group["users"] if user["email"] == new_group["admin"]["email"]
@@ -124,7 +125,8 @@ def test_search_group_by_user(client):
     assert group[0]["name"] == new_group_data["name"]
     assert group[0]["organisation_siret"] == new_group_data["organisation_siret"]
     assert group[0]["scopes"] == new_group_data["scopes"]
-    assert group[0]["contract"] == new_group_data["contract"]
+    assert group[0]["contract_description"] == new_group_data["contract_description"]
+    assert group[0]["contract_url"] == new_group_data["contract_url"]
 
     assert any(
         (
@@ -162,8 +164,9 @@ def test_search_group_by_user(client):
 def test_get_group_verify_conflict(client):
     new_group_data = create_group(client)
 
+    initial_sub = random_sub_pro_connect()
     admin = new_group_data["admin"]["email"]
-    verify_user(client, admin, random_sub_pro_connect())
+    verify_user(client, admin, initial_sub)
 
     random_sub = random_sub_pro_connect()
     response = client.get(
@@ -175,6 +178,34 @@ def test_get_group_verify_conflict(client):
     )
     # Verify user with a different sub should return 406
     assert response.status_code == 406
+
+    response = client.get(
+        "/groups/search",
+        params={
+            "user_email": new_group_data["admin"]["email"],
+            "user_sub": initial_sub,
+        },
+    )
+    assert response.status_code == 200
+
+
+def test_get_group_email_with_plus(client):
+    new_group_data = random_group()
+    user = random_user()
+    user_email = "test+" + user["email"]
+
+    new_group_data["admin"]["email"] = user_email
+    response = client.post("/groups/?no_acting_user=True", json=new_group_data)
+    assert response.status_code == 201
+
+    response = client.get(
+        "/groups/search",
+        params={
+            "user_email": new_group_data["admin"]["email"],
+            "user_sub": random_sub_pro_connect(),
+        },
+    )
+    assert response.status_code == 200
 
 
 def test_get_group_not_found(client):

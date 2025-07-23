@@ -148,7 +148,8 @@ class GroupsService:
         )
 
         group_dict["scopes"] = scopes_and_contract.scopes
-        group_dict["contract"] = scopes_and_contract.contract
+        group_dict["contract_description"] = scopes_and_contract.contract_description
+        group_dict["contract_url"] = scopes_and_contract.contract_url
 
         return GroupWithUsersAndScopesResponse(**group_dict)
 
@@ -187,9 +188,9 @@ class GroupsService:
                 detail=f"User with ID {user.id} is already in group {group_id}",
             )
 
-        return await self.groups_repository.add_user_to_group(
-            group.id, user.id, role.id
-        )
+        await self.groups_repository.add_user_to_group(group.id, user.id, role.id)
+
+        return user
 
     async def remove_user_from_group(self, group_id: int, user_id: int):
         user = await self.users_service.get_user_by_id(
@@ -229,7 +230,13 @@ class GroupsService:
             group.id, user_id, role.id
         )
 
-    async def update_scopes(self, group_id: int, scopes: str, contract: str):
+    async def update_scopes(
+        self,
+        group_id: int,
+        scopes: str | None = None,
+        contract_description: str | None = None,
+        contract_url: str | None = None,
+    ):
         group = await self.get_group_by_id(group_id)
         service_provider = (
             await self.service_provider_service.get_service_provider_by_id(
@@ -241,7 +248,7 @@ class GroupsService:
         await self.scopes_service.get_scopes_and_contract(service_provider.id, group.id)
         # check if the group is linked to the service provider
         return await self.scopes_service.update(
-            service_provider.id, group.id, scopes, contract
+            service_provider.id, group.id, scopes, contract_description, contract_url
         )
 
     def is_user_in_group(

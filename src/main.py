@@ -53,7 +53,6 @@ app.include_router(groups_admin.router)
 app.include_router(groups_scopes.router)
 
 # admin interface
-
 app.include_router(admin_home.router, include_in_schema=False)
 
 # In FastAPI/Starlette, middleware is processed in reverse order of how it's added,
@@ -73,7 +72,7 @@ def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema
     openapi_schema = get_openapi(
-        title="D-rôles",
+        title="API Rôles.data",
         version="0.0.1",
         summary=api_summary,
         description=api_description,

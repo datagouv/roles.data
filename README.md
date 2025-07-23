@@ -1,9 +1,9 @@
-# D-roles
+# Roles.data
 
-[![Run Integration Tests](https://github.com/datagouv/d-roles/actions/workflows/integration_tests.yml/badge.svg)](https://github.com/datagouv/d-roles/actions/workflows/integration_tests.yml)
-[![Create and deploy a new release](https://github.com/datagouv/d-roles/actions/workflows/create-deploy-release.yml/badge.svg)](https://github.com/datagouv/d-roles/actions/workflows/create-deploy-release.yml)
+[![Run Integration Tests](https://github.com/datagouv/roles.data/actions/workflows/integration_tests.yml/badge.svg)](https://github.com/datagouv/roles.data/actions/workflows/integration_tests.yml)
+[![Create and deploy a new release](https://github.com/datagouv/roles.data/actions/workflows/create-deploy-release.yml/badge.svg)](https://github.com/datagouv/roles.data/actions/workflows/create-deploy-release.yml)
 
-API de gestion des droits utilisateurs pour les outils du pôle DATA
+API de gestion des droits utilisateurs pour les outils du pôle DATA. Pour en savoir plus, [découvrez la présentation](PRESENTATION.md).
 
 ## Table des matières
 
@@ -28,8 +28,8 @@ API de gestion des droits utilisateurs pour les outils du pôle DATA
 
 ```bash
 # Cloner le dépôt
-git clone https://github.com/votre-organisation/d-roles.git
-cd d-roles
+git clone https://github.com/datagouv/roles.data.git
+cd roles.data
 
 # Installer les dépendances
 uv sync
@@ -105,21 +105,6 @@ Ajouter un fichier `db/migrations/{YYYYMMDD}_{description}.sql` avec le SQL néc
 #### Seed
 
 Mettre a jour le fichier seeds (selon l'environnement) dans `db/seeds/{environnement}/seed.sql`
-
-### Actions d’administration et création de comptes de service
-
-Seul un administrateur peut executer ces scripts
-
-```bash
-# crée un nouveau service provider
-make admin_create_service_provider
-
-# crée un nouveau compte de service service
-make admin_create_service_account
-
-# reset le jeton d'un compte de service
-make admin_update_service_account
-```
 
 ## Tests
 

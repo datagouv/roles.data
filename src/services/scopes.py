@@ -21,11 +21,21 @@ class ScopesService:
 
         return ScopeBase(
             scopes=(scopes_response.scopes or "") if scopes_response else "",
-            contract=(scopes_response.contract or "") if scopes_response else "",
+            contract_description=(scopes_response.contract_description or "")
+            if scopes_response
+            else "",
+            contract_url=(scopes_response.contract_url or None)
+            if scopes_response
+            else None,
         )
 
     async def update(
-        self, service_provider_id: int, group_id: int, scopes: str, contract: str
+        self,
+        service_provider_id: int,
+        group_id: int,
+        scopes: str | None = None,
+        contract_description: str | None = None,
+        contract_url: str | None = None,
     ) -> None:
         existing_scopes = await self.scopes_repository.get(
             service_provider_id, group_id
@@ -37,5 +47,5 @@ class ScopesService:
             )
 
         return await self.scopes_repository.update(
-            service_provider_id, group_id, scopes, contract
+            service_provider_id, group_id, scopes, contract_description, contract_url
         )

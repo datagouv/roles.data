@@ -20,5 +20,6 @@ class RolesRepository:
             query = """
             SELECT R.id, R.role_name, R.is_admin
             FROM roles AS R
+            ORDER BY R.id
             """
             return await self.db_session.fetch_all(query)

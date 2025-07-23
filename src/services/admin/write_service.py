@@ -1,8 +1,9 @@
 from fastapi import HTTPException, status
 
-from model import ServiceProviderResponse
+from ...model import ServiceProviderResponse
 from ...repositories.admin.admin_write_repository import AdminWriteRepository
 from ...utils.security import generate_random_password, hash_password
+
 
 class AdminWriteService:
     """
@@ -74,10 +75,9 @@ class AdminWriteService:
         return await self.admin_write_repository.set_admin(group_id, user_id)
 
     async def create_service_provider(
-        self,
-        name: str,
+        self, name: str, url: str
     ) -> ServiceProviderResponse:
         """
         Create a new service provider.
         """
-        return await self.admin_write_repository.create_service_provider(name)
+        return await self.admin_write_repository.create_service_provider(name, url)

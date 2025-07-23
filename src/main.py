@@ -72,7 +72,7 @@ def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema
     openapi_schema = get_openapi(
-        title="D-rôles",
+        title="API Rôles.data",
         version="0.0.1",
         summary=api_summary,
         description=api_description,

@@ -193,7 +193,10 @@ class GroupsService:
 
         role = await self.roles_service.get_roles_by_id(role.id)
         return UserInGroupResponse(
-            **dict(user), role_id=role.id, role_name=role.role_name
+            **dict(user),
+            role_id=role.id,
+            role_name=role.role_name,
+            is_admin=role.is_admin,
         )
 
     async def remove_user_from_group(self, group_id: int, user_id: int):

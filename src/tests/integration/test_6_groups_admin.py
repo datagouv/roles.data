@@ -108,6 +108,7 @@ def test_add_user_to_group_and_update_roles(client):
     assert new_user_in_group["email"] == user_data["email"]
     assert new_user_in_group["role_id"] == role_1["id"]
     assert new_user_in_group["role_name"] == role_1["role_name"]
+    assert new_user_in_group["is_admin"] is True
 
     # Cannot add the same user again
     response_add_user_again = client.post(

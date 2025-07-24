@@ -19,10 +19,10 @@ from .routers import (
     service_providers,
     users,
 )
-from .routers.auth import auth
 
 # web routers
-from .routers.web.admin import view as admin_home
+from .routers.admin import view as admin_home
+from .routers.auth import auth
 
 if settings.SENTRY_DSN != "":
     sentry_sdk.init(

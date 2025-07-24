@@ -5,7 +5,7 @@ from pydantic import UUID4
 from src.auth import decode_access_token
 from src.dependencies import get_groups_service
 
-from ..model import GroupResponse, UserInGroupCreate
+from ..model import GroupResponse, UserInGroupCreate, UserInGroupResponse
 from ..services.groups import GroupsService
 
 router = APIRouter(
@@ -41,7 +41,7 @@ async def add_user(
         ..., description="Sub ProConnect de l’utilisateur effectuant la requête"
     ),
     groups_service: GroupsService = Depends(get_groups_service),
-):
+) -> UserInGroupResponse:
     """
     Ajout d’un utilisateur
 

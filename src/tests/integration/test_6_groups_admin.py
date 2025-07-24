@@ -103,6 +103,12 @@ def test_add_user_to_group_and_update_roles(client):
 
     assert response.status_code == 201
 
+    # response contains the user in the group
+    new_user_in_group = response.json()
+    assert new_user_in_group["email"] == user_data["email"]
+    assert new_user_in_group["role_id"] == role_1["id"]
+    assert new_user_in_group["role_name"] == role_1["role_name"]
+
     # Cannot add the same user again
     response_add_user_again = client.post(
         f"/groups/{new_group_data["id"]}/users?acting_user_sub={admin_sub}",

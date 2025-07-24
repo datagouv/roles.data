@@ -68,7 +68,7 @@ class UsersRepository:
     async def get_users_by_group_id(self, group_id: int) -> list[UserWithRoleResponse]:
         async with self.db_session.transaction():
             query = """
-                SELECT U.id, U.email, U.is_verified, U.created_at, R.role_name, R.is_admin
+                SELECT U.id, U.email, U.is_verified, U.created_at, R.role_name, R.id as role_id, R.is_admin
                 FROM users as U
                 INNER JOIN group_user_relations as TUR ON TUR.user_id = U.id
                 INNER JOIN roles as R ON TUR.role_id = R.id

@@ -128,13 +128,16 @@ def test_search_group_by_user(client):
     assert group[0]["contract_description"] == new_group_data["contract_description"]
     assert group[0]["contract_url"] == new_group_data["contract_url"]
 
-    assert any(
+    user = next(
         (
             user
             for user in group[0]["users"]
             if user["email"] == new_group_data["admin"]["email"]
         )
     )
+    assert user is not None
+    assert user["role_name"] == "administrateur"
+    assert user["role_id"] == 1
 
     # Test non-existent user
     response404 = client.get(

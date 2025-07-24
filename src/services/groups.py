@@ -9,6 +9,7 @@ from ..model import (
     GroupWithUsersAndScopesResponse,
     OrganisationCreate,
     UserCreate,
+    UserInGroupResponse,
 )
 from ..repositories import groups
 from . import organisations, roles, scopes, users
@@ -190,7 +191,10 @@ class GroupsService:
 
         await self.groups_repository.add_user_to_group(group.id, user.id, role.id)
 
-        return user
+        role = await self.roles_service.get_roles_by_id(role.id)
+        return UserInGroupResponse(
+            **dict(user), role_id=role.id, role_name=role.role_name
+        )
 
     async def remove_user_from_group(self, group_id: int, user_id: int):
         user = await self.users_service.get_user_by_id(

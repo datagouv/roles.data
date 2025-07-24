@@ -114,6 +114,7 @@ class UserInGroupCreate(BaseModel):
 class UserInGroupResponse(UserResponse):
     role_id: int
     role_name: str
+    is_admin: bool
 
 
 class GroupWithUsersAndScopesResponse(GroupResponse):

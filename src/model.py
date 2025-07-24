@@ -80,6 +80,7 @@ class UserResponse(UserBase):
 class UserWithRoleResponse(UserBase):
     id: int
     role_name: str
+    role_id: int
     is_admin: bool
 
     model_config = ConfigDict(from_attributes=True)
@@ -108,6 +109,11 @@ class GroupResponse(GroupBase):
 class UserInGroupCreate(BaseModel):
     email: EmailStr
     role_id: int
+
+
+class UserInGroupResponse(UserResponse):
+    role_id: int
+    role_name: str
 
 
 class GroupWithUsersAndScopesResponse(GroupResponse):

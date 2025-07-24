@@ -193,7 +193,10 @@ class GroupsService:
 
         role = await self.roles_service.get_roles_by_id(role.id)
         return UserInGroupResponse(
-            **dict(user), role_id=role.id, role_name=role.role_name
+            **dict(user),
+            role_id=role.id,
+            role_name=role.role_name,
+            is_admin=role.is_admin,
         )
 
     async def remove_user_from_group(self, group_id: int, user_id: int):
@@ -214,6 +217,9 @@ class GroupsService:
     async def update_user_in_group(self, group_id: int, user_id: int, role_id: int):
         # check if the user, is in the group
         role = await self.roles_service.get_roles_by_id(role_id)
+        user = await self.users_service.get_user_by_id(
+            user_id, only_verified_user=False
+        )
         group = await self.get_group_with_users_and_scopes(group_id)
 
         if not self.is_user_in_group(group, user_id):
@@ -230,8 +236,15 @@ class GroupsService:
                         detail=f"Impossible to update user {user_id} role in group {group_id} as it is the only admin of the group.",
                     )
 
-        return await self.groups_repository.update_user_role_in_group(
+        await self.groups_repository.update_user_role_in_group(
             group.id, user_id, role.id
+        )
+
+        return UserInGroupResponse(
+            **dict(user),
+            role_id=role.id,
+            role_name=role.role_name,
+            is_admin=role.is_admin,
         )
 
     async def update_scopes(

@@ -24,7 +24,7 @@ class GroupsService:
     It uses almost every other services as a group is linked organisation, user, user roles and groups
 
     It can only be used in the context of a service provider, which is why it takes a service_provider_id as an argument
-    in the constructor.
+    in the constructor. Note: service_provider_id refers to the business entity ID, not the OAuth2 client credentials.
     """
 
     def __init__(

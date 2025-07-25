@@ -50,6 +50,9 @@ async def get_email_service() -> EmailService:
 def get_service_provider_id(access_token: dict = Depends(decode_access_token)):
     """
     Dependency function that extracts the service provider ID from the access token.
+
+    Returns the business entity ID (from service_providers table) that owns the service account.
+    Use this for business logic, permissions, and group operations.
     """
     return access_token.get("service_provider_id")
 
@@ -57,6 +60,9 @@ def get_service_provider_id(access_token: dict = Depends(decode_access_token)):
 def get_service_account_id(access_token: dict = Depends(decode_access_token)):
     """
     Dependency function that extracts the service account ID from the access token.
+
+    Returns the OAuth2 client credentials ID (from service_accounts table).
+    Use this for technical auth tracking and audit logs only.
     """
     return access_token.get("service_account_id")
 

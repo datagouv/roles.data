@@ -1,15 +1,15 @@
-# Architecture Technique de D-Rôles
+# Architecture Technique de rôles.data.gouv.fr
 
 ## Vue d'ensemble
 
-**D-Rôles** est un **système de gestion des rôles et permissions** construit avec **FastAPI** et **PostgreSQL**, conçu pour l'intégration avec les services de l’administration française via **ProConnect**.
+**rôles.data.gouv.fr** est un **système de gestion des rôles et permissions** construit avec **FastAPI** et **PostgreSQL**, conçu pour l'intégration avec les services de l’administration française via **ProConnect**.
 
 ## Architecture et concepts clefs
 
 L'applicatif peut être découpé en deux parties :
 
-- **API** : le coeur de l'application, qui permet à des fournisseurs de services, munis d’un `client_id` et d’un `client_secret` (OAuth2) de créer, mettre à jour et utiliser **D-rôles**.
-- **L’interface web** : réservés aux administrateurs (membres de la DINUM) de D-rôles. Permet d’effectuer des actions exceptionnelles (nommer un admin, reset ou créer un compte de service etc.)
+- **API** : le coeur de l'application, qui permet à des fournisseurs de services, munis d’un `client_id` et d’un `client_secret` (OAuth2) de créer, mettre à jour et utiliser **rôles.data.gouv.fr**.
+- **L’interface web** : réservés aux administrateurs (membres de la DINUM) de rôles.data.gouv.fr. Permet d’effectuer des actions exceptionnelles (nommer un admin, reset ou créer un compte de service etc.)
 
 ### Stack et partis pris
 
@@ -32,7 +32,7 @@ API :
 
 Web :
 
-- **SSO ProConnect** avec whitelisting des administrateurs de D-rôles
+- **SSO ProConnect** avec whitelisting des administrateurs de rôles.data.gouv.fr
 - **Middleware de session** pour stocker la session après la ProConnexion
 
 ## Structure du Projet

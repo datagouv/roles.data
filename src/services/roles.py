@@ -2,6 +2,8 @@ from fastapi import HTTPException, status
 
 from src.repositories.roles import RolesRepository
 
+from ..model import RoleResponse
+
 
 class RolesService:
     def __init__(self, roles_repository: RolesRepository):
@@ -19,7 +21,7 @@ class RolesService:
                 detail="is_admin must be a boolean.",
             )
 
-    async def get_roles_by_id(self, role_id: int):
+    async def get_roles_by_id(self, role_id: int) -> RoleResponse:
         """
         Get a role by its ID
         """

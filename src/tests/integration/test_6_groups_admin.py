@@ -103,6 +103,13 @@ def test_add_user_to_group_and_update_roles(client):
 
     assert response.status_code == 201
 
+    # response contains the user in the group
+    new_user_in_group = response.json()
+    assert new_user_in_group["email"] == user_data["email"]
+    assert new_user_in_group["role_id"] == role_1["id"]
+    assert new_user_in_group["role_name"] == role_1["role_name"]
+    assert new_user_in_group["is_admin"] is True
+
     # Cannot add the same user again
     response_add_user_again = client.post(
         f"/groups/{new_group_data["id"]}/users?acting_user_sub={admin_sub}",
@@ -118,9 +125,14 @@ def test_add_user_to_group_and_update_roles(client):
     assert find_user["role_name"] == role_1["role_name"]
 
     # Update user role in group
-    client.patch(
+    updated_user_response = client.patch(
         f"/groups/{new_group_data["id"]}/users/{user_id}?acting_user_sub={admin_sub}&role_id={role_2['id']}"
     )
+
+    updated_user = updated_user_response.json()
+    assert updated_user["email"] == user_data["email"]
+    assert updated_user["role_name"] == role_2["role_name"]
+    assert updated_user["is_admin"] is False
 
     # Verify user has new role in the group
     group_details = client.get(f"/groups/{new_group_data["id"]}")

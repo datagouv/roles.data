@@ -3,7 +3,7 @@ from fastapi.responses import HTMLResponse
 
 from templates.template_manager import admin_template_manager
 
-from .....dependencies import get_admin_read_service
+from ....dependencies import get_admin_read_service
 
 router = APIRouter(
     prefix="/logs",

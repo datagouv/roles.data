@@ -3,7 +3,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 
 from templates.template_manager import Breadcrumb, admin_template_manager
 
-from .....dependencies import get_admin_read_service, get_admin_write_service
+from ....dependencies import get_admin_read_service, get_admin_write_service
 
 router = APIRouter(
     prefix="/groups",

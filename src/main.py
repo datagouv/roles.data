@@ -19,6 +19,8 @@ from .routers import (
     service_providers,
     users,
 )
+
+# web routers
 from .routers.auth import auth
 
 # Web routers

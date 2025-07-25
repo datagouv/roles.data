@@ -1,9 +1,13 @@
+<<<<<<< HEAD
 # Rôles.data.gouv.fr
+=======
+# Roles.data
+>>>>>>> main
 
-[![Run Integration Tests](https://github.com/datagouv/d-roles/actions/workflows/integration_tests.yml/badge.svg)](https://github.com/datagouv/d-roles/actions/workflows/integration_tests.yml)
-[![Create and deploy a new release](https://github.com/datagouv/d-roles/actions/workflows/create-deploy-release.yml/badge.svg)](https://github.com/datagouv/d-roles/actions/workflows/create-deploy-release.yml)
+[![Run Integration Tests](https://github.com/datagouv/roles.data/actions/workflows/integration_tests.yml/badge.svg)](https://github.com/datagouv/roles.data/actions/workflows/integration_tests.yml)
+[![Create and deploy a new release](https://github.com/datagouv/roles.data/actions/workflows/create-deploy-release.yml/badge.svg)](https://github.com/datagouv/roles.data/actions/workflows/create-deploy-release.yml)
 
-API de gestion des droits utilisateurs pour les outils du pôle DATA
+API de gestion des droits utilisateurs pour les outils du pôle DATA. Pour en savoir plus, [découvrez la présentation](PRESENTATION.md).
 
 ## Table des matières
 
@@ -13,6 +17,7 @@ API de gestion des droits utilisateurs pour les outils du pôle DATA
 - [Tests](#tests)
 - [Déploiements](#déploiements)
 - [Conventions de code](#conventions-de-code)
+- [Contribuer](#contribuer)
 
 ## Installation
 
@@ -27,8 +32,8 @@ API de gestion des droits utilisateurs pour les outils du pôle DATA
 
 ```bash
 # Cloner le dépôt
-git clone https://github.com/datagouv/d-roles.git
-cd d-roles
+git clone https://github.com/datagouv/roles.data.git
+cd roles.data
 
 # Installer les dépendances
 uv sync
@@ -58,10 +63,15 @@ La commande lance les containers :
 - nginx (cf `./nginx.conf`)
 - app
 - postgres-local
+<<<<<<< HEAD
 - postgres-test
 - smtp-local
+=======
+>>>>>>> main
 
 Ce mode permet de tester la conf nginx, le dockerfile et la logique de migration.
+
+Cette commande est systématiquement testée dans la CI par la Github Action `docker-config-test`
 
 ## Base de données
 
@@ -159,3 +169,7 @@ Ce projet utilise Ruff pour le formatage et le linting :
 ```
 make lint
 ```
+
+## Contribuer
+
+Cf [documentation contributeur](CONTRIBUTING.md)

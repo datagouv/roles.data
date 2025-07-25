@@ -1,7 +1,8 @@
 from fastapi import HTTPException, status
 
-from model import RoleResponse
 from src.repositories.roles import RolesRepository
+
+from ..model import RoleResponse
 
 
 class RolesService:

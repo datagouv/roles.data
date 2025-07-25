@@ -13,6 +13,7 @@ from ..model import (
 )
 from ..repositories import groups
 from . import organisations, roles, scopes, users
+from .email import EmailService
 
 
 class GroupsService:
@@ -24,7 +25,7 @@ class GroupsService:
     It uses almost every other services as a group is linked organisation, user, user roles and groups
 
     It can only be used in the context of a service provider, which is why it takes a service_provider_id as an argument
-    in the constructor.
+    in the constructor. Note: service_provider_id refers to the business entity ID, not the OAuth2 client credentials.
     """
 
     def __init__(
@@ -35,6 +36,7 @@ class GroupsService:
         organisations_service: organisations.OrganisationsService,
         service_provider_service: ServiceProvidersService,
         scopes_service: scopes.ScopesService,
+        email_service: EmailService,
         service_provider_id: int,
     ):
         self.groups_repository = groups_repository
@@ -43,6 +45,7 @@ class GroupsService:
         self.organisations_service = organisations_service
         self.service_provider_service = service_provider_service
         self.scopes_service = scopes_service
+        self.email_service = email_service
         self.service_provider_id = service_provider_id
 
     async def validate_group_data(self, group_data: GroupCreate) -> None:
@@ -190,6 +193,19 @@ class GroupsService:
             )
 
         await self.groups_repository.add_user_to_group(group.id, user.id, role.id)
+
+        if not user.is_verified:
+            service_provider = (
+                await self.service_provider_service.get_service_provider_by_id(
+                    self.service_provider_id
+                )
+            )
+            await self.email_service.confirmation_email(
+                recipients=[user.email],
+                group_name=group.name,
+                service_provider_name=service_provider.name,
+                service_provider_url=service_provider.url,
+            )
 
         role = await self.roles_service.get_roles_by_id(role.id)
         return UserInGroupResponse(

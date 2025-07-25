@@ -6,18 +6,18 @@ from pydantic import EmailStr
 
 from .auth import decode_access_token
 from .database import get_db
-from .repositories.admin.admin_read_repository import AdminReadRepository
-from .repositories.admin.admin_write_repository import AdminWriteRepository
+from .repositories.audit_logs import AuditLogsRepository
 from .repositories.auth import AuthRepository
 from .repositories.groups import GroupsRepository
 from .repositories.logs import LogsRepository
 from .repositories.organisations import OrganisationsRepository
 from .repositories.roles import RolesRepository
 from .repositories.scopes import ScopesRepository
+from .repositories.service_accounts import ServiceAccountsRepository
 from .repositories.service_providers import ServiceProvidersRepository
 from .repositories.users import UsersRepository
-from .services.admin.read_service import AdminReadService
-from .services.admin.write_service import AdminWriteService
+from .services.admin_read_service import AdminReadService
+from .services.admin_write_service import AdminWriteService
 from .services.auth import AuthService
 from .services.groups import GroupsService
 from .services.logs import LogsService
@@ -188,8 +188,25 @@ async def get_admin_read_service(
     """
     Dependency function that provides an AdminReadService instance.
     """
-    admin_read_repository = AdminReadRepository(db, admin_email=user_email)
-    return AdminReadService(admin_read_repository)
+    # Create regular repositories
+    audit_logs_repository = AuditLogsRepository(db)
+    groups_repository = GroupsRepository(
+        db, None
+    )  # No logs service needed for admin reads
+    service_providers_repository = ServiceProvidersRepository(db)
+    service_accounts_repository = ServiceAccountsRepository(db)
+    users_repository = UsersRepository(
+        db, None
+    )  # No logs service needed for admin reads
+
+    return AdminReadService(
+        admin_email=user_email,
+        audit_logs_repository=audit_logs_repository,
+        groups_repository=groups_repository,
+        service_providers_repository=service_providers_repository,
+        service_accounts_repository=service_accounts_repository,
+        users_repository=users_repository,
+    )
 
 
 async def get_admin_write_service(
@@ -199,5 +216,16 @@ async def get_admin_write_service(
     """
     Dependency function that provides an AdminWriteService instance.
     """
-    admin_write_repository = AdminWriteRepository(db, admin_email=user_email)
-    return AdminWriteService(admin_write_repository)
+    # Create regular repositories
+    groups_repository = GroupsRepository(
+        db, None
+    )  # No logs service needed for admin writes
+    service_providers_repository = ServiceProvidersRepository(db)
+    service_accounts_repository = ServiceAccountsRepository(db)
+
+    return AdminWriteService(
+        admin_email=user_email,
+        groups_repository=groups_repository,
+        service_providers_repository=service_providers_repository,
+        service_accounts_repository=service_accounts_repository,
+    )

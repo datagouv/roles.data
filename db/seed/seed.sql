@@ -52,7 +52,7 @@ INSERT INTO :schema_name.service_accounts (
 VALUES (
     1,
     'client_id',
-    '$2b$12$3NJuxRM4j5rnuXtKysMRiujPCd13Z5T5k4Bs7TSPWszFfpPgkyWRa',
+    '$2b$04$.7IQNgnTlWVWp6kBlQPADOOO4Hs8Psi7lZcjb6pdWpwCADaf.03Si',
     true
 ) ON CONFLICT (service_provider_id, name) DO NOTHING;
 

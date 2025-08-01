@@ -3,7 +3,11 @@ import string
 
 from passlib.context import CryptContext
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(
+    schemes=["bcrypt"],
+    deprecated="auto",
+    bcrypt__rounds=8,  # Optimized for performance: ~25ms vs ~200ms with default 12 rounds
+)
 
 
 def verify_password(plain_password, hashed_password):

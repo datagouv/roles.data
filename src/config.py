@@ -44,7 +44,7 @@ class Settings(BaseSettings):
 
     @property
     def DATABASE_URL(self) -> str:
-        return f"postgresql://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT_TEST if self.DB_ENV=='test' else self.DB_PORT}/{self.DB_NAME}"  # type: ignore
+        return f"postgresql://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT_TEST if self.DB_ENV == 'test' else self.DB_PORT}/{self.DB_NAME}"  # type: ignore
 
     @property
     def IS_PRODUCTION(self) -> bool:

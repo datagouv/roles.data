@@ -4,7 +4,7 @@ from fastapi.responses import HTMLResponse
 from templates.template_manager import Breadcrumb, template_manager
 
 from ....dependencies import get_admin_read_service
-from ....services.admin.read_service import AdminReadService
+from ....services.admin_read_service import AdminReadService
 
 router = APIRouter(
     prefix="/users",

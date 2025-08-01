@@ -95,3 +95,25 @@ class UsersRepository:
             )
 
             return user_response
+
+    # Admin-specific methods
+    async def get_all_users(self) -> list[dict]:
+        """Get all users for admin view."""
+        async with self.db_session.transaction():
+            query = """
+                SELECT *
+                FROM users AS U
+            """
+            return await self.db_session.fetch_all(query, {})
+
+    async def get_user_groups(self, user_id: int) -> list[dict]:
+        """Get all groups for a user for admin view."""
+        async with self.db_session.transaction():
+            query = """
+                SELECT G.name, G.id, R.role_name as role, GUR.created_at
+                FROM group_user_relations AS GUR
+                INNER JOIN groups as G ON G.id = GUR.group_id
+                INNER JOIN roles AS R ON R.id = GUR.role_id
+                WHERE GUR.user_id = :user_id
+            """
+            return await self.db_session.fetch_all(query, values={"user_id": user_id})

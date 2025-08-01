@@ -11,6 +11,8 @@ from ..model import (
 
 
 class GroupsRepository:
+    """Repository for group database operations."""
+
     def __init__(self, db_session, logs_service: LogsService):
         self.db_session = db_session
         self.logs_service = logs_service
@@ -197,5 +199,73 @@ class GroupsRepository:
                 new_values={
                     "user_id": user_id,
                     "role_id": role_id,
+                },
+            )
+
+    # Admin-specific methods
+    async def get_all_groups(self, group_ids: list[int] = []) -> list[dict]:
+        """Get all groups for admin view with organization and user count."""
+        async with self.db_session.transaction():
+            query = """
+                SELECT G.*, O.siret AS organisation_siret, O.name AS organisation_name, COUNT(GUR.user_id) AS user_count
+                FROM groups as G
+                INNER JOIN organisations AS O ON O.id = G.orga_id
+                INNER JOIN group_user_relations AS GUR ON GUR.group_id = G.id
+            """
+            where_conditions = []
+            values = {}
+
+            if len(group_ids) > 0:
+                # Create individual parameter placeholders
+                placeholders = ", ".join(
+                    [f":group_id_{i}" for i in range(len(group_ids))]
+                )
+                where_conditions.append(f"G.id IN ({placeholders})")
+
+                # Add individual parameters
+                for i, group_id in enumerate(group_ids):
+                    values[f"group_id_{i}"] = group_id
+
+            if where_conditions:
+                query += " WHERE " + " AND ".join(where_conditions)
+
+            query += " GROUP BY G.id, O.siret, O.name ORDER BY id"
+            return await self.db_session.fetch_all(query, values)
+
+    async def get_group_users(self, group_id: int) -> list[dict]:
+        """Get all users in a group for admin view."""
+        async with self.db_session.transaction():
+            query = """
+                SELECT U.id, U.email, U.is_verified, R.role_name as role, GUR.created_at
+                FROM group_user_relations AS GUR
+                INNER JOIN users as U ON U.id = GUR.user_id
+                INNER JOIN roles AS R ON R.id = GUR.role_id
+                WHERE GUR.group_id = :group_id
+            """
+            return await self.db_session.fetch_all(query, values={"group_id": group_id})
+
+    async def get_group_scopes(self, group_id: int) -> list[dict]:
+        """Get all scopes for a group for admin view."""
+        async with self.db_session.transaction():
+            query = """
+                SELECT GSR.*, SP.name AS service_provider_name
+                FROM group_service_provider_relations AS GSR
+                INNER JOIN service_providers AS SP ON SP.id = GSR.service_provider_id
+                WHERE GSR.group_id = :group_id
+            """
+            return await self.db_session.fetch_all(query, values={"group_id": group_id})
+
+    async def set_user_admin(self, group_id: int, user_id: int) -> None:
+        """Set a user as admin in a group (admin operation)."""
+        async with self.db_session.transaction():
+            await self.db_session.execute(
+                """
+                    UPDATE group_user_relations
+                    SET role_id = 1
+                    WHERE group_id = :group_id AND user_id = :user_id
+                    """,
+                values={
+                    "group_id": group_id,
+                    "user_id": user_id,
                 },
             )

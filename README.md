@@ -1,4 +1,8 @@
+<<<<<<< HEAD
+# Rôles.data.gouv.fr
+=======
 # Roles.data
+>>>>>>> main
 
 [![Run Integration Tests](https://github.com/datagouv/roles.data/actions/workflows/integration_tests.yml/badge.svg)](https://github.com/datagouv/roles.data/actions/workflows/integration_tests.yml)
 [![Create and deploy a new release](https://github.com/datagouv/roles.data/actions/workflows/create-deploy-release.yml/badge.svg)](https://github.com/datagouv/roles.data/actions/workflows/create-deploy-release.yml)
@@ -35,10 +39,10 @@ cd roles.data
 uv sync
 
 # Lancer les conteneurs de base de données
-make db_start
+make docker_local
 
 # Initialiser & migrer la base de données
-make db_scripts
+make db_init
 
 # Lancer l'application
 make start
@@ -54,11 +58,16 @@ Pour tester la configuration docker complète de l'application :
 make docker
 ```
 
-La commande lance 4 containers :
+La commande lance les containers :
 
 - nginx (cf `./nginx.conf`)
 - app
 - postgres-local
+<<<<<<< HEAD
+- postgres-test
+- smtp-local
+=======
+>>>>>>> main
 
 Ce mode permet de tester la conf nginx, le dockerfile et la logique de migration.
 
@@ -86,7 +95,7 @@ docker-compose-up
 psql -h localhost -p 5432 -U d-roles -d d-roles
 
 # executer les migrations et la seed
-make db_scripts
+make db_init
 ```
 
 ### Scripts de provisionnement de la base de données
@@ -112,10 +121,10 @@ Les tests d'intégration tournent sur pytest. La DB postgres-test est une DB dif
 
 ```
 # démarrer la DB
-make db_start
+make docker_local
 
 # test de migrations/seed
-# make db_scripts
+# make db_init
 
 # lancer les tests
 make test

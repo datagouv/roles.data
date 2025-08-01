@@ -30,8 +30,13 @@ class DatabaseWithSchema:
         return getattr(self.db, name)
 
 
-# Create database instance
-database = databases.Database(settings.DATABASE_URL)
+# Create database instance with optimized connection pooling
+database = databases.Database(
+    settings.DATABASE_URL,
+    min_size=5,  # Keep minimum 5 connections open
+    max_size=20,  # Allow up to 20 concurrent connections
+    max_inactive_connection_lifetime=60,  # Close idle connections after 1 minute
+)
 
 
 async def startup():

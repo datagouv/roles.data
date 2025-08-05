@@ -1,10 +1,14 @@
 # ------- USER ROUTER FILE -------
 from fastapi import APIRouter, Depends
 
-from src.auth import decode_access_token
+from auth.o_auth import decode_access_token
+from model import ServiceProviderResponse
 from src.services.services_provider import ServiceProvidersService
 
-from ..dependencies import get_service_provider_id, get_service_providers_service
+from ..dependencies import (
+    get_service_provider_id,
+    get_service_providers_service,
+)
 
 router = APIRouter(
     prefix="/service-providers",
@@ -20,7 +24,7 @@ async def get_service_provider_info(
     service_providers_service: ServiceProvidersService = Depends(
         get_service_providers_service
     ),
-):
+) -> ServiceProviderResponse:
     """
     Récupère les informations du fournisseur de service associé au compte de service.
     """

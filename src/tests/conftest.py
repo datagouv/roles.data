@@ -18,7 +18,6 @@ if settings.DB_ENV != "test":
 async def test_db_startup():
     if not test_db.is_connected:
         await test_db.connect()
-        await test_db.execute(f"SET search_path TO {settings.DB_SCHEMA}")
 
 
 async def test_db_shutdown():
@@ -29,7 +28,7 @@ async def test_db_shutdown():
 async def override_get_db():
     await test_db_startup()
 
-    # always ensure the schema is set (for every connections of the pool)
+    # Create schema-aware database instance for tests
     schema_test_db = DatabaseWithSchema(test_db, settings.DB_SCHEMA)
 
     try:

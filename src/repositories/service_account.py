@@ -4,13 +4,11 @@
 from src.model import ServiceAccountResponse
 
 
-class AuthRepository:
+class ServiceAccountRepository:
     def __init__(self, db_session):
         self.db_session = db_session
 
-    async def get_service_account(
-        self, service_account_name: str
-    ) -> ServiceAccountResponse:
+    async def get(self, service_account_name: str) -> ServiceAccountResponse:
         async with self.db_session.transaction():
             query = """
         SELECT SA.*

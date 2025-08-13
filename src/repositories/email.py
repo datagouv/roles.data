@@ -19,7 +19,7 @@ class EmailRepository:
         )
         self.fastmail = FastMail(self.conf)
 
-    async def send_email(
+    async def send(
         self, recipients: list[str], subject: str, template: str, context: dict
     ):
         message = MessageSchema(

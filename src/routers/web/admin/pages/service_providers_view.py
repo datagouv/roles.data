@@ -4,8 +4,8 @@ from pydantic import HttpUrl, ValidationError
 
 from templates.template_manager import Breadcrumb, admin_template_manager
 
-from ....dependencies import get_admin_read_service, get_admin_write_service
-from ....services.admin.write_service import AdminWriteService
+from .....dependencies import get_admin_read_service, get_admin_write_service
+from .....services.admin.write_service import AdminWriteService
 
 router = APIRouter(
     prefix="/service-providers",

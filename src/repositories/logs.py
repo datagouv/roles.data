@@ -13,6 +13,8 @@ class LogsRepository:
 
     Does not rely on its own database session, but uses the one provided by the current transaction
 
+    When used outside of a service_provider_context (eg. admin ops or user activation), service_provider_id and service_account_id are set to 0
+
     Args:
         service_provider_id: Business entity ID (from service_providers table) - for business context
         service_account_id: OAuth2 client credentials ID (from service_accounts table) - for auth tracking

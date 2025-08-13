@@ -1,5 +1,7 @@
 # ------- REPOSITORY FILE -------
 
+from typing import Any
+
 import httpx
 
 from src.services.logs import LogsService
@@ -18,16 +20,12 @@ class OrganisationsRepository:
         self.db_session = db_session
         self.logs_service = logs_service
 
-    async def get_organisation(
-        self, organisation_data: OrganisationCreate
-    ) -> OrganisationResponse | None:
+    async def get_by_siret(self, siret: Siret) -> OrganisationResponse | None:
         async with self.db_session.transaction():
             query = "SELECT * FROM organisations WHERE siret = :siret"
-            return await self.db_session.fetch_one(
-                query, {"siret": organisation_data.siret}
-            )
+            return await self.db_session.fetch_one(query, {"siret": siret})
 
-    async def create_organisation(
+    async def create(
         self, organisation_data: OrganisationCreate
     ) -> OrganisationResponse:
         async with self.db_session.transaction():
@@ -54,7 +52,7 @@ class OrganisationsRepository:
         If the organisation is not found, it will default to "Organisation inconnue".
         If the API calls fails, we will retry later.
         """
-        name = await self.fetch_organisation_name(siret)
+        name: None | Any = await fetch_organisation_metadata(siret)
 
         async with self.db_session.transaction():
             query = "UPDATE organisations SET name = :name WHERE id = :id"
@@ -70,33 +68,34 @@ class OrganisationsRepository:
 
             return await self.db_session.execute(query, values)
 
-    async def fetch_organisation_name(self, siret: Siret):
-        """
-        Fetch the name of an organisation by its SIREt using the API Recherche Entreprise
 
-        If the organisation is not found, return None.
-        If the API request fails, raise an exception.
-        """
-        async with httpx.AsyncClient(timeout=2.0) as client:
-            # Search by SIREt using the search endpoint
-            url = "https://recherche-entreprises.api.gouv.fr/search"
-            params = {
-                "q": siret,
-                "per_page": 1,  # We only need the first result
-                "page": 1,
-            }
+async def fetch_organisation_metadata(siret: Siret):
+    """
+    Fetch the name of an organisation by its SIREt using the API Recherche Entreprise
 
-            response = await client.get(url, params=params)
-            response.raise_for_status()
+    If the organisation is not found, return None.
+    If the API request fails, raise an exception.
+    """
+    async with httpx.AsyncClient(timeout=2.0) as client:
+        # Search by SIREt using the search endpoint
+        url = "https://recherche-entreprises.api.gouv.fr/search"
+        params = {
+            "q": siret,
+            "per_page": 1,  # We only need the first result
+            "page": 1,
+        }
 
-            data = response.json()
+        response = await client.get(url, params=params)
+        response.raise_for_status()
 
-            if data.get("total_results", 0) == 0:
-                return None
+        data = response.json()
 
-            results = data.get("results", [])
-            if not results:
-                return None
+        if data.get("total_results", 0) == 0:
+            return None
 
-            organisation = results[0]
-            return organisation.get("nom_complet")
+        results = data.get("results", [])
+        if not results:
+            return None
+
+        organisation = results[0]
+        return organisation.get("nom_complet")

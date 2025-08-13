@@ -13,7 +13,7 @@ from ..model import (
 )
 from ..repositories import groups
 from . import organisations, roles, scopes, users
-from .email import EmailService
+from .ui.email import EmailService
 
 
 class GroupsService:
@@ -73,9 +73,7 @@ class GroupsService:
             )
 
     async def get_group_by_id(self, group_id: int) -> GroupResponse:
-        group = await self.groups_repository.get_group_by_id(
-            group_id, self.service_provider_id
-        )
+        group = await self.groups_repository.get(group_id, self.service_provider_id)
         if not group:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -94,7 +92,7 @@ class GroupsService:
             group_data.admin
         )
 
-        new_group = await self.groups_repository.create_group(
+        new_group = await self.groups_repository.create(
             group_data, orga_id, self.service_provider_id
         )
 
@@ -108,7 +106,7 @@ class GroupsService:
         return new_group
 
     async def list_groups(self) -> list[GroupResponse]:
-        return await self.groups_repository.list_groups(self.service_provider_id)
+        return await self.groups_repository.get_all(self.service_provider_id)
 
     async def search_groups(
         self, user_email: EmailStr
@@ -122,7 +120,7 @@ class GroupsService:
         user = await self.users_service.get_user_by_email(
             user_email, only_verified_user=True
         )
-        groups = await self.groups_repository.search_groups_by_user(
+        groups = await self.groups_repository.search_by_user(
             user.id, self.service_provider_id
         )
 
@@ -159,7 +157,7 @@ class GroupsService:
 
     async def update_group(self, group_id: int, group_name: str) -> GroupResponse:
         group = await self.get_group_by_id(group_id)
-        return await self.groups_repository.update_group(group.id, group_name)
+        return await self.groups_repository.update(group.id, group_name)
 
     # user management
     async def add_user_to_group(
@@ -192,7 +190,7 @@ class GroupsService:
                 detail=f"User with ID {user.id} is already in group {group_id}",
             )
 
-        await self.groups_repository.add_user_to_group(group.id, user.id, role.id)
+        await self.groups_repository.add_user(group.id, user.id, role.id)
 
         if not user.is_verified:
             service_provider = (
@@ -228,7 +226,7 @@ class GroupsService:
                     detail=f"Impossible to remove user {user_id} from group {group_id} as it is the only admin of the group.",
                 )
 
-        return await self.groups_repository.remove_user_from_group(group.id, user.id)
+        return await self.groups_repository.remove_user(group.id, user.id)
 
     async def update_user_in_group(self, group_id: int, user_id: int, role_id: int):
         # check if the user, is in the group
@@ -252,9 +250,7 @@ class GroupsService:
                         detail=f"Impossible to update user {user_id} role in group {group_id} as it is the only admin of the group.",
                     )
 
-        await self.groups_repository.update_user_role_in_group(
-            group.id, user_id, role.id
-        )
+        await self.groups_repository.update_user_role(group.id, user_id, role.id)
 
         return UserInGroupResponse(
             **dict(user),

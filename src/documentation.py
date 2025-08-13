@@ -41,10 +41,6 @@ api_tags_metadata = [
         "description": "Ping de l’application",
     },
     {
-        "name": "Fournisseur de services",
-        "description": "Votre fournisseur de service (ex: ma-startup-d-etat.fr)",
-    },
-    {
         "name": "Utilisateurs",
         "description": "Création et récupération des utilisateurs (les utilisateurs sont indépendants du fournisseur de service)",
     },

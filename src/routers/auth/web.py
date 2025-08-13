@@ -76,7 +76,9 @@ async def callback(request: Request):
             request.session["user_sub"] = userinfo["sub"]
             request.session["is_super_admin"] = False
 
-            return RedirectResponse(url="/ui", status_code=status.HTTP_302_FOUND)
+            return RedirectResponse(
+                url="/ui/activation/succes", status_code=status.HTTP_302_FOUND
+            )
 
         if connexion_type == CONNEXION_TYPE.ADMIN:
             if userinfo["email"] not in settings.SUPER_ADMIN_EMAILS:

@@ -8,22 +8,15 @@ from .config import settings
 from .database import shutdown, startup
 from .documentation import api_description, api_summary, api_tags_metadata
 from .middleware.force_web_auth import ForceWebAuthenticationMiddleware
-
-# API routers
 from .routers import (
     groups,
     groups_admin,
     groups_scopes,
     health,
     roles,
-    service_providers,
     users,
 )
-
-# web routers
 from .routers.auth import auth
-
-# Web routers
 from .routers.web.admin import view as admin_home
 from .routers.web.ui import view as ui_home
 
@@ -37,30 +30,39 @@ if settings.SENTRY_DSN != "":
 
 app = FastAPI(redirect_slashes=True, redoc_url="/")
 
-# Add template and static file support
+# Add template and static files support for HTML/Jinja templating
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Register startup and shutdown events
+# Register startup and shutdown events (essentially DB connexion)
 app.add_event_handler("startup", startup)
 app.add_event_handler("shutdown", shutdown)
 
+# health/monitoring
 app.include_router(health.router)
 
+# authentication - both web(ProConnect) and API(OAuth2)
 app.include_router(auth.router)
 
-app.include_router(service_providers.router)
+# API routers - only use OAuth2
 app.include_router(users.router)
 app.include_router(roles.router)
 app.include_router(groups.router)
 app.include_router(groups_admin.router)
 app.include_router(groups_scopes.router)
 
-# web interfaces
+# web interfaces - only use ProConnect
 app.include_router(admin_home.router, include_in_schema=False)
 app.include_router(ui_home.router, include_in_schema=False)
 
+# ===========
+# Middlewares
+# ===========
+
 # In FastAPI/Starlette, middleware is processed in reverse order of how it's added,
 # so the last middleware added is executed first.
+
+# force authentication on web paths
+# NB : API router authentication is enforce through dependencies
 app.add_middleware(ForceWebAuthenticationMiddleware)
 app.add_middleware(
     SessionMiddleware,

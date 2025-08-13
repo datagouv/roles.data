@@ -2,7 +2,8 @@ import pytest
 from databases import Database
 from fastapi.testclient import TestClient
 
-from ..auth.o_auth import decode_access_token
+from src.auth.o_auth import decode_access_token
+
 from ..config import settings
 from ..database import DatabaseWithSchema, get_db
 from ..main import app
@@ -39,6 +40,7 @@ async def override_get_db():
 
 
 def override_decode_access_token():
+    """Override decode_access_token to return fake data without JWT validation"""
     return {"service_provider_id": 1, "service_account_id": 1}
 
 
@@ -48,7 +50,6 @@ def test_override_setup():
     Override the app startup and shutdown events to prevent
     connecting to the production database during tests.
     """
-
     # Save original handlers
     original_startup_handlers = app.router.on_startup.copy()
     original_shutdown_handlers = app.router.on_shutdown.copy()
@@ -63,6 +64,8 @@ def test_override_setup():
 
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[decode_access_token] = override_decode_access_token
+
+    # Also override alternative import paths if they exist
 
     yield
 

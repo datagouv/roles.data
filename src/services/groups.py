@@ -192,13 +192,21 @@ class GroupsService:
 
         await self.groups_repository.add_user(group.id, user.id, role.id)
 
-        if not user.is_verified:
-            service_provider = (
-                await self.service_provider_service.get_service_provider_by_id(
-                    self.service_provider_id
-                )
+        service_provider = (
+            await self.service_provider_service.get_service_provider_by_id(
+                self.service_provider_id
             )
+        )
+
+        if not user.is_verified:
             await self.email_service.confirmation_email(
+                recipients=[user.email],
+                group_name=group.name,
+                service_provider_name=service_provider.name,
+                service_provider_url=service_provider.url,
+            )
+        else:
+            await self.email_service.nouveau_groupe_email(
                 recipients=[user.email],
                 group_name=group.name,
                 service_provider_name=service_provider.name,

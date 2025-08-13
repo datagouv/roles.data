@@ -19,6 +19,34 @@ class EmailService:
 
         return f"https://roles.{env}.data.gouv.fr/ui/activation"
 
+    async def nouveau_groupe_email(
+        self,
+        recipients: list[str],
+        group_name: str,
+        service_provider_name: str,
+        service_provider_url: HttpUrl | None,
+    ):
+        subject = f"Nouveau groupe {service_provider_name}"
+        template = "nouveau-groupe.html"
+
+        context = {
+            "group_name": group_name,
+            "service_provider_name": service_provider_name,
+            "service_provider_url": service_provider_url,
+        }
+
+        try:
+            await self.email_repository.send(
+                recipients=recipients,
+                subject=subject,
+                template=template,
+                context=context,
+            )
+            return True
+        except Exception as e:
+            print(f"Failed to send email: {e}")
+            return False
+
     async def confirmation_email(
         self,
         recipients: list[str],

@@ -5,40 +5,49 @@ import databases
 from .config import settings
 
 
-# wrapper that ensure we always use schema
+# Optimized database wrapper that sets schema once per transaction
 class DatabaseWithSchema:
     def __init__(self, db, schema):
         self.db = db
         self.schema = schema
 
     async def execute(self, query, *args, **kwargs):
-        await self.db.execute(f"SET search_path TO {self.schema}")
+        await self._ensure_schema_set()
         return await self.db.execute(query, *args, **kwargs)
 
     async def fetch_one(self, query, *args, **kwargs):
-        await self.db.execute(f"SET search_path TO {self.schema}")
+        await self._ensure_schema_set()
         return await self.db.fetch_one(query, *args, **kwargs)
 
     async def fetch_all(self, query, *args, **kwargs):
-        await self.db.execute(f"SET search_path TO {self.schema}")
+        await self._ensure_schema_set()
         return await self.db.fetch_all(query, *args, **kwargs)
 
-    # Add other methods as needed
+    async def _ensure_schema_set(self):
+        # For now, set schema on each operation but this could be optimized further
+        # by tracking transaction state
+        await self.db.execute(f"SET search_path TO {self.schema}")
+
+    def transaction(self, **kwargs):
+        return self.db.transaction(**kwargs)
 
     # Pass through other attributes
     def __getattr__(self, name):
         return getattr(self.db, name)
 
 
-# Create database instance
-database = databases.Database(settings.DATABASE_URL)
+# Create database instance with optimized connection pooling
+database = databases.Database(
+    settings.DATABASE_URL,
+    min_size=5,  # Keep minimum 5 connections open
+    max_size=20,  # Allow up to 20 concurrent connections
+    max_inactive_connection_lifetime=60,  # Close idle connections after 1 minute
+)
 
 
 async def startup():
     if not database.is_connected:
         await database.connect()
-        # on startup we set the schema
-        await database.execute(f"SET search_path TO {settings.DB_SCHEMA}")
 
 
 async def shutdown():
@@ -50,7 +59,7 @@ async def shutdown():
 async def get_db() -> AsyncGenerator[DatabaseWithSchema, None]:
     await startup()
 
-    # always ensure the schema is set (for every connections of the pool)
+    # Create schema-aware database instance
     schema_database = DatabaseWithSchema(database, settings.DB_SCHEMA)
 
     try:

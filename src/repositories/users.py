@@ -73,7 +73,7 @@ class UsersRepository:
                 INNER JOIN group_user_relations as TUR ON TUR.user_id = U.id
                 INNER JOIN roles as R ON TUR.role_id = R.id
                 WHERE TUR.group_id = :group_id
-                ORDER BY U.id
+                ORDER BY R.id ASC, U.id ASC
                 """
             return await self.db_session.fetch_all(query, {"group_id": group_id})
 

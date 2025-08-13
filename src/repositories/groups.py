@@ -6,6 +6,7 @@ from ..model import (
     LOG_RESOURCE_TYPES,
     GroupCreate,
     GroupResponse,
+    GroupWithScopesResponse,
     GroupWithUsersAndScopesResponse,
 )
 
@@ -42,10 +43,12 @@ class GroupsRepository:
                 query, {"id": group_id, "service_provider_id": service_provider_id}
             )
 
-    async def list_groups(self, service_provider_id: int) -> list[GroupResponse]:
+    async def list_groups(
+        self, service_provider_id: int
+    ) -> list[GroupWithScopesResponse]:
         async with self.db_session.transaction():
             query = """
-            SELECT G.id, G.name, O.siret as organisation_siret
+            SELECT G.id, G.name, O.siret as organisation_siret, , GSPR.scopes, GSPR.contract_description, GSPR.contract_url
             FROM groups as G
             INNER JOIN organisations AS O ON G.orga_id = O.id
             INNER JOIN group_service_provider_relations AS GSPR ON GSPR.group_id = G.id AND GSPR.service_provider_id = :service_provider_id

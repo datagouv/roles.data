@@ -6,7 +6,12 @@ from src.auth import decode_access_token
 from src.dependencies import get_groups_service, get_users_service
 from src.services.users import UsersService
 
-from ..model import GroupCreate, GroupResponse, GroupWithUsersAndScopesResponse
+from ..model import (
+    GroupCreate,
+    GroupResponse,
+    GroupWithScopesResponse,
+    GroupWithUsersAndScopesResponse,
+)
 from ..services.groups import GroupsService
 
 router = APIRouter(
@@ -17,7 +22,7 @@ router = APIRouter(
 )
 
 
-@router.get("/", response_model=list[GroupResponse])
+@router.get("/", response_model=list[GroupWithScopesResponse])
 async def list_groups(
     group_service: GroupsService = Depends(get_groups_service),
 ):

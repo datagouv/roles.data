@@ -45,8 +45,8 @@ def create_group(client):
 
 
 def verify_user(client, user_email, user_sub):
-    """Verify a user by email and sub."""
+    """Activate a user by email and sub."""
     response = client.patch(
-        "/users/verify", params={"user_email": user_email, "user_sub": user_sub}
+        "/users/activate", params={"user_email": user_email, "user_sub": user_sub}
     )
     assert response.status_code == 200

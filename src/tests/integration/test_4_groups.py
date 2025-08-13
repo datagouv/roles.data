@@ -108,7 +108,9 @@ def test_search_group_by_user(client):
     responseNotVerified = client.get(
         "/groups/search", params={"user_email": new_group_data["admin"]["email"]}
     )
-    assert responseNotVerified.status_code == 422
+    assert responseNotVerified.status_code == 423
+
+    verify_user(client, new_group_data["admin"]["email"], random_sub)
 
     response = client.get(
         "/groups/search",
@@ -142,54 +144,27 @@ def test_search_group_by_user(client):
     # Test non-existent user
     response404 = client.get(
         "/groups/search",
-        params={"user_email": "hey@test.fr", "user_sub": random_sub_pro_connect()},
+        params={"user_email": "hey@test.fr"},
     )
     assert response404.status_code == 404
 
     userResponse = client.post("/users", json=random_user())
     assert userResponse.status_code == 201
-    user = userResponse.json()
+    new_user = userResponse.json()
+
+    verify_user(client, new_user["email"], random_sub_pro_connect())
 
     # Test non-existent group
     responseEmpty = client.get(
         "/groups/search",
         params={
-            "user_email": user["email"],
-            "user_sub": random_sub_pro_connect(),
+            "user_email": new_user["email"],
         },
     )
     assert responseEmpty.status_code == 200
     group = responseEmpty.json()
     assert isinstance(group, list)
     assert len(group) == 0
-
-
-def test_get_group_verify_conflict(client):
-    new_group_data = create_group(client)
-
-    initial_sub = random_sub_pro_connect()
-    admin = new_group_data["admin"]["email"]
-    verify_user(client, admin, initial_sub)
-
-    random_sub = random_sub_pro_connect()
-    response = client.get(
-        "/groups/search",
-        params={
-            "user_email": new_group_data["admin"]["email"],
-            "user_sub": random_sub,
-        },
-    )
-    # Verify user with a different sub should return 406
-    assert response.status_code == 406
-
-    response = client.get(
-        "/groups/search",
-        params={
-            "user_email": new_group_data["admin"]["email"],
-            "user_sub": initial_sub,
-        },
-    )
-    assert response.status_code == 200
 
 
 def test_get_group_email_with_plus(client):
@@ -201,11 +176,11 @@ def test_get_group_email_with_plus(client):
     response = client.post("/groups/?no_acting_user=True", json=new_group_data)
     assert response.status_code == 201
 
+    verify_user(client, user_email, random_sub_pro_connect())
     response = client.get(
         "/groups/search",
         params={
             "user_email": new_group_data["admin"]["email"],
-            "user_sub": random_sub_pro_connect(),
         },
     )
     assert response.status_code == 200

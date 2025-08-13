@@ -49,14 +49,32 @@ async def get_email_service() -> EmailService:
 # =========================
 
 
-def get_logs_service(request: Request) -> LogsService:
+def get_service_provider_id(token: dict = Depends(decode_access_token)):
+    try:
+        return token.get("service_provider_id")
+    except HTTPException as e:
+        if e.status_code == 403:
+            return None
+        raise e
+
+
+def get_service_account_id(token: dict = Depends(decode_access_token)):
+    try:
+        return token.get("service_account_id")
+    except HTTPException as e:
+        if e.status_code == 403:
+            return None
+        raise e
+
+
+def get_logs_service(
+    request: Request,
+    service_account_id: int | None = Depends(get_service_account_id),
+    service_provider_id: int | None = Depends(get_service_provider_id),
+) -> LogsService:
     """Dependency to get LogsService instance."""
 
-    try:
-        access_token = decode_access_token()
-        service_account_id = access_token.get("service_account_id")
-        service_provider_id = access_token.get("service_provider_id")
-
+    if service_account_id is not None and service_provider_id is not None:
         acting_user_sub = request.query_params.get("acting_user_sub")
 
         if acting_user_sub is not None:
@@ -73,7 +91,8 @@ def get_logs_service(request: Request) -> LogsService:
             service_provider_id, service_account_id, acting_user_sub
         )
         return LogsService(logs_repository)
-    except Exception:
+
+    else:
         connected_user_sub = request.session.get("user_sub", None)
 
         if not connected_user_sub:
@@ -155,7 +174,7 @@ async def get_scopes_service(
 
 async def get_groups_service(
     db: Database = Depends(get_db),
-    access_token=Depends(decode_access_token),
+    service_provider_id=Depends(get_service_provider_id),
     users_service: UsersService = Depends(get_users_service),
     roles_service: RolesService = Depends(get_roles_service),
     organisations_service: OrganisationsService = Depends(get_organisations_service),
@@ -170,7 +189,11 @@ async def get_groups_service(
     Dependency function that provides a GroupsService instance.
     """
     groups_repository = GroupsRepository(db, logs_service)
-    service_provider_id = access_token.get("service_provider_id")
+
+    if not service_provider_id:
+        raise Exception(
+            "Group service should always be used in the context of a Service Provider"
+        )
 
     return GroupsService(
         groups_repository,

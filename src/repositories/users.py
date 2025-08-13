@@ -17,7 +17,7 @@ class UsersRepository:
         self.db_session = db_session
         self.logs_service = logs_service
 
-    async def activate(self, user_email: str, user_sub: UUID4):
+    async def activate(self, user_email: str, user_sub: UUID4) -> UserResponse:
         """
         Mark the user as verified
         """
@@ -37,6 +37,7 @@ class UsersRepository:
                 resource_id=user_response["id"],
                 new_values=values,
             )
+            return user_response
 
     async def get_sub(self, email: str):
         async with self.db_session.transaction():

@@ -5,7 +5,12 @@ from pydantic import UUID4, EmailStr
 from src.auth.o_auth import decode_access_token
 from src.dependencies import get_groups_service
 
-from ..model import GroupCreate, GroupResponse, GroupWithUsersAndScopesResponse
+from ..model import (
+    GroupCreate,
+    GroupResponse,
+    GroupWithScopesResponse,
+    GroupWithUsersAndScopesResponse,
+)
 from ..services.groups import GroupsService
 
 router = APIRouter(
@@ -16,7 +21,7 @@ router = APIRouter(
 )
 
 
-@router.get("/", response_model=list[GroupResponse])
+@router.get("/", response_model=list[GroupWithScopesResponse])
 async def list_groups(
     group_service: GroupsService = Depends(get_groups_service),
 ):

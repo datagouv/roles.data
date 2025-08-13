@@ -31,20 +31,19 @@ if [ -d "./db/migrations" ]; then
     else
       echo "🐣 Applying new migration: $migration"
 
-      # Start a transaction
-      PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -c "BEGIN;"
-
-      # Apply the migration
-      PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -v DB_SCHEMA=$DB_SCHEMA -f $migration
-
-      # Record the migration in the migrations table
-      PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -c "
-      INSERT INTO ${DB_SCHEMA}.migrations (filename) VALUES ('$migration');"
-
-      # Commit the transaction
-      PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -c "COMMIT;"
-
-      echo "Successfully applied: $migration"
+      # Apply the migration in a single transaction
+      if (
+        echo "BEGIN;"
+        cat "$migration"
+        echo "INSERT INTO ${DB_SCHEMA}.migrations (filename) VALUES ('$migration');"
+        echo "COMMIT;"
+      ) | PGPASSWORD=$DB_PASSWORD psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -v DB_SCHEMA=$DB_SCHEMA -v ON_ERROR_STOP=1; then
+        echo "Successfully applied: $migration"
+      else
+        echo "❌ Failed to apply migration: $migration"
+        echo "Migration process stopped due to error"
+        exit 1
+      fi
     fi
   done
 else

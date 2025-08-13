@@ -27,7 +27,7 @@ class UsersRepository:
             WHERE email = :email
             RETURNING *
             """
-            values = {"email": user_email, "sub_pro_connect": user_sub}
+            values = {"email": user_email.lower(), "sub_pro_connect": user_sub}
             user_response = await self.db_session.fetch_one(query, values)
 
             await self.logs_service.save(
@@ -43,14 +43,14 @@ class UsersRepository:
             query = """
             SELECT U.sub_pro_connect FROM users as U WHERE U.email = :email
             """
-            return await self.db_session.fetch_one(query, {"email": email})
+            return await self.db_session.fetch_one(query, {"email": email.lower()})
 
     async def get_by_email(self, email: str) -> UserResponse:
         async with self.db_session.transaction():
             query = """
             SELECT U.id, U.email, U.is_verified FROM users as U WHERE U.email = :email
             """
-            return await self.db_session.fetch_one(query, {"email": email})
+            return await self.db_session.fetch_one(query, {"email": email.lower()})
 
     async def get_by_id(self, user_id: int) -> UserResponse:
         async with self.db_session.transaction():
@@ -83,7 +83,7 @@ class UsersRepository:
     async def create(self, user: UserCreate) -> UserResponse:
         async with self.db_session.transaction():
             query = "INSERT INTO users (email, is_verified) VALUES (:email, :is_verified) RETURNING *"
-            values = {"email": user.email, "is_verified": False}
+            values = {"email": user.email.lower(), "is_verified": False}
 
             user_response = await self.db_session.fetch_one(query, values)
 

@@ -6,6 +6,7 @@ from src.services.services_provider import ServiceProvidersService
 from ..model import (
     GroupCreate,
     GroupResponse,
+    GroupWithScopesResponse,
     GroupWithUsersAndScopesResponse,
     OrganisationCreate,
     UserCreate,
@@ -105,7 +106,7 @@ class GroupsService:
 
         return new_group
 
-    async def list_groups(self) -> list[GroupResponse]:
+    async def list_groups(self) -> list[GroupWithScopesResponse]:
         return await self.groups_repository.get_all(self.service_provider_id)
 
     async def search_groups(

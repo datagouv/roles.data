@@ -117,12 +117,15 @@ class UserInGroupResponse(UserResponse):
     is_admin: bool
 
 
-class GroupWithUsersAndScopesResponse(GroupResponse):
-    organisation_siret: Siret
-    users: list[UserWithRoleResponse]
+class GroupWithScopesResponse(GroupResponse):
     scopes: str
     contract_description: str | None
     contract_url: HttpUrl | None = None
+
+
+class GroupWithUsersAndScopesResponse(GroupWithScopesResponse):
+    organisation_siret: Siret
+    users: list[UserWithRoleResponse]
 
 
 class ParentChildCreate(BaseModel):

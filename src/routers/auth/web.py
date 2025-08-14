@@ -5,7 +5,7 @@ from authlib.integrations.starlette_client import OAuthError
 from fastapi import APIRouter, HTTPException, Request, status
 from fastapi.responses import RedirectResponse
 
-from auth.pro_connect import pro_connect_provider
+from src.auth.pro_connect import pro_connect_provider
 from src.config import settings
 
 # This is a router for ProConnect authentication

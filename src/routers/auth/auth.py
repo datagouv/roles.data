@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from fastapi.security import HTTPBasic
 
-from routers.auth import api, web
+from src.routers.auth import api, web
 
 router = APIRouter(
     prefix="/auth",

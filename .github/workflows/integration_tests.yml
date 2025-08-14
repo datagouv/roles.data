@@ -27,6 +27,12 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
+      mailhog:
+        image: mailhog/mailhog:v1.0.1
+        ports:
+          - 1025:1025  # SMTP port
+          - 8025:8025  # Web UI port
+
     steps:
       - uses: actions/checkout@v4
 
@@ -59,6 +65,12 @@ jobs:
           PROCONNECT_URL_DISCOVER=foo
           PROCONNECT_REDIRECT_URI=bar
           PROCONNECT_POST_LOGOUT_REDIRECT_URI=foo
+          MAIL_HOST=localhost
+          MAIL_USERNAME=
+          MAIL_PASSWORD=
+          MAIL_PORT=1025
+          MAIL_USE_TLS=False
+          MAIL_USE_SSL=False
           EOL
 
       - name: Run tests

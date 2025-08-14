@@ -62,8 +62,6 @@ La commande lance les containers :
 - postgres-test
 - smtp-local
 
->>>>>>> main
-
 Ce mode permet de tester la conf nginx, le dockerfile et la logique de migration.
 
 Cette commande est systématiquement testée dans la CI par la Github Action `docker-config-test`

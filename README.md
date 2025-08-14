@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-# Rôles.data.gouv.fr
-=======
 # Roles.data
->>>>>>> main
 
 [![Run Integration Tests](https://github.com/datagouv/roles.data/actions/workflows/integration_tests.yml/badge.svg)](https://github.com/datagouv/roles.data/actions/workflows/integration_tests.yml)
 [![Create and deploy a new release](https://github.com/datagouv/roles.data/actions/workflows/create-deploy-release.yml/badge.svg)](https://github.com/datagouv/roles.data/actions/workflows/create-deploy-release.yml)
@@ -63,10 +59,9 @@ La commande lance les containers :
 - nginx (cf `./nginx.conf`)
 - app
 - postgres-local
-<<<<<<< HEAD
 - postgres-test
 - smtp-local
-=======
+
 >>>>>>> main
 
 Ce mode permet de tester la conf nginx, le dockerfile et la logique de migration.

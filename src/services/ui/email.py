@@ -1,7 +1,11 @@
+import logging
+
 from pydantic import HttpUrl
 
 from ...config import settings
 from ...repositories.email import EmailRepository
+
+logger = logging.getLogger(__name__)
 
 
 class EmailService:
@@ -35,17 +39,14 @@ class EmailService:
             "service_provider_url": service_provider_url,
         }
 
-        try:
-            await self.email_repository.send(
-                recipients=recipients,
-                subject=subject,
-                template=template,
-                context=context,
-            )
-            return True
-        except Exception as e:
-            print(f"Failed to send email: {e}")
-            return False
+        await self.email_repository.send(
+            recipients=recipients,
+            subject=subject,
+            template=template,
+            context=context,
+            retry=3,
+            retry_delay=30,
+        )
 
     async def confirmation_email(
         self,
@@ -64,14 +65,11 @@ class EmailService:
             "service_provider_url": service_provider_url,
         }
 
-        try:
-            await self.email_repository.send(
-                recipients=recipients,
-                subject=subject,
-                template=template,
-                context=context,
-            )
-            return True
-        except Exception as e:
-            print(f"Failed to send email: {e}")
-            return False
+        await self.email_repository.send(
+            recipients=recipients,
+            subject=subject,
+            template=template,
+            context=context,
+            retry=3,
+            retry_delay=30,
+        )

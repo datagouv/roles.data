@@ -1,3 +1,5 @@
+import asyncio
+
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 
 from ..config import settings
@@ -20,7 +22,13 @@ class EmailRepository:
         self.fastmail = FastMail(self.conf)
 
     async def send(
-        self, recipients: list[str], subject: str, template: str, context: dict
+        self,
+        recipients: list[str],
+        subject: str,
+        template: str,
+        context: dict,
+        retry: int = 3,
+        retry_delay: int = 30,
     ):
         message = MessageSchema(
             subject=subject,
@@ -29,4 +37,11 @@ class EmailRepository:
             subtype=MessageType.html,
         )
 
-        await self.fastmail.send_message(message, template_name=template)
+        for attempt in range(retry):
+            try:
+                return await self.fastmail.send_message(message, template_name=template)
+            except Exception as e:
+                if attempt < retry - 1:
+                    await asyncio.sleep(retry_delay)
+                else:
+                    raise e

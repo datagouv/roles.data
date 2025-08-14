@@ -1,6 +1,9 @@
+import logging
+
 import sentry_sdk
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.openapi.utils import get_openapi
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -20,15 +23,59 @@ from .routers.auth import auth
 from .routers.web.admin import view as admin_home
 from .routers.web.ui import view as ui_home
 
+app = FastAPI(redirect_slashes=True, redoc_url="/")
+
+# =================
+# ERROR and logging
+# =================
+
+# Configure only application loggers, not FastAPI's built-in ones
+app_logger = logging.getLogger("src")  # Your application namespace
+app_logger.setLevel(logging.INFO)
+
 if settings.SENTRY_DSN != "":
     sentry_sdk.init(
         dsn=settings.SENTRY_DSN,
         # Set traces_sample_rate to 1.0 to capture 100%
         # of transactions for tracing.
         traces_sample_rate=0.1,
+        # Capture more information
+        attach_stacktrace=True,
+        send_default_pii=False,  # Set to True if you want user data
+        # Environment information
+        environment=settings.DB_ENV,
+        # Capture specific integrations
+        integrations=[
+            sentry_sdk.integrations.fastapi.FastApiIntegration(  # type: ignore
+                transaction_style="endpoint"
+            ),
+            sentry_sdk.integrations.logging.LoggingIntegration(  # type: ignore
+                level=logging.INFO,  # Capture info and above as breadcrumbs
+                event_level=logging.ERROR,  # Send errors as events
+            ),
+        ],
+        # Sample rate for error events (1.0 = 100%)
+        sample_rate=1.0,
+        # Enable profiling (optional)
+        # profiles_sample_rate=0.1,
+        # Before send hook to filter/modify events
+        # before_send=lambda event, hint: event if settings.DB_ENV != "test" else None,
     )
 
-app = FastAPI(redirect_slashes=True, redoc_url="/")
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    if not isinstance(exc, HTTPException):
+        sentry_sdk.capture_exception(exc)
+        app_logger.error(f"Unexpected exception caught: {exc}", exc_info=True)
+        return JSONResponse(
+            status_code=500, content={"detail": "Internal server error"}
+        )
+
+
+# =========
+# APP SETUP
+# =========
 
 # Add template and static files support for HTML/Jinja templating
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -72,6 +119,24 @@ app.add_middleware(
     https_only=settings.IS_PRODUCTION,
     session_cookie="session",  # Consistent cookie name
 )
+
+
+@app.middleware("http")
+async def sentry_context_middleware(request: Request, call_next):
+    scope = sentry_sdk.get_current_scope()
+    scope.set_tag("endpoint", request.url.path)
+    scope.set_tag("method", request.method)
+    scope.set_context(
+        "request",
+        {
+            "url": str(request.url),
+            "method": request.method,
+            "headers": dict(request.headers),
+        },
+    )
+
+    response = await call_next(request)
+    return response
 
 
 def custom_openapi():

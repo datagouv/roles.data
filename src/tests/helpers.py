@@ -2,6 +2,8 @@ import random
 import string
 from uuid import uuid4
 
+import httpx
+
 DINUM_SIRET = "13002526500013"
 
 
@@ -50,3 +52,43 @@ def verify_user(client, user_email, user_sub):
         "/users/activate", params={"user_email": user_email, "user_sub": user_sub}
     )
     assert response.status_code == 200
+
+
+# MailHog testing helpers
+def get_mailhog_messages(mailhog_url="http://localhost:8025"):
+    """Get all messages from MailHog."""
+    response = httpx.get(f"{mailhog_url}/api/v2/messages")
+    response.raise_for_status()
+    return response.json().get("items", [])
+
+
+def clear_mailhog_messages(mailhog_url="http://localhost:8025"):
+    """Clear all messages from MailHog."""
+    response = httpx.delete(f"{mailhog_url}/api/v1/messages")
+    response.raise_for_status()
+
+
+def assert_email_sent(
+    recipient_email, subject_contains="", mailhog_url="http://localhost:8025"
+):
+    """Assert that an email was sent to a recipient with optional subject check."""
+    messages = get_mailhog_messages(mailhog_url)
+    email = None
+    for msg in messages:
+        for recipient in msg.get("To", []):
+            if (
+                recipient.get("Mailbox") == recipient_email.split("@")[0]
+                and recipient.get("Domain") == recipient_email.split("@")[1]
+            ):
+                email = msg
+                break
+
+    assert email is not None, f"No email found for {recipient_email}"
+
+    if subject_contains:
+        subject = email.get("Content", {}).get("Headers", {}).get("Subject", [""])[0]
+        assert (
+            subject_contains in subject
+        ), f"Subject '{subject}' doesn't contain '{subject_contains}'"
+
+    return email

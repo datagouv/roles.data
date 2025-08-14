@@ -62,7 +62,7 @@ app.include_router(ui_home.router, include_in_schema=False)
 # so the last middleware added is executed first.
 
 # force authentication on web paths
-# NB : API router authentication is enforce through dependencies
+# NB : API router authentication is enforced through dependencies
 app.add_middleware(ForceWebAuthenticationMiddleware)
 app.add_middleware(
     SessionMiddleware,

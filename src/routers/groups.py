@@ -34,6 +34,7 @@ async def list_groups(
 @router.get("/search", response_model=list[GroupWithUsersAndScopesResponse])
 async def search(
     user_email: EmailStr = Query(..., description="Mail de l’utilisateur"),
+    user_sub: UUID4 | None = Query(..., description="Legacy (facultatif)"),
     group_service: GroupsService = Depends(get_groups_service),
 ):
     """

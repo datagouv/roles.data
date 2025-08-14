@@ -116,7 +116,7 @@ class GroupsRepository:
 
     async def update(self, group_id: int, group_name: str) -> GroupResponse:
         """
-        Update groupe name
+        Update group name
         """
         async with self.db_session.transaction():
             query = (

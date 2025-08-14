@@ -71,7 +71,7 @@ class OrganisationsRepository:
 
 async def fetch_organisation_metadata(siret: Siret):
     """
-    Fetch the name of an organisation by its SIREt using the API Recherche Entreprise
+    Fetch the name of an organisation by its SIRET using the API Recherche Entreprises
 
     If the organisation is not found, return None.
     If the API request fails, raise an exception.

@@ -25,7 +25,7 @@ class RolesService:
         """
         Get a role by its ID
         """
-        role = await self.roles_repository.get_roles_by_id(role_id)
+        role = await self.roles_repository.get(role_id)
         if not role:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Role not found"

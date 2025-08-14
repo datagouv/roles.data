@@ -14,7 +14,7 @@ class ServiceProvidersService:
         """
         Get a service provider by its ID.
         """
-        service_provider = await self.service_provider_repository.get_by_id(
+        service_provider = await self.service_provider_repository.get(
             service_provider_id
         )
 

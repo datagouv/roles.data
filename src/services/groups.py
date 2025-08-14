@@ -14,6 +14,7 @@ from ..model import (
 )
 from ..repositories import groups
 from . import organisations, roles, scopes, users
+from .ui.email import EmailService
 
 
 class GroupsService:
@@ -25,7 +26,7 @@ class GroupsService:
     It uses almost every other services as a group is linked organisation, user, user roles and groups
 
     It can only be used in the context of a service provider, which is why it takes a service_provider_id as an argument
-    in the constructor.
+    in the constructor. Note: service_provider_id refers to the business entity ID, not the OAuth2 client credentials.
     """
 
     def __init__(
@@ -36,6 +37,7 @@ class GroupsService:
         organisations_service: organisations.OrganisationsService,
         service_provider_service: ServiceProvidersService,
         scopes_service: scopes.ScopesService,
+        email_service: EmailService,
         service_provider_id: int,
     ):
         self.groups_repository = groups_repository
@@ -44,6 +46,7 @@ class GroupsService:
         self.organisations_service = organisations_service
         self.service_provider_service = service_provider_service
         self.scopes_service = scopes_service
+        self.email_service = email_service
         self.service_provider_id = service_provider_id
 
     async def validate_group_data(self, group_data: GroupCreate) -> None:
@@ -71,9 +74,7 @@ class GroupsService:
             )
 
     async def get_group_by_id(self, group_id: int) -> GroupResponse:
-        group = await self.groups_repository.get_group_by_id(
-            group_id, self.service_provider_id
-        )
+        group = await self.groups_repository.get(group_id, self.service_provider_id)
         if not group:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -92,7 +93,7 @@ class GroupsService:
             group_data.admin
         )
 
-        new_group = await self.groups_repository.create_group(
+        new_group = await self.groups_repository.create(
             group_data, orga_id, self.service_provider_id
         )
 
@@ -106,7 +107,7 @@ class GroupsService:
         return new_group
 
     async def list_groups(self) -> list[GroupWithScopesResponse]:
-        return await self.groups_repository.list_groups(self.service_provider_id)
+        return await self.groups_repository.get_all(self.service_provider_id)
 
     async def search_groups(
         self, user_email: EmailStr
@@ -120,7 +121,7 @@ class GroupsService:
         user = await self.users_service.get_user_by_email(
             user_email, only_verified_user=True
         )
-        groups = await self.groups_repository.search_groups_by_user(
+        groups = await self.groups_repository.search_by_user(
             user.id, self.service_provider_id
         )
 
@@ -157,7 +158,7 @@ class GroupsService:
 
     async def update_group(self, group_id: int, group_name: str) -> GroupResponse:
         group = await self.get_group_by_id(group_id)
-        return await self.groups_repository.update_group(group.id, group_name)
+        return await self.groups_repository.update(group.id, group_name)
 
     # user management
     async def add_user_to_group(
@@ -190,7 +191,28 @@ class GroupsService:
                 detail=f"User with ID {user.id} is already in group {group_id}",
             )
 
-        await self.groups_repository.add_user_to_group(group.id, user.id, role.id)
+        await self.groups_repository.add_user(group.id, user.id, role.id)
+
+        service_provider = (
+            await self.service_provider_service.get_service_provider_by_id(
+                self.service_provider_id
+            )
+        )
+
+        if not user.is_verified:
+            await self.email_service.confirmation_email(
+                recipients=[user.email],
+                group_name=group.name,
+                service_provider_name=service_provider.name,
+                service_provider_url=service_provider.url,
+            )
+        else:
+            await self.email_service.nouveau_groupe_email(
+                recipients=[user.email],
+                group_name=group.name,
+                service_provider_name=service_provider.name,
+                service_provider_url=service_provider.url,
+            )
 
         role = await self.roles_service.get_roles_by_id(role.id)
         return UserInGroupResponse(
@@ -213,7 +235,7 @@ class GroupsService:
                     detail=f"Impossible to remove user {user_id} from group {group_id} as it is the only admin of the group.",
                 )
 
-        return await self.groups_repository.remove_user_from_group(group.id, user.id)
+        return await self.groups_repository.remove_user(group.id, user.id)
 
     async def update_user_in_group(self, group_id: int, user_id: int, role_id: int):
         # check if the user, is in the group
@@ -237,9 +259,7 @@ class GroupsService:
                         detail=f"Impossible to update user {user_id} role in group {group_id} as it is the only admin of the group.",
                     )
 
-        await self.groups_repository.update_user_role_in_group(
-            group.id, user_id, role.id
-        )
+        await self.groups_repository.update_user_role(group.id, user_id, role.id)
 
         return UserInGroupResponse(
             **dict(user),

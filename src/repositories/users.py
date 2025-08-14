@@ -17,7 +17,10 @@ class UsersRepository:
         self.db_session = db_session
         self.logs_service = logs_service
 
-    async def mark_user_as_verified(self, user_email: str, user_sub: UUID4):
+    async def activate(self, user_email: str, user_sub: UUID4) -> UserResponse:
+        """
+        Mark the user as verified
+        """
         async with self.db_session.transaction():
             query = """
             UPDATE users SET sub_pro_connect = :sub_pro_connect, is_verified = TRUE
@@ -34,29 +37,30 @@ class UsersRepository:
                 resource_id=user_response["id"],
                 new_values=values,
             )
+            return user_response
 
-    async def get_user_sub(self, email: str):
+    async def get_sub(self, email: str):
         async with self.db_session.transaction():
             query = """
             SELECT U.sub_pro_connect FROM users as U WHERE U.email = :email
             """
             return await self.db_session.fetch_one(query, {"email": email.lower()})
 
-    async def get_user_by_email(self, email: str) -> UserResponse:
+    async def get_by_email(self, email: str) -> UserResponse:
         async with self.db_session.transaction():
             query = """
             SELECT U.id, U.email, U.is_verified FROM users as U WHERE U.email = :email
             """
             return await self.db_session.fetch_one(query, {"email": email.lower()})
 
-    async def get_user_by_id(self, user_id: int) -> UserResponse:
+    async def get_by_id(self, user_id: int) -> UserResponse:
         async with self.db_session.transaction():
             query = """
             SELECT U.id, U.email, U.is_verified FROM users as U WHERE U.id = :id
             """
             return await self.db_session.fetch_one(query, {"id": user_id})
 
-    async def get_user_by_sub(self, user_sub: UUID4) -> UserResponse:
+    async def get_by_sub(self, user_sub: UUID4) -> UserResponse:
         async with self.db_session.transaction():
             query = """
             SELECT U.id, U.email, U.is_verified FROM users as U WHERE U.sub_pro_connect = :sub_pro_connect
@@ -65,7 +69,7 @@ class UsersRepository:
                 query, {"sub_pro_connect": str(user_sub)}
             )
 
-    async def get_users_by_group_id(self, group_id: int) -> list[UserWithRoleResponse]:
+    async def get_all_by_group_id(self, group_id: int) -> list[UserWithRoleResponse]:
         async with self.db_session.transaction():
             query = """
                 SELECT U.id, U.email, U.is_verified, U.created_at, R.role_name, R.id as role_id, R.is_admin
@@ -77,7 +81,7 @@ class UsersRepository:
                 """
             return await self.db_session.fetch_all(query, {"group_id": group_id})
 
-    async def add_user(self, user: UserCreate) -> UserResponse:
+    async def create(self, user: UserCreate) -> UserResponse:
         async with self.db_session.transaction():
             query = "INSERT INTO users (email, is_verified) VALUES (:email, :is_verified) RETURNING *"
             values = {"email": user.email.lower(), "is_verified": False}

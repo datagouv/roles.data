@@ -1,11 +1,16 @@
 import pytest
 from databases import Database
+from fastapi import Depends
 from fastapi.testclient import TestClient
+from pydantic import UUID4, EmailStr
 
-from ..auth import decode_access_token
+from src.auth.o_auth import decode_access_token
+
 from ..config import settings
 from ..database import DatabaseWithSchema, get_db
+from ..dependencies import get_activation_service
 from ..main import app
+from ..services.ui.activation_service import ActivationService
 
 # Create a test database instance
 test_db = Database(settings.DATABASE_URL)
@@ -39,7 +44,18 @@ async def override_get_db():
 
 
 def override_decode_access_token():
+    """Override decode_access_token to return fake data without JWT validation"""
     return {"service_provider_id": 1, "service_account_id": 1}
+
+
+# Test-only route for user activation
+async def test_activate_user(
+    user_email: EmailStr,
+    user_sub: UUID4,
+    activation_service: ActivationService = Depends(get_activation_service),
+):
+    """Test-only route for activating users."""
+    return await activation_service.activate_user(user_email, user_sub)
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -48,7 +64,6 @@ def test_override_setup():
     Override the app startup and shutdown events to prevent
     connecting to the production database during tests.
     """
-
     # Save original handlers
     original_startup_handlers = app.router.on_startup.copy()
     original_shutdown_handlers = app.router.on_shutdown.copy()
@@ -63,6 +78,19 @@ def test_override_setup():
 
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[decode_access_token] = override_decode_access_token
+
+    # Add test-only routes
+    app.add_api_route(
+        "/users/activate", test_activate_user, methods=["PATCH"], status_code=200
+    )
+
+    # Also override alternative import paths if they exist
+    try:
+        from src.auth.o_auth import decode_access_token as alt_decode_access_token
+
+        app.dependency_overrides[alt_decode_access_token] = override_decode_access_token
+    except ImportError:
+        pass
 
     yield
 

@@ -1,7 +1,6 @@
 from typing import Any
 
 from fastapi import Request
-from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, ConfigDict
 
@@ -14,15 +13,15 @@ class Breadcrumb(BaseModel):
 
 
 class TemplateManager:
-    def __init__(self, template_dirs: list[str]):
+    def __init__(self, template_dirs: list[str], admin_pages: bool = False):
         self.templates = Jinja2Templates(directory=template_dirs)
+        self.admin_pages = admin_pages
 
     def render(
         self,
         request: Request,
         template_name: str,
         title: str,
-        enforce_authentication: bool = True,
         context: dict[str, Any] | None = None,
         breadcrumbs: list[Breadcrumb] = [],
     ):
@@ -30,19 +29,14 @@ class TemplateManager:
         if context is None:
             context = {}
 
-        user_email = request.session.get("user_email", None)
-        is_authenticated = bool(user_email)
-
-        if enforce_authentication and not is_authenticated:
-            return RedirectResponse(url="/admin/login", status_code=303)
-
         # Add common context
         context.update(
             {
                 "title": title,
                 "request": request,
-                "user_email": user_email,
-                "is_authenticated": is_authenticated,
+                "user_email": request.session.get("user_email", None),
+                "is_super_admin": request.session.get("is_super_admin", False),
+                "is_authenticated": bool(request.session.get("user_email", None)),
                 "breadcrumb_items": [Breadcrumb(path="/admin", label="Accueil")]
                 + breadcrumbs,
             }
@@ -51,10 +45,18 @@ class TemplateManager:
         return self.templates.TemplateResponse(template_name, context)
 
 
-template_manager = TemplateManager(
+ui_template_manager = TemplateManager(
     [
         "templates",
-        "templates/pages",
+        "templates/pages/ui",
+        "templates/components",
+    ]
+)
+
+admin_template_manager = TemplateManager(
+    [
+        "templates",
+        "templates/pages/admin",
         "templates/components",
     ]
 )

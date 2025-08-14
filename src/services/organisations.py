@@ -16,14 +16,12 @@ class OrganisationsService:
 
         Create it if it doesn't exist
         """
-        organisation = await self.organisations_repository.get_organisation(
-            organisation_data
+        organisation = await self.organisations_repository.get_by_siret(
+            organisation_data.siret
         )
 
         if not organisation:
-            organisation = await self.organisations_repository.create_organisation(
-                organisation_data
-            )
+            organisation = await self.organisations_repository.create(organisation_data)
 
         if not organisation.name:
             asyncio.create_task(

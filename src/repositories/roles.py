@@ -6,7 +6,7 @@ class RolesRepository:
     def __init__(self, db_session):
         self.db_session = db_session
 
-    async def get_roles_by_id(self, role_id: int) -> RoleResponse:
+    async def get(self, role_id: int) -> RoleResponse:
         async with self.db_session.transaction():
             query = """
             SELECT R.id, R.role_name, R.is_admin

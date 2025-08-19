@@ -27,8 +27,7 @@ jobs:
         MAIL_USERNAME=
         MAIL_PASSWORD=
         MAIL_PORT=1025
-        MAIL_USE_TLS=False
-        MAIL_USE_SSL=False
+        MAIL_USE_STARTTLS=False
         EOF
 
     - name: Build and start services

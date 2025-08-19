@@ -1,3 +1,5 @@
+import asyncio
+
 from fastapi import HTTPException, status
 from pydantic import UUID4, EmailStr
 
@@ -199,19 +201,24 @@ class GroupsService:
             )
         )
 
+        # Send email in background task to avoid blocking the response
         if not user.is_verified:
-            await self.email_service.confirmation_email(
-                recipients=[user.email],
-                group_name=group.name,
-                service_provider_name=service_provider.name,
-                service_provider_url=service_provider.url,
+            asyncio.create_task(
+                self.email_service.confirmation_email(
+                    recipients=[user.email],
+                    group_name=group.name,
+                    service_provider_name=service_provider.name,
+                    service_provider_url=service_provider.url,
+                )
             )
         else:
-            await self.email_service.nouveau_groupe_email(
-                recipients=[user.email],
-                group_name=group.name,
-                service_provider_name=service_provider.name,
-                service_provider_url=service_provider.url,
+            asyncio.create_task(
+                self.email_service.nouveau_groupe_email(
+                    recipients=[user.email],
+                    group_name=group.name,
+                    service_provider_name=service_provider.name,
+                    service_provider_url=service_provider.url,
+                )
             )
 
         role = await self.roles_service.get_roles_by_id(role.id)

@@ -5,6 +5,8 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from sentry_sdk.integrations.fastapi import FastApiIntegration
+from sentry_sdk.integrations.logging import LoggingIntegration
 from starlette.middleware.sessions import SessionMiddleware
 
 from .config import settings
@@ -46,10 +48,8 @@ if settings.SENTRY_DSN != "":
         environment=settings.DB_ENV,
         # Capture specific integrations
         integrations=[
-            sentry_sdk.integrations.FastApiIntegration(  # type: ignore
-                transaction_style="endpoint"
-            ),
-            sentry_sdk.integrations.LoggingIntegration(  # type: ignore
+            FastApiIntegration(transaction_style="endpoint"),
+            LoggingIntegration(
                 level=logging.INFO,  # Capture info and above as breadcrumbs
                 event_level=logging.ERROR,  # Send errors as events
             ),

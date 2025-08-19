@@ -1,5 +1,3 @@
-import asyncio
-
 from fastapi import HTTPException, status
 from pydantic import UUID4, EmailStr
 
@@ -203,22 +201,18 @@ class GroupsService:
 
         # Send email in background task to avoid blocking the response
         if not user.is_verified:
-            asyncio.create_task(
-                self.email_service.confirmation_email(
-                    recipients=[user.email],
-                    group_name=group.name,
-                    service_provider_name=service_provider.name,
-                    service_provider_url=service_provider.url,
-                )
+            self.email_service.confirmation_email(
+                recipients=[user.email],
+                group_name=group.name,
+                service_provider_name=service_provider.name,
+                service_provider_url=service_provider.url,
             )
         else:
-            asyncio.create_task(
-                self.email_service.nouveau_groupe_email(
-                    recipients=[user.email],
-                    group_name=group.name,
-                    service_provider_name=service_provider.name,
-                    service_provider_url=service_provider.url,
-                )
+            self.email_service.nouveau_groupe_email(
+                recipients=[user.email],
+                group_name=group.name,
+                service_provider_name=service_provider.name,
+                service_provider_url=service_provider.url,
             )
 
         role = await self.roles_service.get_roles_by_id(role.id)
@@ -241,6 +235,19 @@ class GroupsService:
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail=f"Impossible to remove user {user_id} from group {group_id} as it is the only admin of the group.",
                 )
+
+        service_provider = (
+            await self.service_provider_service.get_service_provider_by_id(
+                self.service_provider_id
+            )
+        )
+
+        self.email_service.suppression_email(
+            recipients=[user.email],
+            group_name=group.name,
+            service_provider_name=service_provider.name,
+            service_provider_url=service_provider.url,
+        )
 
         return await self.groups_repository.remove_user(group.id, user.id)
 

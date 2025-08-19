@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from pydantic import HttpUrl
@@ -23,7 +24,7 @@ class EmailService:
 
         return f"https://roles.{env}.data.gouv.fr/ui/activation"
 
-    async def nouveau_groupe_email(
+    def nouveau_groupe_email(
         self,
         recipients: list[str],
         group_name: str,
@@ -39,16 +40,18 @@ class EmailService:
             "service_provider_url": service_provider_url,
         }
 
-        await self.email_repository.send(
-            recipients=recipients,
-            subject=subject,
-            template=template,
-            context=context,
-            retry=3,
-            retry_delay=30,
+        asyncio.create_task(
+            self.email_repository.send(
+                recipients=recipients,
+                subject=subject,
+                template=template,
+                context=context,
+                retry=3,
+                retry_delay=30,
+            )
         )
 
-    async def confirmation_email(
+    def confirmation_email(
         self,
         recipients: list[str],
         group_name: str,
@@ -65,11 +68,40 @@ class EmailService:
             "service_provider_url": service_provider_url,
         }
 
-        await self.email_repository.send(
-            recipients=recipients,
-            subject=subject,
-            template=template,
-            context=context,
-            retry=3,
-            retry_delay=30,
+        asyncio.create_task(
+            self.email_repository.send(
+                recipients=recipients,
+                subject=subject,
+                template=template,
+                context=context,
+                retry=3,
+                retry_delay=30,
+            )
+        )
+
+    def suppression_email(
+        self,
+        recipients: list[str],
+        group_name: str,
+        service_provider_name: str,
+        service_provider_url: HttpUrl | None,
+    ):
+        subject = f"Vous avez été retiré(e) du groupe {group_name}"
+        template = "suppression.html"
+
+        context = {
+            "group_name": group_name,
+            "service_provider_name": service_provider_name,
+            "service_provider_url": service_provider_url,
+        }
+
+        asyncio.create_task(
+            self.email_repository.send(
+                recipients=recipients,
+                subject=subject,
+                template=template,
+                context=context,
+                retry=3,
+                retry_delay=30,
+            )
         )

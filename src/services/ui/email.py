@@ -16,7 +16,7 @@ class EmailService:
     def get_confirmation_link(self):
         env = settings.DB_ENV.lower()
 
-        if env in ["test", "dev"]:
+        if env in ["test", "local"]:
             return "http://localhost:8000/ui/activation"
         if env == "prod":
             return "https://roles.data.gouv.fr/ui/activation"

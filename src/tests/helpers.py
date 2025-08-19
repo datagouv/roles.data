@@ -12,11 +12,11 @@ def random_group():
     return {
         "name": f"Test Group {''.join(random.choices(string.ascii_lowercase, k=5))}",
         "organisation_siret": DINUM_SIRET,
-        "admin": {"email": f"admin_{random.randint(1000, 9999)}@example.com"},
+        "admin": {"email": f"admin_{random.randint(1000, 9999)}@beta.gouv.fr"},
         "scopes": "read maintain",
         "contract_description": "datapass_test",
         "contract_url": "https://example.com/contract",
-        "members": [{"email": f"member_{random.randint(1000, 9999)}@example.com"}],
+        "members": [{"email": f"member_{random.randint(1000, 9999)}@beta.gouv.fr"}],
     }
 
 
@@ -27,7 +27,10 @@ def random_sub_pro_connect():
 
 def random_user():
     """Generate a random user for testing."""
-    return {"email": f"test_{uuid4()}@example.com", "sub_pro_connect": f"sub_{uuid4()}"}
+    return {
+        "email": f"test_{uuid4()}@beta.gouv.fr",
+        "sub_pro_connect": f"sub_{uuid4()}",
+    }
 
 
 def random_name():

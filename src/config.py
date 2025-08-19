@@ -22,9 +22,8 @@ class AppSettings(BaseSettings):
     MAIL_HOST: str
     MAIL_USERNAME: str
     MAIL_PASSWORD: SecretStr
-    MAIL_USE_TLS: bool
-    MAIL_USE_SSL: bool
     MAIL_PORT: int = 1025
+    MAIL_USE_STARTTLS: bool
 
     # API Authentication (for service-to-service)
     API_ALGORITHM: str = "HS256"  # HS256 is fine for API tokens

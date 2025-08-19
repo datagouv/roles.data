@@ -13,9 +13,9 @@ class EmailRepository:
             MAIL_PASSWORD=settings.MAIL_PASSWORD,
             MAIL_FROM="roles@data.gouv.fr",
             MAIL_PORT=settings.MAIL_PORT,
-            MAIL_STARTTLS=settings.MAIL_USE_TLS,
-            MAIL_SSL_TLS=settings.MAIL_USE_SSL,
-            USE_CREDENTIALS=True,
+            MAIL_STARTTLS=settings.MAIL_USE_STARTTLS,
+            MAIL_SSL_TLS=False,
+            USE_CREDENTIALS=settings.MAIL_USERNAME is not None,
             VALIDATE_CERTS=True,
             TEMPLATE_FOLDER="templates/emails",  # type: ignore
         )

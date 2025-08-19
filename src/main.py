@@ -46,10 +46,10 @@ if settings.SENTRY_DSN != "":
         environment=settings.DB_ENV,
         # Capture specific integrations
         integrations=[
-            sentry_sdk.integrations.fastapi.FastApiIntegration(  # type: ignore
+            sentry_sdk.integrations.FastApiIntegration(  # type: ignore
                 transaction_style="endpoint"
             ),
-            sentry_sdk.integrations.logging.LoggingIntegration(  # type: ignore
+            sentry_sdk.integrations.LoggingIntegration(  # type: ignore
                 level=logging.INFO,  # Capture info and above as breadcrumbs
                 event_level=logging.ERROR,  # Send errors as events
             ),

@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from fastapi.security import HTTPBasic
 
-from src.routers.auth import pro_connect, token
+from src.routers.auth import api, web
 
 router = APIRouter(
     prefix="/auth",
@@ -10,10 +10,10 @@ router = APIRouter(
 )
 
 # API OAuth2
-router.include_router(token.router, include_in_schema=True)
+router.include_router(api.router, include_in_schema=True)
 
 # Web / proconnect based Auth
-router.include_router(pro_connect.router, include_in_schema=False)
+router.include_router(web.router, include_in_schema=False)
 
 
 security = HTTPBasic(auto_error=False)

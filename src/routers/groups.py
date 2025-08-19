@@ -2,9 +2,8 @@
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
 from pydantic import UUID4, EmailStr
 
-from src.auth import decode_access_token
-from src.dependencies import get_groups_service, get_users_service
-from src.services.users import UsersService
+from src.auth.o_auth import decode_access_token
+from src.dependencies import get_groups_service
 
 from ..model import (
     GroupCreate,
@@ -35,18 +34,12 @@ async def list_groups(
 @router.get("/search", response_model=list[GroupWithUsersAndScopesResponse])
 async def search(
     user_email: EmailStr = Query(..., description="Mail de l’utilisateur"),
-    user_sub: UUID4 = Query(..., description="Sub de l’utilisateur (facultatif)"),
-    users_service: UsersService = Depends(get_users_service),
+    user_sub: UUID4 = Query(None, description="Legacy (facultatif)"),
     group_service: GroupsService = Depends(get_groups_service),
 ):
     """
     Recherche les groupes d’un utilisateur, avec son adresse e-mail et son sub ProConnect.
-
-    Cet appel agit comme une verification (cf route `/users/verify`), et permet de "vérifier" le compte de l’utilisateur.
     """
-
-    await users_service.verify_user(user_sub=user_sub, user_email=user_email)
-
     return await group_service.search_groups(user_email=user_email)
 
 

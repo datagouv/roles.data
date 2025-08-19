@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Vous avez été ajouté(e) à un nouveau groupe</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+          }
+          h1 {
+            text-align: center;
+          }
+          .content {
+            padding: 20px;
+            border: 2px solid #eee;
+            border-radius: 8px 8px 0 0;
+        }
+        .button {
+            display: inline-block;
+            background: #000091;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 4px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        .footer {
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            background: #eee;
+            border-radius: 0 0 8px 8px;
+        }
+    </style>
+</head>
+<body>
+  <div class="content">
+
+    <h1>Nouveau groupe {{ service_provider_name }}</h1>
+
+    <p>Bonjour,</p>
+
+    <p>Vous avez été ajouté(e) au groupe “<i>{{ group_name }}</i>”, qui vous donne accès à <a href="{{ service_provider_url }}">{{ service_provider_name }}</a>.
+
+    <p>Vous pouvez dès maintenant vous rendre sur <a href="{{ service_provider_url }}">{{ service_provider_name }}</a> et profiter de vos nouveaux droits.</p>
+
+    <p>Cordialement,<br>L'équipe {{ service_provider_name }}</p>
+  </div>
+</body>
+</html>

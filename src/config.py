@@ -1,8 +1,8 @@
-from pydantic import field_validator
+from pydantic import SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class Settings(BaseSettings):
+class AppSettings(BaseSettings):
     """
     Application settings loaded from environment variables
     """
@@ -17,6 +17,13 @@ class Settings(BaseSettings):
     DB_PASSWORD: str
     DB_SCHEMA: str
     DB_ENV: str
+
+    # Mail settings
+    MAIL_HOST: str
+    MAIL_USERNAME: str
+    MAIL_PASSWORD: SecretStr
+    MAIL_PORT: int = 1025
+    MAIL_USE_STARTTLS: bool
 
     # API Authentication (for service-to-service)
     API_ALGORITHM: str = "HS256"  # HS256 is fine for API tokens
@@ -75,4 +82,4 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env")
 
 
-settings = Settings()  # type: ignore
+settings = AppSettings()  # type: ignore

@@ -1,8 +1,8 @@
 # ------- USER ROUTER FILE -------
 from fastapi import APIRouter, Depends
-from pydantic import UUID4, EmailStr
+from pydantic import EmailStr
 
-from src.auth import decode_access_token
+from src.auth.o_auth import decode_access_token
 
 from ..dependencies import get_users_service
 from ..model import UserCreate, UserResponse
@@ -25,9 +25,9 @@ async def create(
 
     L’utilisateur doit être un utilisateur ProConnect existant.
 
-    Quand l'utilisateur est créé, il est encore non vérifié. Un appel à l'endpoint `/users/verify` permet de le confirmer avec son sub ProConnect.
+    Quand l'utilisateur est créé, il est encore non vérifié. L'utilisateur recevra un email avec un lien de confirmation pour activer son compte.
 
-    Cela permet de créér un utilisateur et de l’ajouter à un groupe sans connaitre son sub.
+    Cela permet de créér un utilisateur et de l'ajouter à un groupe sans connaitre son sub.
     """
     return await users_service.create_user(user)
 
@@ -51,18 +51,3 @@ async def by_id(
     Retourne un utilisateur identifié par son ID.
     """
     return await users_service.get_user_by_id(user_id, only_verified_user=False)
-
-
-@router.patch("/verify", status_code=200)
-async def confirm_user(
-    user_email: EmailStr,
-    user_sub: UUID4,
-    users_service: UsersService = Depends(get_users_service),
-) -> UserResponse:
-    """
-    Enregistre le sub ProConnect d’un utilisateur et permet de "vérifier" l’utilisateur.
-
-    À sa création, seul le mail de l'utilisateur est connu.
-    L’utilisateur n’est alors pas vérifié et certaines actions impliquant cet utilisateur sont impossibles.
-    """
-    return await users_service.verify_user(user_email, user_sub)

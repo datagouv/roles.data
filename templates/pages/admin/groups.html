@@ -1,0 +1,22 @@
+{% extends "base_admin.html" %}
+{% from "components/table.html" import data_table %}
+
+{% block content %}
+
+{% macro formatter(group) %}
+    <tr>
+        <td>{{ group.id }}</td>
+        <td>{{ group.created_at.strftime('%d/%m/%Y') }}</td>
+        <td>{{ group.updated_at.strftime('%d/%m/%Y') }} {{ group.updated_at.strftime('%H:%M:%S') }}</td>
+        <td><a title="{{group.organisation_name}}" target="_blank" rel="noreferrer noopener" href="https://annuaire-entreprises.data.gouv.fr/etablissement/{{group.organisation_siret}}">{{ group.organisation_siret }}</a></td>
+        <td>{{ group.user_count }}</td>
+        <td><a href='/admin/groups/{{group.id}}'>{{ group.name }}</a></td>
+    </tr>
+{% endmacro %}
+{% set headers = ['ID', 'Creation', 'MAJ', 'Organisation', 'Utilisateurs', 'Nom'] %}
+
+<div class="fr-container">
+    {{ data_table(headers, groups, formatter) }}
+</div>
+
+{% endblock %}

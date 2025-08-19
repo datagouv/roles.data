@@ -1,7 +1,7 @@
 # ------- USER ROUTER FILE -------
 from fastapi import APIRouter, Depends
 
-from src.auth import decode_access_token
+from src.auth.o_auth import decode_access_token
 
 from ..dependencies import get_roles_service
 from ..model import RoleResponse

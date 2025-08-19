@@ -14,16 +14,16 @@ test:
 lint:
 	python -m ruff check .
 
-docker: # run application in docker
-	docker compose up postgres-local app nginx
+docker: # locally run entire application in docker
+	docker compose up smtp-local postgres-local app nginx
 
-db_scripts:
+docker_local: # only run DB & mail containers
+	docker compose up smtp-local postgres-local postgres-test
+
+db_init:
 	echo "Using DB_SCHEMA: ${DB_SCHEMA}"
 	DB_HOST='localhost' DB_PORT=5432 sh ./db/entrypoint.sh
 	DB_HOST='localhost' DB_PASSWORD='d-roles' DB_PORT=5433 DB_NAME='d-roles' sh ./db/entrypoint.sh
-
-db_start: # only run DB container
-	docker compose up postgres-local postgres-test
 
 deploy_prod:
 	git checkout main && \

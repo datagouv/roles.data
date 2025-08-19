@@ -1,18 +1,19 @@
 from fastapi import HTTPException, status
 
 from src.model import ServiceAccountResponse
-from src.repositories.auth import AuthRepository
 from src.utils.security import verify_password
+
+from ..repositories.service_account import ServiceAccountRepository
 
 
 class AuthService:
-    def __init__(self, auth_repository: AuthRepository):
-        self.auth_repository = auth_repository
+    def __init__(self, service_account_repository: ServiceAccountRepository):
+        self.service_account_repository = service_account_repository
 
     async def authenticate(
         self, client_id: str, client_secret: str
     ) -> ServiceAccountResponse:
-        service_account = await self.auth_repository.get_service_account(
+        service_account = await self.service_account_repository.get(
             service_account_name=client_id
         )
 

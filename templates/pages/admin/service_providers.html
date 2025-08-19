@@ -1,0 +1,36 @@
+{% extends "base_admin.html" %}
+{% from "components/table.html" import data_table %}
+
+{% block content %}
+
+{% macro formatter(sp) %}
+    <tr>
+        <td>{{ sp.created_at.strftime('%d/%m/%Y') }}</td>
+        <td>{{ sp.updated_at.strftime('%d/%m/%Y') }} {{ sp.updated_at.strftime('%H:%M:%S') }}</td>
+        <td>{{sp.id}}</td>
+        <td><a href='/admin/service-providers/{{sp.id}}'>{{ sp.name }}</a></td>
+        <td>
+            {% if sp.url %}
+                <a href='{{ sp.url }}'>{{ sp.url }}</a>
+            {% else %}
+                <i>Non renseigné</i>
+            {% endif %}
+        </td>
+    </tr>
+{% endmacro %}
+{% set headers = ['Creation', 'MAJ', 'ID', 'Nom', 'Url'] %}
+
+<div class="fr-container">
+    <div class="fr-grid-row fr-grid-row--right">
+        <div class="fr-col-auto">
+            <a class="fr-btn fr-btn--sm fr-btn--secondary" href='/admin/service-providers/create'>
+                Créer un nouveau fournisseur de service
+            </a>
+        </div>
+    </div>
+</div>
+<div class="fr-container">
+    {{ data_table(headers, service_providers, formatter) }}
+</div>
+
+{% endblock %}

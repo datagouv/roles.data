@@ -64,7 +64,7 @@ def test_uuid_format(client):
     user = response.json()
 
     response_verify = client.patch(
-        "/users/verify",
+        "/users/activate",
         params={"user_email": user["email"], "user_sub": "blbabla_test"},
     )
 
@@ -72,7 +72,7 @@ def test_uuid_format(client):
     assert response_verify.status_code == 422
 
     response_verify_ok = client.patch(
-        "/users/verify",
+        "/users/activate",
         params={"user_email": user["email"], "user_sub": random_sub_pro_connect()},
     )
 

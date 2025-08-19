@@ -1,4 +1,6 @@
 from src.tests.helpers import (
+    assert_email_sent,
+    clear_mailhog_messages,
     create_group,
     random_group,
     random_sub_pro_connect,
@@ -108,7 +110,9 @@ def test_search_group_by_user(client):
     responseNotVerified = client.get(
         "/groups/search", params={"user_email": new_group_data["admin"]["email"]}
     )
-    assert responseNotVerified.status_code == 422
+    assert responseNotVerified.status_code == 423
+
+    verify_user(client, new_group_data["admin"]["email"], random_sub)
 
     response = client.get(
         "/groups/search",
@@ -142,54 +146,27 @@ def test_search_group_by_user(client):
     # Test non-existent user
     response404 = client.get(
         "/groups/search",
-        params={"user_email": "hey@test.fr", "user_sub": random_sub_pro_connect()},
+        params={"user_email": "hey@test.fr"},
     )
     assert response404.status_code == 404
 
     userResponse = client.post("/users", json=random_user())
     assert userResponse.status_code == 201
-    user = userResponse.json()
+    new_user = userResponse.json()
+
+    verify_user(client, new_user["email"], random_sub_pro_connect())
 
     # Test non-existent group
     responseEmpty = client.get(
         "/groups/search",
         params={
-            "user_email": user["email"],
-            "user_sub": random_sub_pro_connect(),
+            "user_email": new_user["email"],
         },
     )
     assert responseEmpty.status_code == 200
     group = responseEmpty.json()
     assert isinstance(group, list)
     assert len(group) == 0
-
-
-def test_get_group_verify_conflict(client):
-    new_group_data = create_group(client)
-
-    initial_sub = random_sub_pro_connect()
-    admin = new_group_data["admin"]["email"]
-    verify_user(client, admin, initial_sub)
-
-    random_sub = random_sub_pro_connect()
-    response = client.get(
-        "/groups/search",
-        params={
-            "user_email": new_group_data["admin"]["email"],
-            "user_sub": random_sub,
-        },
-    )
-    # Verify user with a different sub should return 406
-    assert response.status_code == 406
-
-    response = client.get(
-        "/groups/search",
-        params={
-            "user_email": new_group_data["admin"]["email"],
-            "user_sub": initial_sub,
-        },
-    )
-    assert response.status_code == 200
 
 
 def test_get_group_email_with_plus(client):
@@ -201,14 +178,52 @@ def test_get_group_email_with_plus(client):
     response = client.post("/groups/?no_acting_user=True", json=new_group_data)
     assert response.status_code == 201
 
+    verify_user(client, user_email, random_sub_pro_connect())
     response = client.get(
         "/groups/search",
         params={
             "user_email": new_group_data["admin"]["email"],
-            "user_sub": random_sub_pro_connect(),
         },
     )
     assert response.status_code == 200
+
+
+def test_confirmation_email_sent_for_unverified_user(client):
+    """Test that a confirmation email is sent when an unverified user is added to a group."""
+    # Clear any previous emails in MailHog
+    clear_mailhog_messages()
+
+    # Create a new group (this creates an admin user)
+    group_data = create_group(client)
+    admin_email = group_data["admin"]["email"]
+
+    # Verify the admin user so they can act
+    admin_sub = random_sub_pro_connect()
+    verify_user(client, admin_email, admin_sub)
+
+    # Create a new unverified user
+    unverified_user = random_user()
+    user_response = client.post("/users/", json=unverified_user)
+    assert user_response.status_code == 201
+
+    # Add the unverified user to the group (this should trigger confirmation email)
+    add_user_data = {
+        "email": unverified_user["email"],  # Use 'email' not 'user_email'
+        "role_id": 2,  # Regular user role
+    }
+
+    response = client.post(
+        f"/groups/{group_data['id']}/users?acting_user_email={admin_email}&acting_user_sub={admin_sub}",
+        json=add_user_data,
+    )
+    if response.status_code != 201:
+        print(f"Error response: {response.status_code} - {response.text}")
+    assert response.status_code == 201
+
+    # Assert that a confirmation email was sent to the unverified user
+    assert_email_sent(
+        unverified_user["email"], subject_contains="Activation de votre compte"
+    )
 
 
 def test_get_group_not_found(client):

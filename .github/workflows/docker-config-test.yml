@@ -23,6 +23,11 @@ jobs:
         DB_USER=d-roles
         DB_PASSWORD=d-roles
         DB_SCHEMA=d_roles
+        MAIL_HOST=localhost
+        MAIL_USERNAME=
+        MAIL_PASSWORD=
+        MAIL_PORT=1025
+        MAIL_USE_STARTTLS=False
         EOF
 
     - name: Build and start services

@@ -1,0 +1,31 @@
+{% extends "base_admin.html" %}
+{% from "components/table.html" import data_table %}
+
+{% block content %}
+
+{% macro formatter(user) %}
+    <tr>
+        <td>{{ user.created_at.strftime('%d/%m/%Y') }}</td>
+        <td>{{ user.updated_at.strftime('%d/%m/%Y') }} {{ user.updated_at.strftime('%H:%M:%S') }}</td>
+        <td>{{user.id}}</td>
+        <td>
+            {% if user.is_verified %}
+            <span class="fr-badge fr-badge--success">
+              Vérifié
+            </span>
+            {% else %}
+            <span class="fr-badge">
+              Non vérifié
+            </span>
+            {% endif %}
+        </td>
+        <td><a href='/admin/users/{{user.id}}'>{{ user.email }}</a></td>
+    </tr>
+{% endmacro %}
+{% set headers = ['Creation', 'MAJ', 'ID', 'Etat', 'Email'] %}
+
+<div class="fr-container">
+    {{ data_table(headers, users, formatter) }}
+</div>
+
+{% endblock %}

@@ -179,11 +179,6 @@ class ServiceProviderResponse(ServiceProviderBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-class ServiceAccountProviderResponse(BaseModel):
-    service_account_id: int
-    service_provider_id: int
-
-
 class ServiceAccountBase(BaseModel):
     is_active: boolean
     name: str
@@ -240,12 +235,18 @@ class LOG_RESOURCE_TYPES(Enum):
 
 
 class LogResponse(BaseModel):
+    """Response model for audit logs with clear ID naming conventions."""
+
     id: int
     action_type: LOG_ACTIONS
     resource_type: LOG_RESOURCE_TYPES
     resource_id: int | None = None
-    service_account_id: int | None = None
-    service_provider_id: int | None = None
+    service_account_id: int | None = (
+        None  # OAuth2 client credentials ID (from service_accounts table)
+    )
+    service_provider_id: int | None = (
+        None  # Business entity ID (from service_providers table)
+    )
     new_values: str
     created_at: str  # ISO format string
 

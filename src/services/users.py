@@ -16,27 +16,13 @@ class UsersService:
         if not user_data.email:
             raise ValueError("Email is required.")
 
-    async def verify_user(self, user_email: str, user_sub: UUID4):
-        user = await self.get_user_by_email(user_email, only_verified_user=False)
-        if user.is_verified:
-            verified_user_sub = await self.user_repository.get_user_sub(user_email)
-            if str(verified_user_sub["sub_pro_connect"]) != str(user_sub):
-                raise HTTPException(
-                    status_code=status.HTTP_406_NOT_ACCEPTABLE,
-                    detail="User is already verified with a different sub.",
-                )
-        else:
-            await self.user_repository.mark_user_as_verified(user_email, user_sub)
-
-        return await self.get_user_by_email(user_email, only_verified_user=True)
-
     async def get_user_by_email(
         self, email: str, only_verified_user: boolean = True
     ) -> UserResponse:
         """
         Retrieve user by email
         """
-        user = await self.user_repository.get_user_by_email(email)
+        user = await self.user_repository.get_by_email(email)
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -55,7 +41,7 @@ class UsersService:
         """
         Retrieve user by ID
         """
-        user = await self.user_repository.get_user_by_id(user_id)
+        user = await self.user_repository.get_by_id(user_id)
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -72,7 +58,7 @@ class UsersService:
         """
         Retrieve user by it's ProConnect sub
         """
-        user = await self.user_repository.get_user_by_sub(user_sub)
+        user = await self.user_repository.get_by_sub(user_sub)
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -84,10 +70,10 @@ class UsersService:
         """
         Retrieve all user for a given group ID
         """
-        return await self.user_repository.get_users_by_group_id(group_id)
+        return await self.user_repository.get_all_by_group_id(group_id)
 
     async def check_user_exists(self, email: str) -> bool:
-        existing_user = await self.user_repository.get_user_by_email(email)
+        existing_user = await self.user_repository.get_by_email(email)
 
         if existing_user:
             return True
@@ -104,7 +90,7 @@ class UsersService:
             raise ValueError("User already exists.")
         except HTTPException as e:
             if e.status_code == 404:
-                new_user = await self.user_repository.add_user(user_data)
+                new_user = await self.user_repository.create(user_data)
                 return new_user
             raise e
 

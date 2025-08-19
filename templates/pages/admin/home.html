@@ -1,0 +1,11 @@
+{% extends "base_admin.html" %}
+
+{% block content %}
+<div class="fr-container">
+    <p>Bonjour, {{ user_email }}!</p>
+    <a href="/auth/pro-connect/logout" class="fr-btn fr-btn--secondary">
+        Déconnexion
+    </a>
+</div>
+<br/>
+{% endblock %}

@@ -1,17 +1,12 @@
 import pytest
 from databases import Database
-from fastapi import Depends
 from fastapi.testclient import TestClient
-from pydantic import UUID4, EmailStr
 
 from src.auth.o_auth import decode_access_token
 
 from ..config import settings
 from ..database import DatabaseWithSchema, get_db
-from ..dependencies import get_logs_service_o_auth
 from ..main import app
-from ..repositories.users import UsersRepository
-from ..services.ui.activation_service import ActivationService
 
 # Create a test database instance
 test_db = Database(settings.DATABASE_URL)
@@ -49,21 +44,6 @@ def override_decode_access_token():
     return {"service_provider_id": 1, "service_account_id": 1}
 
 
-# Test-only route for user activation
-async def test_activate_user(
-    user_email: EmailStr,
-    user_sub: UUID4,
-    logs_service=Depends(get_logs_service_o_auth),
-    db=Depends(get_db),
-):
-    """Test-only route for activating users."""
-    users_repository = UsersRepository(db, logs_service)
-    activation_service = ActivationService(users_repository)
-    return await activation_service.activate_user(
-        user_sub=user_sub, user_email=user_email
-    )
-
-
 @pytest.fixture(scope="session", autouse=True)
 def test_override_setup():
     """
@@ -84,11 +64,6 @@ def test_override_setup():
 
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[decode_access_token] = override_decode_access_token
-
-    # Add test-only routes
-    app.add_api_route(
-        "/users/activate", test_activate_user, methods=["PATCH"], status_code=200
-    )
 
     # Also override alternative import paths if they exist
     try:

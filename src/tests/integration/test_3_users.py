@@ -1,4 +1,4 @@
-from src.tests.helpers import random_sub_pro_connect, random_user
+from src.tests.helpers import random_user
 
 
 def test_create_user(client):
@@ -55,26 +55,3 @@ def test_get_user_by_email(client):
     # Verify not found case
     response = client.get("/users/search", params={"email": "notfound@example.com"})
     assert response.status_code == 404
-
-
-def test_uuid_format(client):
-    """Test that the user ID is in UUID format."""
-    user_data = random_user()
-    response = client.post("/users/", json=user_data)
-    user = response.json()
-
-    response_verify = client.patch(
-        "/users/activate",
-        params={"user_email": user["email"], "user_sub": "blbabla_test"},
-    )
-
-    # not a valid uuid v4
-    assert response_verify.status_code == 422
-
-    response_verify_ok = client.patch(
-        "/users/activate",
-        params={"user_email": user["email"], "user_sub": random_sub_pro_connect()},
-    )
-
-    assert response_verify_ok.status_code == 200
-    assert response_verify_ok.json()["is_verified"] is not False

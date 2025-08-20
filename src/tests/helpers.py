@@ -1,5 +1,7 @@
 import random
 import string
+from contextlib import contextmanager
+from unittest.mock import Mock, patch
 from uuid import uuid4
 
 import httpx
@@ -49,14 +51,6 @@ def create_group(client):
     return new_group_data
 
 
-def verify_user(client, user_email, user_sub):
-    """Activate a user by email and sub."""
-    response = client.patch(
-        "/users/activate", params={"user_email": user_email, "user_sub": user_sub}
-    )
-    assert response.status_code == 200
-
-
 # MailHog testing helpers
 def get_mailhog_messages(mailhog_url="http://localhost:8025"):
     """Get all messages from MailHog."""
@@ -95,3 +89,38 @@ def assert_email_sent(
         ), f"Subject '{subject}' doesn't contain '{subject_contains}'"
 
     return email
+
+
+@contextmanager
+def mock_session(session_data: dict):
+    """
+    Context manager to mock session data in FastAPI requests.
+
+    Usage:
+        with mock_session({"user_email": "test@example.com"}):
+            response = client.get("/some-endpoint")
+    """
+
+    def mock_session_get(key, default=None):
+        return session_data.get(key, default)
+
+    mock_session_obj = Mock()
+    mock_session_obj.get = mock_session_get
+
+    with patch("starlette.requests.Request.session", mock_session_obj):
+        yield
+
+
+def verify_user(client, user_email, user_sub):
+    """Activate a user by email and sub."""
+
+    session_data = {
+        "user_email": user_email,
+        "user_sub": user_sub,
+        "is_super_admin": False,
+    }
+
+    with mock_session(session_data):
+        # Activate the user via UI success page
+        activation_success_response = client.get("/ui/activation/succes")
+        assert activation_success_response.status_code == 200

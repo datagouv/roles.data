@@ -50,63 +50,55 @@ async def get_email_service() -> EmailService:
 
 
 def get_service_provider_id(token: dict = Depends(decode_access_token)):
-    try:
-        return token.get("service_provider_id")
-    except HTTPException as e:
-        if e.status_code == 403:
-            return None
-        raise e
+    return token.get("service_provider_id")
 
 
 def get_service_account_id(token: dict = Depends(decode_access_token)):
-    try:
-        return token.get("service_account_id")
-    except HTTPException as e:
-        if e.status_code == 403:
-            return None
-        raise e
+    return token.get("service_account_id")
 
 
-def get_logs_service(
+def get_logs_service_o_auth(
     request: Request,
-    service_account_id: int | None = Depends(get_service_account_id),
-    service_provider_id: int | None = Depends(get_service_provider_id),
+    service_account_id: int = Depends(get_service_account_id),
+    service_provider_id: int = Depends(get_service_provider_id),
 ) -> LogsService:
     """Dependency to get LogsService instance."""
+    acting_user_sub = request.query_params.get("acting_user_sub")
 
-    if service_account_id is not None and service_provider_id is not None:
-        acting_user_sub = request.query_params.get("acting_user_sub")
-
-        if acting_user_sub is not None:
-            try:
-                # Cast string to UUID4
-                acting_user_sub = UUID(acting_user_sub)
-            except (ValueError, TypeError):
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Invalid UUID format for acting_user_sub: {acting_user_sub}",
-                )
-
-        logs_repository = LogsRepository(
-            service_provider_id, service_account_id, acting_user_sub
-        )
-        return LogsService(logs_repository)
-
-    else:
-        connected_user_sub = request.session.get("user_sub", None)
-
-        if not connected_user_sub:
+    if acting_user_sub is not None:
+        try:
+            # Cast string to UUID4
+            acting_user_sub = UUID(acting_user_sub)
+        except (ValueError, TypeError):
             raise HTTPException(
-                status_code=403,
-                detail="User is not authenticated",
+                status_code=400,
+                detail=f"Invalid UUID format for acting_user_sub: {acting_user_sub}",
             )
 
-        logs_repository = LogsRepository(
-            service_provider_id=0,
-            service_account_id=0,
-            acting_user_sub=connected_user_sub,
+    logs_repository = LogsRepository(
+        service_provider_id, service_account_id, acting_user_sub
+    )
+    return LogsService(logs_repository)
+
+
+def get_logs_service_web(
+    request: Request,
+) -> LogsService:
+    """Dependency to get LogsService instance - for the web only"""
+    connected_user_sub = request.session.get("user_sub", None)
+
+    if not connected_user_sub:
+        raise HTTPException(
+            status_code=403,
+            detail="User is not authenticated",
         )
-        return LogsService(logs_repository)
+
+    logs_repository = LogsRepository(
+        service_provider_id=0,
+        service_account_id=0,
+        acting_user_sub=connected_user_sub,
+    )
+    return LogsService(logs_repository)
 
 
 # ============
@@ -125,7 +117,7 @@ async def get_auth_service(
 
 
 async def get_users_service(
-    db: Database = Depends(get_db), logs_service=Depends(get_logs_service)
+    db: Database = Depends(get_db), logs_service=Depends(get_logs_service_o_auth)
 ) -> UsersService:
     """
     Dependency function that provides a UsersService instance.
@@ -135,7 +127,7 @@ async def get_users_service(
 
 
 async def get_organisations_service(
-    db: Database = Depends(get_db), logs_service=Depends(get_logs_service)
+    db: Database = Depends(get_db), logs_service=Depends(get_logs_service_o_auth)
 ) -> OrganisationsService:
     """
     Dependency function that provides a OrganisationsService instance.
@@ -163,7 +155,7 @@ async def get_service_providers_service(
 
 
 async def get_scopes_service(
-    db: Database = Depends(get_db), logs_service=Depends(get_logs_service)
+    db: Database = Depends(get_db), logs_service=Depends(get_logs_service_o_auth)
 ) -> ScopesService:
     """
     Dependency function that provides a ScopeService instance.
@@ -183,7 +175,7 @@ async def get_groups_service(
     ),
     scopes_service: ScopesService = Depends(get_scopes_service),
     email_service: EmailService = Depends(get_email_service),
-    logs_service=Depends(get_logs_service),
+    logs_service=Depends(get_logs_service_o_auth),
 ) -> GroupsService:
     """
     Dependency function that provides a GroupsService instance.
@@ -248,7 +240,7 @@ async def get_admin_write_service(
 
 
 async def get_activation_service(
-    db: Database = Depends(get_db), logs_service=Depends(get_logs_service)
+    db: Database = Depends(get_db), logs_service=Depends(get_logs_service_web)
 ):
     """
     Dependency function that provides an ActivationService instance.

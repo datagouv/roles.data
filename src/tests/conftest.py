@@ -8,8 +8,9 @@ from src.auth.o_auth import decode_access_token
 
 from ..config import settings
 from ..database import DatabaseWithSchema, get_db
-from ..dependencies import get_activation_service
+from ..dependencies import get_logs_service_o_auth
 from ..main import app
+from ..repositories.users import UsersRepository
 from ..services.ui.activation_service import ActivationService
 
 # Create a test database instance
@@ -52,10 +53,15 @@ def override_decode_access_token():
 async def test_activate_user(
     user_email: EmailStr,
     user_sub: UUID4,
-    activation_service: ActivationService = Depends(get_activation_service),
+    logs_service=Depends(get_logs_service_o_auth),
+    db=Depends(get_db),
 ):
     """Test-only route for activating users."""
-    return await activation_service.activate_user(user_email, user_sub)
+    users_repository = UsersRepository(db, logs_service)
+    activation_service = ActivationService(users_repository)
+    return await activation_service.activate_user(
+        user_sub=user_sub, user_email=user_email
+    )
 
 
 @pytest.fixture(scope="session", autouse=True)

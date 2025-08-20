@@ -5,6 +5,11 @@
 -- Begin transaction
 BEGIN;
 
+INSERT INTO :schema_name.roles (id, role_name, is_admin) VALUES
+(1, 'administrateur', true),
+(2, 'agent', false) ON CONFLICT (id) DO NOTHING;
+
+
 -- Create an organization for the group
 INSERT INTO :schema_name.organisations (id, name, siret)
 VALUES (1, 'DINUM', '13002526500013') ON CONFLICT (id) DO NOTHING;

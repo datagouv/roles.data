@@ -102,9 +102,4 @@ CREATE TABLE  IF NOT EXISTS :schema_name.service_accounts (
     CONSTRAINT fk_sa_sp_id FOREIGN KEY (service_provider_id) REFERENCES :schema_name.service_providers (id) ON DELETE CASCADE
 );
 
-INSERT INTO :schema_name.roles (id, role_name, is_admin) VALUES
-(1, 'administrateur', true),
-(2, 'agent', false),
-(3, 'prestataire', false) ON CONFLICT (id) DO NOTHING;
-
 COMMIT;

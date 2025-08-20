@@ -1,3 +1,4 @@
+\set schema_name :DB_SCHEMA
 
 --  see migration 20250815
 INSERT INTO :schema_name.roles (id, role_name, is_admin) VALUES

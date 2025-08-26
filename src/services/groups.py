@@ -89,7 +89,7 @@ class GroupsService:
             OrganisationCreate(siret=group_data.organisation_siret)
         )
 
-        admin_user = await self.users_service.create_user_if_doesnt_exist(
+        admin_user = await self.users_service.create_user_if_doesnt_exists(
             group_data.admin
         )
 
@@ -100,9 +100,11 @@ class GroupsService:
         await self.add_user_to_group(new_group.id, user_id=admin_user.id, role_id=1)
 
         if group_data.members:
-            for member in group_data.members:
-                user = await self.users_service.create_user_if_doesnt_exist(member)
-                await self.add_user_to_group(new_group.id, user_id=user.id, role_id=2)
+            members = await self.users_service.create_users_if_dont_exist(
+                group_data.members
+            )
+            user_role_pairs = [(user.id, 2) for user in members]
+            await self.groups_repository.add_users(new_group.id, user_role_pairs)
 
         return new_group
 
@@ -125,12 +127,16 @@ class GroupsService:
             user.id, self.service_provider_id
         )
 
+        # Batch fetch users for all groups
+        group_ids = [g.id for g in groups]
+        users_by_group = await self.users_service.get_users_by_group_ids(group_ids)
+
         groupsWithUsers = []
         for g in groups:
             # Python's dict() function does not include dynamically added attributes
             # so we have to manually create a dict then a new object
             g_dict = dict(g)
-            g_dict["users"] = await self.users_service.get_users_by_group_id(g.id)
+            g_dict["users"] = users_by_group.get(g.id, [])
             groupsWithUsers.append(GroupWithUsersAndScopesResponse(**g_dict))
         return groupsWithUsers
 
@@ -169,7 +175,7 @@ class GroupsService:
         user_id: int | None = None,
     ):
         if user_email is not None:
-            user = await self.users_service.create_user_if_doesnt_exist(
+            user = await self.users_service.create_user_if_doesnt_exists(
                 UserCreate(email=user_email)
             )
         elif user_id is not None:

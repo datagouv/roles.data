@@ -108,3 +108,16 @@ class AdminWriteRepository:
             """
             values = {"name": name, "url": url}  # URL is optional, can be set later
             return await self.db_session.fetch_one(query, values)
+
+    async def update_service_provider(
+        self, id: int, name: str, url: str
+    ) -> ServiceProviderResponse:
+        async with self.db_session.transaction():
+            query = """
+                UPDATE service_providers
+                SET name=:name, url=:url, updated_at= CURRENT_TIMESTAMP
+                WHERE service_providers.id = :id
+                RETURNING *
+            """
+            values = {"id": id, "name": name, "url": url}
+            return await self.db_session.fetch_one(query, values)

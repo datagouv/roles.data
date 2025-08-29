@@ -84,6 +84,14 @@ class AdminReadService:
         return await self.admin_read_repository.read_service_providers()
 
     async def get_service_provider_details(self, service_provider_id: int):
+        service_providers = await self.get_service_providers()
+        return next(
+            service_provider
+            for service_provider in service_providers
+            if service_provider["id"] == service_provider_id
+        )
+
+    async def get_service_accounts_and_logs(self, service_provider_id: int):
         logs = await self.get_logs(service_provider_id=service_provider_id)
         service_accounts = await self.admin_read_repository.read_service_accounts(
             service_provider_id=service_provider_id

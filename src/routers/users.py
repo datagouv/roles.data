@@ -29,7 +29,7 @@ async def create(
 
     Cela permet de créér un utilisateur et de l'ajouter à un groupe sans connaitre son sub.
     """
-    return await users_service.create_user(user)
+    return await users_service.create_user_if_doesnt_exist(user)
 
 
 @router.get("/search", response_model=UserResponse)

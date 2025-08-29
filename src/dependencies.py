@@ -18,6 +18,7 @@ from .repositories.scopes import ScopesRepository
 from .repositories.service_account import ServiceAccountRepository
 from .repositories.service_providers import ServiceProvidersRepository
 from .repositories.users import UsersRepository
+from .repositories.users_in_group import UsersInGroupRepository
 from .services.admin.read_service import AdminReadService
 from .services.admin.write_service import AdminWriteService
 from .services.auth import AuthService
@@ -181,6 +182,7 @@ async def get_groups_service(
     Dependency function that provides a GroupsService instance.
     """
     groups_repository = GroupsRepository(db, logs_service)
+    users_in_group_repository = UsersInGroupRepository(db, logs_service)
 
     if not service_provider_id:
         raise Exception(
@@ -189,6 +191,7 @@ async def get_groups_service(
 
     return GroupsService(
         groups_repository,
+        users_in_group_repository,
         users_service,
         roles_service,
         organisations_service,

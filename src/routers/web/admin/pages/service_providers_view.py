@@ -103,7 +103,7 @@ async def service_provider(
     """
     Allow admin to see the detail of a specific service provider
     """
-    service_provider = await admin_service.get_service_provider_details(
+    service_provider = await admin_service.get_service_accounts_and_logs(
         service_provider_id
     )
     return admin_template_manager.render(
@@ -120,77 +120,52 @@ async def service_provider(
     )
 
 
-@router.get(
-    "/{service_provider_id}/accounts/{account_id}/reset",
-    response_class=HTMLResponse,
-)
-async def reset_secret(
-    service_provider_id: int,
-    account_id: int,
-    admin_service=Depends(get_admin_write_service),
-):
-    """Reset and return the secret"""
-    try:
-        new_secret = await admin_service.update_service_account(
-            service_provider_id, account_id, action="reset_secret"
-        )
-        return HTMLResponse(f"""
-            <div style="background:#eee; padding: 0 10px">
-                <code >{new_secret}</code>
-            </div>
-            """)
-    except Exception:
-        import logging
-
-        logging.error("Error while resetting the secret", exc_info=True)
-        return HTMLResponse("""
-        <div class="error-display">
-            <span class="fr-badge fr-badge--error fr-badge--sm">
-                Une erreur est survenue lors de la réinitialisation du secret.
-            </span>
-        </div>
-        """)
-
-
-@router.get("/{service_provider_id}/account/create", response_class=HTMLResponse)
-async def create_service_account_form(
+@router.get("/{service_provider_id}/update", response_class=HTMLResponse)
+async def update_service_provider_form(
     request: Request,
     service_provider_id: int,
+    admin_service=Depends(get_admin_read_service),
 ):
     """
-    Create a new service provider form
+    Update service provider form
     """
-    target = f"/admin/service-providers/{service_provider_id}/account/create"
+    service_provider = await admin_service.get_service_provider_details(
+        service_provider_id
+    )
     return admin_template_manager.render(
         request,
         "service_create_form.html",
-        "Nouveau compte de service",
+        f"Mettre à jour le FS {service_provider_id}",
         context={
-            "target": target,
+            "target": f"/admin/service-providers/{service_provider_id}/update",
             "fields": [
                 {
-                    "label": "client_id du compte de service",
-                    "label_hint": "Identifiant unique du compte de service, utilisé pour l'authentification. Pour obtenir le secret, vous devez réinitialiser le compte de service.",
-                    "placeholder": "ex: data-gouv-service-account",
+                    "label": "Nom du FS",
+                    "label_hint": "Nom qui sera affiché dans l'interface d'administration",
+                    "placeholder": "ex: Data.gouv",
                     "name": "name",
-                }
+                    "defaultValue": service_provider.name,
+                },
+                {
+                    "label": "URL du FS",
+                    "label_hint": "URL du fournisseur de service",
+                    "placeholder": "ex: https://data.gouv.fr",
+                    "name": "url",
+                    "defaultValue": service_provider.url,
+                },
             ],
         },
         breadcrumbs=[
             Breadcrumb(
                 path="/admin/service-providers",
                 label="Liste des fournisseurs de service",
-            ),
-            Breadcrumb(
-                path=f"/admin/service-providers/{service_provider_id}",
-                label=f"FS n°{service_provider_id}",
-            ),
+            )
         ],
     )
 
 
-@router.post("/{service_provider_id}/account/create")
-async def create_service_account(
+@router.post("/{service_provider_id}/update")
+async def update_service_provider(
     request: Request,
     service_provider_id: int,
     admin_service: AdminWriteService = Depends(get_admin_write_service),
@@ -198,41 +173,21 @@ async def create_service_account(
     """
     Allow admin to see the list of service providers
     """
-    if not isinstance(service_provider_id, int) or service_provider_id <= 0:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid service_provider_id. It must be a positive integer.",
-        )
-
     form = await request.form()
-    client_id = str(form.get("name", ""))
+    name = str(form.get("name", ""))
 
-    await admin_service.create_service_account(
-        service_provider_id=service_provider_id, client_id=client_id
-    )
+    url = ""
 
-    return RedirectResponse(
-        url=f"/admin/service-providers/{service_provider_id}", status_code=303
-    )
-
-
-@router.post("/{service_provider_id}/accounts/{account_id}/activate/{state}")
-async def deactivate_service_account(
-    service_provider_id: int,
-    account_id: int,
-    state: bool,
-    admin_service=Depends(get_admin_write_service),
-):
-    if not isinstance(service_provider_id, int) or service_provider_id <= 0:
+    try:
+        url = HttpUrl(str(form.get("url", "")))
+    except ValidationError:
         raise HTTPException(
             status_code=400,
-            detail="Invalid service_provider_id. It must be a positive integer.",
+            detail="Invalid URL format. Please provide a valid URL.",
         )
 
-    await admin_service.update_service_account(
-        service_provider_id, account_id, action="activate" if state else "deactivate"
+    await admin_service.update_service_provider(
+        service_provider_id=service_provider_id, name=name, url=str(url)
     )
 
-    return RedirectResponse(
-        url=f"/admin/service-providers/{service_provider_id}", status_code=303
-    )
+    return RedirectResponse(url="/admin/service-providers", status_code=303)

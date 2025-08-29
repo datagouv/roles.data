@@ -81,3 +81,13 @@ class AdminWriteService:
         Create a new service provider.
         """
         return await self.admin_write_repository.create_service_provider(name, url)
+
+    async def update_service_provider(
+        self, service_provider_id: int, name: str, url: str
+    ) -> ServiceProviderResponse:
+        """
+        Update a service provider name and url
+        """
+        return await self.admin_write_repository.update_service_provider(
+            service_provider_id, name, url
+        )

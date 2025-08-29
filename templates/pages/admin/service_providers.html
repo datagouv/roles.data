@@ -16,9 +16,14 @@
                 <i>Non renseigné</i>
             {% endif %}
         </td>
+        <td>
+            <a class="fr-btn fr-btn--sm fr-btn--secondary" href='/admin/service-providers/{{sp.id}}/update'>
+                Modifier
+            </a>
+        </td>
     </tr>
 {% endmacro %}
-{% set headers = ['Creation', 'MAJ', 'ID', 'Nom', 'Url'] %}
+{% set headers = ['Creation', 'MAJ', 'ID', 'Nom', 'Url', 'Action'] %}
 
 <div class="fr-container">
     <div class="fr-grid-row fr-grid-row--right">

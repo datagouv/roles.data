@@ -62,7 +62,7 @@ Copiez le et partagez le de manière sécurisé à l’équipe concernée."
   <h2>Comptes de service</h2>
   <div class="fr-grid-row fr-grid-row--right">
       <div class="fr-col-auto">
-          <a class="fr-btn fr-btn--sm fr-btn--secondary" href='/admin/service-providers/{{ service_provider_id }}/account/create'>
+          <a class="fr-btn fr-btn--sm fr-btn--secondary" onclick="return confirm('Êtes-vous sûr de vouloir créer un nouveau compte de service ? \nLe compte va être créé avec un client_id aléatoire et immédiatement après, vous pourrez cliquer sur “Reset” afin de générer un client_secret.')" href='/admin/service-providers/{{ service_provider_id }}/accounts/create'>
               Créer un nouveau compte de service
           </a>
       </div>

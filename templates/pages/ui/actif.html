@@ -3,7 +3,18 @@
 {% block content %}
 <div class="fr-container">
     <p>
-        Votre compte est bien activé.
+        Votre compte est bien activé. Vous dès maintenant l’utiliser auprès des services pour lesquels vous disposez de droits :
     </p>
+    <ul>
+        {% for service in services %}
+            <li>
+                {% if service['url'] %}
+                    <a href="{{service['url']}}">{{ service["name"] }}</a>
+                {% else %}
+                    {{ service["name"] }}
+                {% endif %}
+            </li>
+        {% endfor %}
+    </ul>
 </div>
 {% endblock %}

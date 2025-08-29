@@ -3,7 +3,7 @@
 {% from "components/footer.html" import footer %}
 
 {% block body_content %}
-{{ header(false, is_authenticated, user_email, is_super_admin) }}
+{{ header(true, is_authenticated, user_email, is_super_admin) }}
 <main>
     <div class="fr-container">
         <nav role="navigation" class="fr-breadcrumb" aria-label="vous êtes ici :">

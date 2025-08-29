@@ -249,4 +249,5 @@ async def get_activation_service(
     Dependency function that provides an ActivationService instance.
     """
     users_repository = UsersRepository(db, logs_service)
-    return ActivationService(users_repository)
+    service_providers_repository = ServiceProvidersRepository(db)
+    return ActivationService(users_repository, service_providers_repository)

@@ -31,7 +31,7 @@ class LogsRepository:
         self.service_account_id = service_account_id
         self.acting_user_sub = acting_user_sub
 
-    async def save_many(
+    async def add_entries(
         self,
         action_type: LOG_ACTIONS,
         resource_type: LOG_RESOURCE_TYPES,

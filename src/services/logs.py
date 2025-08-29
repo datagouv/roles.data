@@ -33,7 +33,7 @@ class LogsService:
 
         NB : require a database session to be passed, as it ensure transaction consistency.
         """
-        await self.logs_repository.save_many(
+        await self.logs_repository.add_entries(
             action_type=action_type,
             db_session=db_session,
             resource_type=resource_type,
@@ -55,7 +55,7 @@ class LogsService:
         for i, resource_value in enumerate(resource_values):
             resource_values[i] = (resource_value[0], self.serialize(resource_value[1]))
 
-        await self.logs_repository.save_many(
+        await self.logs_repository.add_entries(
             action_type=action_type,
             db_session=db_session,
             resource_type=resource_type,

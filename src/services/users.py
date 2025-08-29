@@ -78,6 +78,8 @@ class UsersService:
         Retrieve all user for a given group ID
         """
         usersByGroupId = await self.get_users_by_group_ids([group_id])
+        if group_id not in usersByGroupId:
+            return []
         return usersByGroupId[group_id]
 
     async def check_user_exists(self, email: str) -> bool:

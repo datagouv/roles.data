@@ -113,25 +113,6 @@ class UsersRepository:
 
             return result
 
-    async def create(self, user: UserCreate) -> UserResponse:
-        async with self.db_session.transaction():
-            query = "INSERT INTO users (email, is_verified) VALUES (:email, :is_verified) RETURNING *"
-            values = {"email": user.email.lower(), "is_verified": False}
-
-            user_response = await self.db_session.fetch_one(query, values)
-
-            await self.logs_service.save(
-                action_type=LOG_ACTIONS.CREATE_USER,
-                resource_type=LOG_RESOURCE_TYPES.USER,
-                db_session=self.db_session,
-                resource_id=user_response["id"],
-                new_values={
-                    "email": user_response["email"],
-                },
-            )
-
-            return user_response
-
     async def create_many(self, users: list[UserCreate]) -> list[UserResponse]:
         """
         Create multiple users in a single query with RETURNING clause

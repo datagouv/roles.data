@@ -12,7 +12,7 @@ from ..model import (
     UserCreate,
     UserInGroupResponse,
 )
-from ..repositories import groups
+from ..repositories import groups, users_in_group
 from . import organisations, roles, scopes, users
 from .ui.email import EmailService
 
@@ -32,6 +32,7 @@ class GroupsService:
     def __init__(
         self,
         groups_repository: groups.GroupsRepository,
+        users_in_group_repository: users_in_group.UsersInGroupRepository,
         users_service: users.UsersService,
         roles_service: roles.RolesService,
         organisations_service: organisations.OrganisationsService,
@@ -41,6 +42,7 @@ class GroupsService:
         service_provider_id: int,
     ):
         self.groups_repository = groups_repository
+        self.users_in_group_repository = users_in_group_repository
         self.users_service = users_service
         self.roles_service = roles_service
         self.organisations_service = organisations_service
@@ -104,7 +106,9 @@ class GroupsService:
                 group_data.members
             )
             user_role_pairs = [(user.id, 2) for user in members]
-            await self.groups_repository.add_users(new_group.id, user_role_pairs)
+            await self.users_in_group_repository.add_users(
+                new_group.id, user_role_pairs
+            )
 
         return new_group
 
@@ -197,7 +201,7 @@ class GroupsService:
                 detail=f"User with ID {user.id} is already in group {group_id}",
             )
 
-        await self.groups_repository.add_user(group.id, user.id, role.id)
+        await self.users_in_group_repository.add_users(group.id, [(user.id, role.id)])
 
         service_provider = (
             await self.service_provider_service.get_service_provider_by_id(
@@ -255,7 +259,7 @@ class GroupsService:
             service_provider_url=service_provider.url,
         )
 
-        return await self.groups_repository.remove_user(group.id, user.id)
+        return await self.users_in_group_repository.remove_user(group.id, user.id)
 
     async def update_user_in_group(self, group_id: int, user_id: int, role_id: int):
         # check if the user, is in the group
@@ -279,7 +283,9 @@ class GroupsService:
                         detail=f"Impossible to update user {user_id} role in group {group_id} as it is the only admin of the group.",
                     )
 
-        await self.groups_repository.update_user_role(group.id, user_id, role.id)
+        await self.users_in_group_repository.update_user_role(
+            group.id, user_id, role.id
+        )
 
         return UserInGroupResponse(
             **dict(user),

@@ -33,12 +33,11 @@ class LogsService:
 
         NB : require a database session to be passed, as it ensure transaction consistency.
         """
-        await self.logs_repository.save(
+        await self.logs_repository.save_many(
             action_type=action_type,
             db_session=db_session,
             resource_type=resource_type,
-            resource_id=resource_id,
-            new_values=self.serialize(new_values),
+            resource_values=[(resource_id, self.serialize(new_values))],
         )
 
     async def save_many(

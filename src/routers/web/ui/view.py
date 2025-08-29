@@ -26,12 +26,17 @@ async def home_page(
 
     user = await activation_service.activate_user(user_email, user_sub)
 
+    services = await activation_service.get_user_providers(user_email)
+
     return ui_template_manager.render(
         request,
         "actif.html",
         "Activation de votre compte",
         context={
             "user": user,
+            "services": [
+                {"name": service.name, "url": service.url} for service in services
+            ],
         },
     )
 

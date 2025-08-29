@@ -89,7 +89,7 @@ class GroupsService:
             OrganisationCreate(siret=group_data.organisation_siret)
         )
 
-        admin_user = await self.users_service.create_user_if_doesnt_exists(
+        admin_user = await self.users_service.create_user_if_doesnt_exist(
             group_data.admin
         )
 
@@ -175,7 +175,7 @@ class GroupsService:
         user_id: int | None = None,
     ):
         if user_email is not None:
-            user = await self.users_service.create_user_if_doesnt_exists(
+            user = await self.users_service.create_user_if_doesnt_exist(
                 UserCreate(email=user_email)
             )
         elif user_id is not None:

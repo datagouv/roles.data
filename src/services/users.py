@@ -87,7 +87,7 @@ class UsersService:
             return True
         return False
 
-    async def create_user_if_doesnt_exists(self, user_data: UserCreate) -> UserResponse:
+    async def create_user_if_doesnt_exist(self, user_data: UserCreate) -> UserResponse:
         """
         Create/fetch users if they don't exist
         """

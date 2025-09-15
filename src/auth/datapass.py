@@ -42,7 +42,9 @@ async def verified_datapass_signature(
 
     # Use secure comparison to prevent timing attacks
     if not hmac.compare_digest(provided_signature, expected_signature):
-        raise HTTPException(status_code=400, detail="Invalid webhook signature")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid webhook signature"
+        )
 
     payload_dict = json.loads(body.decode("utf-8"))
     return DataPassWebhookPayload(**payload_dict)

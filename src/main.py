@@ -20,6 +20,7 @@ from .routers import (
     health,
     roles,
     users,
+    webhooks,
 )
 from .routers.auth import auth
 from .routers.web.admin import view as admin_home
@@ -96,6 +97,9 @@ app.include_router(roles.router)
 app.include_router(groups.router)
 app.include_router(groups_admin.router)
 app.include_router(groups_scopes.router)
+
+# webhooks (Datapass)
+app.include_router(webhooks.router, include_in_schema=False)
 
 # web interfaces - only use ProConnect
 app.include_router(admin_home.router, include_in_schema=False)

@@ -1,3 +1,4 @@
+import json
 from uuid import UUID
 
 from databases import Database
@@ -6,6 +7,7 @@ from pydantic import EmailStr
 
 from src.auth.o_auth import decode_access_token
 
+from .auth.datapass import verify_datapass_signature
 from .database import get_db
 from .repositories.admin.admin_read_repository import AdminReadRepository
 from .repositories.admin.admin_write_repository import AdminWriteRepository
@@ -43,6 +45,25 @@ async def get_email_service() -> EmailService:
     """
     email_repository = EmailRepository()
     return EmailService(email_repository)
+
+
+# ====================
+# Datapss dependencies
+# ====================
+
+
+async def get_verified_datapass_payload(request: Request):
+    """
+    Dependency function that verify DataPass signature using HMAC SHA256.
+    """
+    from .model import DataPassWebhookPayload
+
+    body = await request.body()
+
+    await verify_datapass_signature(body, request.headers)
+
+    payload_dict = json.loads(body.decode("utf-8"))
+    return DataPassWebhookPayload(**payload_dict)
 
 
 # =========================

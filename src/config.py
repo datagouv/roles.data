@@ -7,8 +7,6 @@ class AppSettings(BaseSettings):
     Application settings loaded from environment variables
     """
 
-    SENTRY_DSN: str = ""  # optional
-
     # Database settings - NO DEFAULTS (required)
     DB_HOST: str
     DB_PORT: int
@@ -36,6 +34,11 @@ class AppSettings(BaseSettings):
     # it is best to use a different algorithm for OAuth2 and for session
     # No algorithm needed - uses symmetric encryption
     SESSION_SECRET_KEY: str
+
+    # third party integrations configuration
+    DATAPASS_WEBHOOK_SECRET: str
+
+    SENTRY_DSN: str = ""  # optional
 
     PROCONNECT_CLIENT_ID: str
     PROCONNECT_CLIENT_SECRET: str

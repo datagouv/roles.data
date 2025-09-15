@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Annotated
+from typing import Annotated, List
 from xmlrpc.client import boolean
 
 from fastapi import HTTPException, status
@@ -251,3 +251,58 @@ class LogResponse(BaseModel):
     created_at: str  # ISO format string
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# --- DataPass Webhook Models ---
+
+
+class DataPassOrganization(BaseModel):
+    """DataPass organization payload."""
+
+    id: int
+    name: str
+    siret: str
+
+
+class DataPassApplicant(BaseModel):
+    """DataPass applicant payload."""
+
+    id: int
+    email: EmailStr
+    given_name: str
+    family_name: str
+    phone_number: str
+    job_title: str
+
+
+class DataPassData(BaseModel):
+    """DataPass authorization request data payload."""
+
+    intitule: str
+    scopes: List[str]
+    contact_technique_given_name: str
+    contact_technique_family_name: str
+    contact_technique_phone_number: str
+    contact_technique_job_title: str
+    contact_technique_email: EmailStr
+
+
+class DataPassAuthorizationRequest(BaseModel):
+    """DataPass authorization request payload."""
+
+    id: int
+    public_id: str
+    state: str
+    form_uid: str
+    organization: DataPassOrganization
+    applicant: DataPassApplicant
+    data: DataPassData
+
+
+class DataPassWebhookPayload(BaseModel):
+    """Complete DataPass webhook payload."""
+
+    event: str
+    fired_at: int
+    model_type: str
+    data: DataPassAuthorizationRequest

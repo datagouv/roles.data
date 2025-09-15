@@ -104,7 +104,7 @@ def test_datapass_webhook_invalid_signature(client):
         },
     )
 
-    assert response.status_code == 400
+    assert response.status_code == 401
     assert "Invalid webhook signature" in response.json()["detail"]
 
 
@@ -120,5 +120,5 @@ def test_datapass_webhook_missing_signature(client):
         headers={"Content-Type": "application/json"},
     )
 
-    assert response.status_code == 400
+    assert response.status_code == 401
     assert "Missing X-Hub-Signature-256 header" in response.json()["detail"]

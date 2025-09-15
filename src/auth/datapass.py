@@ -1,13 +1,17 @@
 import hashlib
 import hmac
+import json
 
-from fastapi import HTTPException
-from fastapi.datastructures import Headers
+from fastapi import HTTPException, status
 
 from src.config import settings
 
+from ..model import DataPassWebhookPayload
 
-async def verify_datapass_signature(body: bytes, headers: Headers) -> None:
+
+async def verified_datapass_signature(
+    body: bytes, signature_header: str | None
+) -> DataPassWebhookPayload:
     """
     Verify DataPass signature using HMAC SHA256.
 
@@ -17,15 +21,16 @@ async def verify_datapass_signature(body: bytes, headers: Headers) -> None:
     Raises:
         HTTPException: If signature header is missing or signature is invalid
     """
-    signature_header = headers.get("X-Hub-Signature-256")
-
     if not signature_header:
         raise HTTPException(
-            status_code=400, detail="Missing X-Hub-Signature-256 header"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing X-Hub-Signature-256 header",
         )
 
     if not signature_header.startswith("sha256="):
-        raise HTTPException(status_code=400, detail="Invalid signature format")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid signature format"
+        )
 
     # Extract the signature hash
     provided_signature = signature_header[7:]  # Remove "sha256=" prefix
@@ -38,3 +43,6 @@ async def verify_datapass_signature(body: bytes, headers: Headers) -> None:
     # Use secure comparison to prevent timing attacks
     if not hmac.compare_digest(provided_signature, expected_signature):
         raise HTTPException(status_code=400, detail="Invalid webhook signature")
+
+    payload_dict = json.loads(body.decode("utf-8"))
+    return DataPassWebhookPayload(**payload_dict)

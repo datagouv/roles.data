@@ -6,7 +6,7 @@ from src.utils.security import verify_password
 from ..repositories.service_account import ServiceAccountRepository
 
 
-class AuthService:
+class ServiceAccountsService:
     def __init__(self, service_account_repository: ServiceAccountRepository):
         self.service_account_repository = service_account_repository
 

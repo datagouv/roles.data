@@ -4,12 +4,12 @@ from fastapi import APIRouter, Depends
 from pydantic import HttpUrl
 
 from ...dependencies import (
+    get_groups_service_factory,
     get_service_providers_service,
     get_verified_datapass_payload,
-    get_webhook_groups_service_factory,
 )
 from ...model import DataPassWebhookPayload, GroupCreate, UserCreate
-from ...services.services_provider import ServiceProvidersService
+from ...services.service_providers import ServiceProvidersService
 
 router = APIRouter(
     prefix="/webhooks/datapass",
@@ -21,7 +21,7 @@ router = APIRouter(
 @router.post("/")
 async def receive_datapass_webhook(
     webhook_payload: DataPassWebhookPayload = Depends(get_verified_datapass_payload),
-    groups_service_factory=Depends(get_webhook_groups_service_factory),
+    groups_service_factory=Depends(get_groups_service_factory),
     service_providers_service: ServiceProvidersService = Depends(
         get_service_providers_service
     ),
@@ -66,13 +66,13 @@ async def receive_datapass_webhook(
     )
 
     # Create group for datapass service provider
-    datapass_groups_service = await groups_service_factory(
+    datapass_groups_service = groups_service_factory(
         99
     )  # DataPass service provider ID = 99
     created_group = await datapass_groups_service.create_group(group_data)
 
     # Add the same group to datapass service provider
-    service_provider_group_service = await groups_service_factory(
+    service_provider_group_service = groups_service_factory(
         service_provider.id
     )  # Annuaire service provider ID = 1
     await service_provider_group_service.add_relation(

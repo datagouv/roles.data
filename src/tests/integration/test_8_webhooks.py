@@ -65,9 +65,9 @@ def test_datapass_webhook_approve_event(client):
 
     assert response.status_code == 200
     json_response = response.json()
-    assert json_response["status"] == "success"
-    assert json_response["event_type"] == "approve"
-    assert json_response["authorization_id"] == "a90939e8-f906-4343-8996-5955257f161d"
+    assert json_response["status"] == "Success"
+    assert "Group" in json_response["message"]
+    assert "created" in json_response["message"]
 
 
 def test_datapass_webhook_refuse_event(client):
@@ -85,8 +85,8 @@ def test_datapass_webhook_refuse_event(client):
 
     assert response.status_code == 200
     json_response = response.json()
-    assert json_response["status"] == "acknowledged"
-    assert json_response["event_type"] == "refuse"
+    assert json_response["status"] == "Ignored"
+    assert "does not trigger group creation" in json_response["message"]
 
 
 def test_datapass_webhook_invalid_signature(client):

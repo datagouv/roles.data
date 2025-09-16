@@ -1,7 +1,7 @@
 from fastapi import HTTPException, status
 from pydantic import UUID4, EmailStr
 
-from src.services.services_provider import ServiceProvidersService
+from services.service_providers import ServiceProvidersService
 
 from ..model import (
     GroupCreate,

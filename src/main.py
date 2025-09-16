@@ -20,11 +20,11 @@ from .routers import (
     health,
     roles,
     users,
-    webhooks,
 )
 from .routers.auth import auth
 from .routers.web.admin import view as admin_home
 from .routers.web.ui import view as ui_home
+from .routers.webhooks import datapass
 
 app = FastAPI(redirect_slashes=True, redoc_url="/")
 
@@ -99,7 +99,7 @@ app.include_router(groups_admin.router)
 app.include_router(groups_scopes.router)
 
 # webhooks (Datapass)
-app.include_router(webhooks.router, include_in_schema=False)
+app.include_router(datapass.router, include_in_schema=False)
 
 # web interfaces - only use ProConnect
 app.include_router(admin_home.router, include_in_schema=False)

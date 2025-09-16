@@ -46,22 +46,6 @@ async def get_email_service() -> EmailService:
     return EmailService(email_repository)
 
 
-# ====================
-# Datapss dependencies
-# ====================
-
-
-async def get_verified_datapass_payload(request: Request):
-    """
-    Dependency function that verify DataPass signature using HMAC SHA256.
-    """
-
-    body = await request.body()
-    signature_header = request.headers.get("X-Hub-Signature-256")
-
-    return await verified_datapass_signature(body, signature_header)
-
-
 # =========================
 # Access Token dependencies
 # =========================
@@ -95,26 +79,6 @@ def get_logs_service_o_auth(
 
     logs_repository = LogsRepository(
         service_provider_id, service_account_id, acting_user_sub
-    )
-    return LogsService(logs_repository)
-
-
-def get_logs_service_web(
-    request: Request,
-) -> LogsService:
-    """Dependency to get LogsService instance - for the web only"""
-    connected_user_sub = request.session.get("user_sub", None)
-
-    if not connected_user_sub:
-        raise HTTPException(
-            status_code=403,
-            detail="User is not authenticated",
-        )
-
-    logs_repository = LogsRepository(
-        service_provider_id=0,
-        service_account_id=0,
-        acting_user_sub=connected_user_sub,
     )
     return LogsService(logs_repository)
 
@@ -223,6 +187,10 @@ async def get_groups_service(
 # Web (UI) dependencies
 # =====================
 
+# ==============
+# Admin services
+# ==============
+
 
 async def get_proconnected_user_email(request: Request):
     """
@@ -259,6 +227,31 @@ async def get_admin_write_service(
     return AdminWriteService(admin_write_repository)
 
 
+# ===========
+# UI services
+# ===========
+
+
+def get_logs_service_web(
+    request: Request,
+) -> LogsService:
+    """Dependency to get LogsService instance - for the web only"""
+    connected_user_sub = request.session.get("user_sub", None)
+
+    if not connected_user_sub:
+        raise HTTPException(
+            status_code=403,
+            detail="User is not authenticated",
+        )
+
+    logs_repository = LogsRepository(
+        service_provider_id=0,
+        service_account_id=0,
+        acting_user_sub=connected_user_sub,
+    )
+    return LogsService(logs_repository)
+
+
 async def get_activation_service(
     db: Database = Depends(get_db), logs_service=Depends(get_logs_service_web)
 ):
@@ -268,3 +261,72 @@ async def get_activation_service(
     users_repository = UsersRepository(db, logs_service)
     service_providers_repository = ServiceProvidersRepository(db)
     return ActivationService(users_repository, service_providers_repository)
+
+
+# =============================
+# Datapass webhook dependencies
+# =============================
+
+
+async def get_verified_datapass_payload(request: Request):
+    """
+    Dependency function that verify DataPass signature using HMAC SHA256.
+    """
+
+    body = await request.body()
+    signature_header = request.headers.get("X-Hub-Signature-256")
+
+    return await verified_datapass_signature(body, signature_header)
+
+
+async def get_logs_service_datapass(
+    request: Request,
+) -> LogsService:
+    """Dependency to get LogsService instance - for the datapass webhook only"""
+    connected_user_sub = request.session.get("user_sub", None)
+
+    if not connected_user_sub:
+        raise HTTPException(
+            status_code=403,
+            detail="User is not authenticated",
+        )
+
+    logs_repository = LogsRepository(
+        service_provider_id=999,
+        service_account_id=0,
+        acting_user_sub=connected_user_sub,
+    )
+    return LogsService(logs_repository)
+
+
+async def get_webhook_groups_service_factory(
+    db: Database = Depends(get_db), logs_service=Depends(get_logs_service_datapass)
+):
+    """
+    Dependency function that returns a factory function to create GroupsService instances for any service provider.
+    """
+
+    async def create_groups_service(service_provider_id: int) -> GroupsService:
+        groups_repository = GroupsRepository(db, logs_service)
+        users_in_group_repository = UsersInGroupRepository(db, logs_service)
+
+        users_service = await get_users_service(db, logs_service)
+        roles_service = await get_roles_service(db)
+        organisations_service = await get_organisations_service(db, logs_service)
+        service_provider_service = await get_service_providers_service(db)
+        scopes_service = await get_scopes_service(db, logs_service)
+        email_service = await get_email_service()
+
+        return GroupsService(
+            groups_repository,
+            users_in_group_repository,
+            users_service,
+            roles_service,
+            organisations_service,
+            service_provider_service,
+            scopes_service,
+            email_service,
+            service_provider_id,
+        )
+
+    return create_groups_service

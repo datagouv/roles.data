@@ -221,6 +221,7 @@ class LOG_ACTIONS(Enum):
     UPDATE_ORGANISATION = "Organisation updated"
 
     # Service provider actions
+    CREATE_GROUP_SERVICE_PROVIDER_RELATION = "Group service provider relation created"
     UPDATE_GROUP_SERVICE_PROVIDER_RELATION = "Group service provider relation updated"
 
 
@@ -278,6 +279,7 @@ class DataPassApplicant(BaseModel):
 class DataPassData(BaseModel):
     """DataPass authorization request data payload."""
 
+    service_provider_id: int
     intitule: str
     scopes: List[str]
     contact_technique_given_name: str
@@ -306,3 +308,45 @@ class DataPassWebhookPayload(BaseModel):
     fired_at: int
     model_type: str
     data: DataPassAuthorizationRequest
+
+
+class DataPassWebhookWrapper:
+    """
+    Wrapper class for DataPass webhook payload with helper methods.
+
+    This class provides convenient methods to navigate and extract
+    information from the DataPass webhook payload.
+    """
+
+    def __init__(self, verified_payload: DataPassWebhookPayload):
+        self.payload = verified_payload
+
+    def id(self):
+        return self.payload.data.public_id
+
+    def is_habilitation_update(self):
+        return (
+            self.payload.event == "approve" and self.payload.data.state == "validated"
+        )
+
+    def get_service_provider_id(self):
+        return self.payload.data.data.service_provider_id
+
+    def applicant_email(self):
+        return self.payload.data.applicant.email
+
+    def organisation_siret(self) -> Siret:
+        siret = validate_siret(self.payload.data.organization.siret)
+        return siret
+
+    def intitule_demande(self):
+        return self.payload.data.data.intitule
+
+    def scopes(self):
+        return " ".join(self.payload.data.data.scopes)
+
+    def demande_url(self):
+        return HttpUrl(f"https://datapass.api.gouv.fr/demandes/{self.id()}")
+
+    def demande_contract_description(self):
+        return f"DATAPASS_DEMANDE_{self.id()}"

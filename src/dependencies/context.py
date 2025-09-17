@@ -8,6 +8,7 @@ from src.auth.o_auth import decode_access_token
 
 from ..repositories.logs import LogsRepository
 from ..services.logs import LogsService
+from .datapass import DATAPASS_SERVICE_PROVIDER_ID
 
 
 @dataclass
@@ -34,6 +35,15 @@ async def get_request_context(request: Request) -> RequestContext:
 
     Raises HTTPException if context cannot be determined.
     """
+
+    if request.url.path.startswith("/webhooks/datapass"):
+        # DataPass webhook means no active user
+        return RequestContext(
+            service_provider_id=DATAPASS_SERVICE_PROVIDER_ID,
+            service_account_id=0,
+            acting_user_sub=None,
+            context_type="webhook",
+        )
 
     # Web session (either admin or user)
     if hasattr(request, "session") and request.session.get("user_sub"):
@@ -84,24 +94,15 @@ async def get_request_context(request: Request) -> RequestContext:
             # If token parsing fails, fall through to other contexts
             pass
 
-    if request.url.path.startswith("/webhooks/datapass"):
-        # DataPass webhook means no active user
-        return RequestContext(
-            service_provider_id=999,
-            service_account_id=0,
-            acting_user_sub=None,
-            context_type="webhook",
-        )
-
     raise HTTPException(
         status_code=500,
         detail="No valid OAuth token, webhook path, or web session found.",
     )
 
 
-# ==================
+# ====================
 # Context dependencies
-# ==================
+# ====================
 
 
 async def get_context(request: Request) -> RequestContext:

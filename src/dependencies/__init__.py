@@ -9,6 +9,9 @@ from .context import (
     get_service_provider_id,
 )
 
+# Webhook dependencies
+from .datapass import get_verified_datapass_payload
+
 # Email dependencies
 from .email import get_email_service
 
@@ -31,9 +34,6 @@ from .web import (
     get_admin_write_service,
     get_proconnected_user_email,
 )
-
-# Webhook dependencies
-from .webhooks import get_verified_datapass_payload
 
 # Make all imports available at package level
 __all__ = [

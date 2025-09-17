@@ -38,6 +38,7 @@ def create_datapass_payload(event: str = "approve", state: str = "validated") ->
                 "job_title": "Rockstar",
             },
             "data": {
+                "service_provider": 1,
                 "intitule": "Ma demande",
                 "scopes": ["cnaf_identite", "cnaf_enfants"],
                 "contact_technique_given_name": "Tech",

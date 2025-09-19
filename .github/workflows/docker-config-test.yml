@@ -28,6 +28,7 @@ jobs:
         MAIL_PASSWORD=
         MAIL_PORT=1025
         MAIL_USE_STARTTLS=False
+        DATAPASS_WEBHOOK_SECRET=blablabla
         EOF
 
     - name: Build and start services

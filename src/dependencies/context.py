@@ -6,9 +6,9 @@ from pydantic import UUID4
 
 from src.auth.o_auth import decode_access_token
 
+from ..config import settings
 from ..repositories.logs import LogsRepository
 from ..services.logs import LogsService
-from .datapass import DATAPASS_SERVICE_PROVIDER_ID
 
 
 @dataclass
@@ -39,7 +39,7 @@ async def get_request_context(request: Request) -> RequestContext:
     if request.url.path.startswith("/webhooks/datapass"):
         # DataPass webhook means no active user
         return RequestContext(
-            service_provider_id=DATAPASS_SERVICE_PROVIDER_ID,
+            service_provider_id=settings.DATAPASS_SERVICE_PROVIDER_ID,
             service_account_id=0,
             acting_user_sub=None,
             context_type="webhook",

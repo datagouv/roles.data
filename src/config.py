@@ -53,6 +53,11 @@ class AppSettings(BaseSettings):
     SUPER_ADMIN_EMAILS: str = ""
 
     @property
+    def DATAPASS_SERVICE_PROVIDER_ID(self):
+        """Hard coded constant"""
+        return 999
+
+    @property
     def DATABASE_URL(self) -> str:
         return f"postgresql://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT_TEST if self.DB_ENV=='test' else self.DB_PORT}/{self.DB_NAME}"  # type: ignore
 

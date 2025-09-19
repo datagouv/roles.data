@@ -78,7 +78,7 @@ class GroupsRepository:
             FROM groups as G
             INNER JOIN organisations AS O ON G.orga_id = O.id
             INNER JOIN group_service_provider_relations AS GSPR ON GSPR.group_id = G.id AND GSPR.service_provider_id = :service_provider_id
-            WHERE G.contract_description = :contract_description
+            WHERE GSPR.contract_description = :contract_description
             ORDER BY G.id
             """
             return await self.db_session.fetch_all(

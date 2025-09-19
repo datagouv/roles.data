@@ -314,18 +314,18 @@ class GroupsService:
         contract_description: str | None = None,
         contract_url: HttpUrl | None = None,
     ):
-        group = await self.get_group_by_id(group_id)
+        """
+        Update or establish a relation between a service_provider and a group
+        """
+        # verify service provider exists
         service_provider = (
             await self.service_provider_service.get_service_provider_by_id(
                 self.service_provider_id
             )
         )
 
-        # verify if the group is already linked to the service provider
-        await self.scopes_service.get_scopes_and_contract(service_provider.id, group.id)
-        # check if the group is linked to the service provider
         return await self.scopes_service.update_or_create(
-            service_provider.id, group.id, scopes, contract_description, contract_url
+            service_provider.id, group_id, scopes, contract_description, contract_url
         )
 
     def is_user_in_group(

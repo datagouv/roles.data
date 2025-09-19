@@ -29,15 +29,17 @@ async def receive_datapass_webhook(
     This endpoint receives webhook calls from DataPass and processes
     approval events for authorization requests.
     """
-    if not payload.is_habilitation_update():
+    if not payload.is_habilitation_update:
         return {
             "status": "Ignored",
             "message": "Event does not trigger group creation or update",
+            "data": {},
         }
 
     group = await datapass_service.process_webhook(payload)
 
     return {
         "status": "Success",
-        "message": f"Group {group.id} created",
+        "message": "Event succesfully processed",
+        "data": group,
     }

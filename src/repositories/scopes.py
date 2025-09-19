@@ -36,7 +36,7 @@ class ScopesRepository:
             """
 
             set = []
-            values: dict[str, int | str] = {
+            values: dict[str, int | str | None] = {
                 "service_provider_id": service_provider_id,
                 "group_id": group_id,
             }

@@ -321,32 +321,41 @@ class DataPassWebhookWrapper:
     def __init__(self, verified_payload: DataPassWebhookPayload):
         self.payload = verified_payload
 
+    @property
     def id(self):
-        return self.payload.data.public_id
+        return self.payload.data.id
 
+    @property
     def is_habilitation_update(self):
         return (
             self.payload.event == "approve" and self.payload.data.state == "validated"
         )
 
+    @property
     def get_service_provider_id(self):
         return self.payload.data.data.service_provider_id
 
+    @property
     def applicant_email(self):
         return self.payload.data.applicant.email
 
+    @property
     def organisation_siret(self) -> Siret:
         siret = validate_siret(self.payload.data.organization.siret)
         return siret
 
+    @property
     def intitule_demande(self):
         return self.payload.data.data.intitule
 
+    @property
     def scopes(self):
         return " ".join(self.payload.data.data.scopes)
 
+    @property
     def demande_url(self):
-        return HttpUrl(f"https://datapass.api.gouv.fr/demandes/{self.id()}")
+        return HttpUrl(f"https://datapass.api.gouv.fr/demandes/{self.id}")
 
+    @property
     def demande_contract_description(self):
-        return f"DATAPASS_DEMANDE_{self.id()}"
+        return f"DATAPASS_DEMANDE_{self.id}"

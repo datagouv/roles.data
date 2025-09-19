@@ -40,13 +40,17 @@ class ScopesService:
         existing_scopes = await self.scopes_repository.get(
             service_provider_id, group_id
         )
+
+        # Url must be str or None url. HttpUrl is a constraint, but db expect a str.
+        contract_url_str = None if not contract_url else str(contract_url)
+
         if existing_scopes is None:
             return await self.scopes_repository.create(
                 service_provider_id,
                 group_id,
                 scopes,
                 contract_description,
-                str(contract_url),
+                contract_url_str,
             )
 
         return await self.scopes_repository.update(
@@ -54,5 +58,5 @@ class ScopesService:
             group_id,
             scopes,
             contract_description,
-            str(contract_url),
+            contract_url_str,
         )

@@ -44,10 +44,16 @@ class DatapassService:
         try:
             # Validate essential payload data
             if not payload.get_service_provider_id:
-                raise ValueError("Service provider ID is required")
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Service provider ID is required",
+                )
 
             if not payload.demande_contract_description:
-                raise ValueError("Contract description is required")
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Contract description is required",
+                )
 
             # Get or create the DataPass group linked to this contract
             group_linked_to_contract = await self.get_datapass_group_for_contract(
@@ -70,15 +76,8 @@ class DatapassService:
             return group_linked_to_contract
 
         except HTTPException:
-            # Re-raise HTTP exceptions as-is
             raise
-        except ValueError as e:
-            logger.error(f"Invalid payload data for demand {payload.id}: {e}")
-            raise ValueError(f"Invalid payload: {str(e)}")
-        except Exception as e:
-            logger.error(
-                f"Unexpected error processing demand {payload.id}: {e}", exc_info=True
-            )
+        except Exception:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Internal error while processing webhook",

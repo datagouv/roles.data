@@ -81,6 +81,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 # Add template and static files support for HTML/Jinja templating
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+
 # Register startup and shutdown events (essentially DB connexion)
 app.add_event_handler("startup", startup)
 app.add_event_handler("shutdown", shutdown)
@@ -99,7 +100,7 @@ app.include_router(groups_admin.router)
 app.include_router(groups_scopes.router)
 
 # webhooks (Datapass)
-app.include_router(datapass.router, include_in_schema=False)
+app.include_router(datapass.router)
 
 # web interfaces - only use ProConnect
 app.include_router(admin_home.router, include_in_schema=False)

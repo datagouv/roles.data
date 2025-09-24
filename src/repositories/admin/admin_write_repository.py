@@ -73,7 +73,7 @@ class AdminWriteRepository:
             await self.db_session.execute(
                 f"""
                     UPDATE service_accounts
-                    SET {', '.join(set)}, updated_at = CURRENT_TIMESTAMP
+                    SET {", ".join(set)}, updated_at = CURRENT_TIMESTAMP
                     WHERE id = :service_account_id AND service_provider_id = :service_provider_id
                     """,
                 values,

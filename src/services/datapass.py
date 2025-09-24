@@ -1,9 +1,12 @@
+import logging
 from collections.abc import Callable
 
 from fastapi import HTTPException, status
 
 from ..model import DataPassWebhookWrapper, GroupCreate, GroupResponse, UserCreate
 from .groups import GroupsService
+
+logger = logging.getLogger(__name__)
 
 
 class DatapassService:
@@ -23,25 +26,63 @@ class DatapassService:
         self.datapass_groups_service = datapass_groups_service
         self.groups_service_factory = groups_service_factory
 
-    async def process_webhook(self, payload: DataPassWebhookWrapper):
+    async def process_webhook(self, payload: DataPassWebhookWrapper) -> GroupResponse:
         """
-        Create datapass <> Group relation if doesnot exist
-        Create SP <> Group relation if doesnot exist, or update it
+        Create datapass <> Group relation if does not exist
+        Create SP <> Group relation if does not exist, or update it
+
+        Args:
+            payload: Validated DataPass webhook payload
+
+        Returns:
+            GroupResponse: The group that was created or updated
+
+        Raises:
+            HTTPException: For business logic errors (409 for conflicts, 400 for invalid data)
+            ValueError: For invalid payload data
         """
-        group_linked_to_contract = await self.get_datapass_group_for_contract(payload)
+        try:
+            # Validate essential payload data
+            if not payload.get_service_provider_id:
+                raise ValueError("Service provider ID is required")
 
-        service_provider_group_service = self.groups_service_factory(
-            payload.get_service_provider_id
-        )
+            if not payload.demande_contract_description:
+                raise ValueError("Contract description is required")
 
-        await service_provider_group_service.update_or_create_scopes(
-            group_linked_to_contract.id,
-            payload.scopes,
-            payload.demande_contract_description,
-            payload.demande_url,
-        )
+            # Get or create the DataPass group linked to this contract
+            group_linked_to_contract = await self.get_datapass_group_for_contract(
+                payload
+            )
 
-        return group_linked_to_contract
+            # Get the service-specific groups service
+            service_provider_group_service = self.groups_service_factory(
+                payload.get_service_provider_id
+            )
+
+            # Update or create scopes for the service provider
+            await service_provider_group_service.update_or_create_scopes(
+                group_linked_to_contract.id,
+                payload.scopes,
+                payload.demande_contract_description,
+                payload.demande_url,
+            )
+
+            return group_linked_to_contract
+
+        except HTTPException:
+            # Re-raise HTTP exceptions as-is
+            raise
+        except ValueError as e:
+            logger.error(f"Invalid payload data for demand {payload.id}: {e}")
+            raise ValueError(f"Invalid payload: {str(e)}")
+        except Exception as e:
+            logger.error(
+                f"Unexpected error processing demand {payload.id}: {e}", exc_info=True
+            )
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Internal error while processing webhook",
+            )
 
     async def get_datapass_group_for_contract(self, payload: DataPassWebhookWrapper):
         """

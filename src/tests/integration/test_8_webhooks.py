@@ -180,7 +180,7 @@ def test_datapass_webhook_existing_habilitation_scope_update(client):
     assert group["name"] == intitule
     assert (
         group["contract_description"]
-        == f"DATAPASS_DEMANDE_{initial_payload["data"]["id"]}"
+        == f"DATAPASS_DEMANDE_{initial_payload['data']['id']}"
     )
     assert group["users"][0]["email"] == applicant_email
 

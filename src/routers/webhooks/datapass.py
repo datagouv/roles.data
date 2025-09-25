@@ -2,7 +2,7 @@
 
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from ...dependencies import (
     get_verified_datapass_payload,
@@ -29,7 +29,6 @@ router = APIRouter(
 
 @router.post("/")
 async def receive_datapass_webhook(
-    request: Request,
     payload: DataPassWebhookWrapper = Depends(get_verified_datapass_payload),
     datapass_service: DatapassService = Depends(get_datapass_service),
     service_provider_id: int = Query(

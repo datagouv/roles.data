@@ -317,7 +317,9 @@ class DataPassWebhookWrapper:
     information from the DataPass webhook payload.
     """
 
-    def __init__(self, verified_payload: DataPassWebhookPayload, environment: str):
+    def __init__(
+        self, verified_payload: DataPassWebhookPayload, environment: str | None
+    ):
         self.env = environment
         self.payload = verified_payload
 

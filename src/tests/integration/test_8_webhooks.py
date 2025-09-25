@@ -148,7 +148,7 @@ def test_datapass_webhook_nonexistent_service_provider(client):
 def test_datapass_webhook_existing_habilitation_scope_update(client):
     """Test DataPass webhook updates scopes for existing habilitation."""
     applicant_email = "existing.admin@test.gouv.fr"
-    intitule = "Demande existante mise à jour"
+    intitule = "demande pour mes amis"
     initial_scopes = ["initial_scope1", "initial_scope2"]
 
     # First, create an initial habilitation for the TEST service provider (ID = 1)
@@ -177,11 +177,8 @@ def test_datapass_webhook_existing_habilitation_scope_update(client):
     assert groups_response.status_code == 200
     group = groups_response.json()
     assert group["scopes"] == " ".join(initial_scopes)
-    assert group["name"] == intitule
-    assert (
-        group["contract_description"]
-        == f"DATAPASS_DEMANDE_{initial_payload['data']['id']}"
-    )
+    assert group["name"] == f"Groupe {intitule}"
+    assert group["contract_description"] == initial_payload["data"]["form_uid"]
     assert group["users"][0]["email"] == applicant_email
 
     # First, simulate an habilitation update

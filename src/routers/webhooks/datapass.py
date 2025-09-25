@@ -58,12 +58,6 @@ async def receive_datapass_webhook(
             detail="Service provider ID is required",
         )
 
-    if not payload.intitule_demande:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Contract description is required",
-        )
-
     if not payload.is_demande_creating_an_habilitation:
         return {
             "status": "Ignored",

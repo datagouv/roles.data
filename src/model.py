@@ -326,13 +326,13 @@ class DataPassWebhookWrapper:
         return self.payload.data.id
 
     @property
-    def is_habilitation_update(self):
+    def is_demande_creating_an_habilitation(self):
         return (
             self.payload.event == "approve" and self.payload.data.state == "validated"
         )
 
     @property
-    def get_service_provider_id(self):
+    def service_provider_id(self):
         return self.payload.data.data.service_provider_id
 
     @property
@@ -357,5 +357,9 @@ class DataPassWebhookWrapper:
         return HttpUrl(f"https://datapass.api.gouv.fr/demandes/{self.id}")
 
     @property
-    def demande_contract_description(self):
+    def demande_description(self):
         return f"DATAPASS_DEMANDE_{self.id}"
+
+    @property
+    def demande_form_uid(self):
+        return self.payload.data.form_uid

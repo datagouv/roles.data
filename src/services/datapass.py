@@ -43,13 +43,13 @@ class DatapassService:
         """
         try:
             # Validate essential payload data
-            if not payload.get_service_provider_id:
+            if not payload.service_provider_id:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Service provider ID is required",
                 )
 
-            if not payload.demande_contract_description:
+            if not payload.intitule_demande:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Contract description is required",
@@ -62,14 +62,14 @@ class DatapassService:
 
             # Get the service-specific groups service
             service_provider_group_service = self.groups_service_factory(
-                payload.get_service_provider_id
+                payload.service_provider_id
             )
 
             # Update or create scopes for the service provider
             await service_provider_group_service.update_or_create_scopes(
                 group_linked_to_contract.id,
                 payload.scopes,
-                payload.demande_contract_description,
+                payload.demande_form_uid,
                 payload.demande_url,
             )
 
@@ -91,14 +91,14 @@ class DatapassService:
         """
         groups_linked_to_contract = (
             await self.datapass_groups_service.search_groups_by_contract(
-                payload.demande_contract_description
+                payload.demande_description
             )
         )
 
         if len(groups_linked_to_contract) > 1:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail="More than one group matches this contract. It should not happen.",
+                detail="More than one group matches this contract.",
             )
 
         if len(groups_linked_to_contract) == 1:
@@ -111,13 +111,13 @@ class DatapassService:
         Create a new group under the DataPass service provider.
         """
         group_data = GroupCreate(
-            name=payload.intitule_demande,
+            name=f"Groupe {payload.intitule_demande}",
             organisation_siret=payload.organisation_siret,
             admin=UserCreate(
                 email=payload.applicant_email,
             ),
             scopes=str(payload.id),
-            contract_description=payload.demande_contract_description,
+            contract_description=payload.demande_description,
             contract_url=payload.demande_url,
         )
 

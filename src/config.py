@@ -97,8 +97,6 @@ class AppSettings(BaseSettings):
             raise ValueError(
                 "DATAPASS_WEBHOOK_SECRET must be at least 16 characters for security"
             )
-        if v in ["test", "localtest", "blablabla", "changeme", "secret"]:
-            raise ValueError("DATAPASS_WEBHOOK_SECRET cannot be a common default value")
         return v
 
     model_config = SettingsConfigDict(env_file=".env")

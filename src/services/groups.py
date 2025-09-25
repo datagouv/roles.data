@@ -118,9 +118,7 @@ class GroupsService:
         self, contract_description: str
     ) -> list[GroupResponse]:
         """
-        Search for groups by user email.
-
-        This method will return all groups that the user is a member of, regardless of their role.
+        Search for groups that match a given contract description.
         """
 
         return await self.groups_repository.search_by_contract(

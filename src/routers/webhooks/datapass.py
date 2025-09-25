@@ -42,13 +42,13 @@ async def receive_datapass_webhook(
 
     **Processing Logic**:
     1. Validates webhook signature for security
-    2. Checks if the event is an approval (habilitation) event
+    2. Checks if the event is an approval (habilitation creation) event
     3. Creates a group under the DataPass service provider if it doesn't exist
     4. Updates group scopes for the requesting service provider
 
     Other events are ignored and return a 200 status with "Ignored" status.
     """
-    if not payload.is_habilitation_update:
+    if not payload.is_demande_creating_an_habilitation:
         return {
             "status": "Ignored",
             "message": "Event does not trigger group creation or update",

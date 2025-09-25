@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Annotated, List
+from typing import Annotated
 from xmlrpc.client import boolean
 
 from fastapi import HTTPException, status
@@ -279,9 +279,8 @@ class DataPassApplicant(BaseModel):
 class DataPassData(BaseModel):
     """DataPass authorization request data payload."""
 
-    service_provider_id: int
     intitule: str
-    scopes: List[str]
+    scopes: list[str]
     contact_technique_given_name: str
     contact_technique_family_name: str
     contact_technique_phone_number: str
@@ -318,7 +317,8 @@ class DataPassWebhookWrapper:
     information from the DataPass webhook payload.
     """
 
-    def __init__(self, verified_payload: DataPassWebhookPayload):
+    def __init__(self, verified_payload: DataPassWebhookPayload, environment: str):
+        self.env = environment
         self.payload = verified_payload
 
     @property
@@ -330,10 +330,6 @@ class DataPassWebhookWrapper:
         return (
             self.payload.event == "approve" and self.payload.data.state == "validated"
         )
-
-    @property
-    def service_provider_id(self):
-        return self.payload.data.data.service_provider_id
 
     @property
     def applicant_email(self):
@@ -354,7 +350,10 @@ class DataPassWebhookWrapper:
 
     @property
     def demande_url(self):
-        return HttpUrl(f"https://datapass.api.gouv.fr/demandes/{self.id}")
+        env_slug = "" if self.env == "prod" else f"{self.env}."
+        return HttpUrl(
+            f"https://{env_slug.lower()}datapass.api.gouv.fr/demandes/{self.id}"
+        )
 
     @property
     def demande_description(self):

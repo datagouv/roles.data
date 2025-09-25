@@ -2,7 +2,7 @@
 
 import logging
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 
 from ...dependencies import (
     get_verified_datapass_payload,
@@ -29,8 +29,12 @@ router = APIRouter(
 
 @router.post("/")
 async def receive_datapass_webhook(
+    request: Request,
     payload: DataPassWebhookWrapper = Depends(get_verified_datapass_payload),
     datapass_service: DatapassService = Depends(get_datapass_service),
+    service_provider_id: int = Query(
+        ..., description="Id du service_provider associé au formulaire"
+    ),
 ):
     """
     Receive and process DataPass webhook notifications.
@@ -48,6 +52,19 @@ async def receive_datapass_webhook(
 
     Other events are ignored and return a 200 status with "Ignored" status.
     """
+    # Validate essential payload data
+    if not service_provider_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Service provider ID is required",
+        )
+
+    if not payload.intitule_demande:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Contract description is required",
+        )
+
     if not payload.is_demande_creating_an_habilitation:
         return {
             "status": "Ignored",
@@ -56,7 +73,7 @@ async def receive_datapass_webhook(
         }
 
     # Process the webhook
-    group = await datapass_service.process_webhook(payload)
+    group = await datapass_service.process_webhook(payload, service_provider_id)
 
     return {
         "status": "Success",

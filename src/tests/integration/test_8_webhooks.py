@@ -14,21 +14,26 @@ def create_webhook_signature(payload_bytes: bytes) -> str:
     return f"sha256={signature}"
 
 
-def submit_datapass_webhook(client, payload: dict):
+def submit_datapass_webhook(
+    client, payload: dict, service_provider_id: int = 1, environment: str = "sandbox"
+):
     payload_bytes = json.dumps(payload).encode("utf-8")
     signature = create_webhook_signature(payload_bytes)
 
     return client.post(
-        "/webhooks/datapass",
+        f"/webhooks/datapass?service_provider_id={service_provider_id}",
         content=payload_bytes,
-        headers={"Content-Type": "application/json", "X-Hub-Signature-256": signature},
+        headers={
+            "Content-Type": "application/json",
+            "X-Hub-Signature-256": signature,
+            "X-App-Environment": environment,
+        },
     )
 
 
 def create_datapass_payload(
     event: str = "approve",
     state: str = "validated",
-    service_provider_id: int = 1,
     intitule: str = "Ma demande",
     applicant_email: str = "jean.dupont@beta.gouv.fr",
     scopes: list[str] = [],
@@ -62,7 +67,6 @@ def create_datapass_payload(
                 "job_title": "Rockstar",
             },
             "data": {
-                "service_provider_id": service_provider_id,
                 "intitule": intitule,
                 "scopes": scopes,
                 "contact_technique_given_name": "Tech",
@@ -87,11 +91,12 @@ def test_datapass_webhook_invalid_signature(client):
     payload_bytes = json.dumps(payload).encode("utf-8")
 
     response = client.post(
-        "/webhooks/datapass",
+        "/webhooks/datapass?service_provider_id=1",
         content=payload_bytes,
         headers={
             "Content-Type": "application/json",
             "X-Hub-Signature-256": "sha256=invalid_signature_here",
+            "X-App-Environment": "sandbox",
         },
     )
 
@@ -106,13 +111,33 @@ def test_datapass_webhook_missing_signature(client):
     payload_bytes = json.dumps(payload).encode("utf-8")
 
     response = client.post(
-        "/webhooks/datapass",
+        "/webhooks/datapass?service_provider_id=1",
         content=payload_bytes,
-        headers={"Content-Type": "application/json"},
+        headers={"Content-Type": "application/json", "X-App-Environment": "sandbox"},
     )
 
     assert response.status_code == 401
     assert "Missing X-Hub-Signature-256 header" in response.json()["detail"]
+
+
+def test_datapass_webhook_missing_service_provider_id(client):
+    """Test DataPass webhook with missing service_provider_id query parameter."""
+    payload = create_datapass_payload(event="approve", state="validated")
+    payload_bytes = json.dumps(payload).encode("utf-8")
+    signature = create_webhook_signature(payload_bytes)
+
+    response = client.post(
+        "/webhooks/datapass",  # Missing service_provider_id query param
+        content=payload_bytes,
+        headers={
+            "Content-Type": "application/json",
+            "X-Hub-Signature-256": signature,
+            "X-App-Environment": "sandbox",
+        },
+    )
+
+    assert response.status_code == 422  # FastAPI validation error
+    assert "Field required" in response.json()["detail"][0]["msg"]
 
 
 # =======================
@@ -137,9 +162,10 @@ def test_datapass_webhook_nonexistent_service_provider(client):
     payload = create_datapass_payload(
         event="approve",
         state="validated",
-        service_provider_id=impossible_service_provider_id,
     )
-    response = submit_datapass_webhook(client, payload)
+    response = submit_datapass_webhook(
+        client, payload, service_provider_id=impossible_service_provider_id
+    )
 
     assert response.status_code == 404
     assert "Service provider not found" in response.json()["detail"]
@@ -155,13 +181,14 @@ def test_datapass_webhook_existing_habilitation_scope_update(client):
     initial_payload = create_datapass_payload(
         event="approve",
         state="validated",
-        service_provider_id=1,
         intitule=intitule,
         applicant_email=applicant_email,
         scopes=initial_scopes,
     )
 
-    initial_response = submit_datapass_webhook(client, initial_payload)
+    initial_response = submit_datapass_webhook(
+        client, initial_payload, service_provider_id=1
+    )
 
     assert initial_response.status_code == 200
     initial_json = initial_response.json()
@@ -184,7 +211,7 @@ def test_datapass_webhook_existing_habilitation_scope_update(client):
     # First, simulate an habilitation update
     updated_scopes = ["updated_scope1", "updated_scope2", "new_scope3"]
     initial_payload["data"]["data"]["scopes"] = updated_scopes
-    submit_datapass_webhook(client, initial_payload)
+    submit_datapass_webhook(client, initial_payload, service_provider_id=1)
 
     groups_response = client.get(f"/groups/{group_id}")
     assert groups_response.status_code == 200

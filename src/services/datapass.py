@@ -26,7 +26,9 @@ class DatapassService:
         self.datapass_groups_service = datapass_groups_service
         self.groups_service_factory = groups_service_factory
 
-    async def process_webhook(self, payload: DataPassWebhookWrapper) -> GroupResponse:
+    async def process_webhook(
+        self, payload: DataPassWebhookWrapper, service_provider_id: int
+    ) -> GroupResponse:
         """
         Create datapass <> Group relation if does not exist
         Create SP <> Group relation if does not exist, or update it
@@ -42,19 +44,6 @@ class DatapassService:
             ValueError: For invalid payload data
         """
         try:
-            # Validate essential payload data
-            if not payload.service_provider_id:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Service provider ID is required",
-                )
-
-            if not payload.intitule_demande:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Contract description is required",
-                )
-
             # Get or create the DataPass group linked to this contract
             group_linked_to_contract = await self.get_datapass_group_for_contract(
                 payload
@@ -62,7 +51,7 @@ class DatapassService:
 
             # Get the service-specific groups service
             service_provider_group_service = self.groups_service_factory(
-                payload.service_provider_id
+                service_provider_id
             )
 
             # Update or create scopes for the service provider

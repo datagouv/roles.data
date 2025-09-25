@@ -18,7 +18,10 @@ async def get_verified_datapass_payload(request: Request):
     body = await request.body()
     signature_header = request.headers.get("X-Hub-Signature-256")
     verified_payload = await verified_datapass_signature(body, signature_header)
-    return DataPassWebhookWrapper(verified_payload)
+    # sandbox, staging, prod
+    datapass_env = request.headers.get("X-App-Environment")
+
+    return DataPassWebhookWrapper(verified_payload, datapass_env)
 
 
 async def get_datapass_service(

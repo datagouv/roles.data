@@ -36,7 +36,7 @@ class ScopesRepository:
             """
 
             set = []
-            values: dict[str, int | str] = {
+            values: dict[str, int | str | None] = {
                 "service_provider_id": service_provider_id,
                 "group_id": group_id,
             }
@@ -71,6 +71,47 @@ class ScopesRepository:
 
             await self.logs_service.save(
                 action_type=LOG_ACTIONS.UPDATE_GROUP_SERVICE_PROVIDER_RELATION,
+                resource_type=LOG_RESOURCE_TYPES.GROUP_SERVICE_PROVIDER_RELATION,
+                db_session=self.db_session,
+                resource_id=response["id"],
+                new_values={
+                    "scopes": scopes,
+                    "contract_description": contract_description,
+                    "contract_url": contract_url,
+                },
+            )
+
+            return response
+
+    async def create(
+        self,
+        service_provider_id: int,
+        group_id: int,
+        scopes: str = "",
+        contract_description: str | None = None,
+        contract_url: str | None = None,
+    ):
+        """Create a new group-service provider relation."""
+        async with self.db_session.transaction():
+            query = """
+            INSERT INTO group_service_provider_relations
+            (service_provider_id, group_id, scopes, contract_description, contract_url)
+            VALUES (:service_provider_id, :group_id, :scopes, :contract_description, :contract_url)
+            RETURNING *
+            """
+
+            values = {
+                "service_provider_id": service_provider_id,
+                "group_id": group_id,
+                "scopes": scopes,
+                "contract_description": contract_description,
+                "contract_url": contract_url,
+            }
+
+            response = await self.db_session.fetch_one(query, values)
+
+            await self.logs_service.save(
+                action_type=LOG_ACTIONS.CREATE_GROUP_SERVICE_PROVIDER_RELATION,
                 resource_type=LOG_RESOURCE_TYPES.GROUP_SERVICE_PROVIDER_RELATION,
                 db_session=self.db_session,
                 resource_id=response["id"],

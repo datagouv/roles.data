@@ -69,6 +69,26 @@ class GroupsRepository:
                 },
             )
 
+    async def search_by_contract(
+        self, contract_description: str, service_provider_id: int
+    ) -> list[GroupResponse]:
+        async with self.db_session.transaction():
+            query = """
+            SELECT G.id, G.name, O.siret as organisation_siret, GSPR.scopes, GSPR.contract_description, GSPR.contract_url
+            FROM groups as G
+            INNER JOIN organisations AS O ON G.orga_id = O.id
+            INNER JOIN group_service_provider_relations AS GSPR ON GSPR.group_id = G.id AND GSPR.service_provider_id = :service_provider_id
+            WHERE GSPR.contract_description = :contract_description
+            ORDER BY G.id
+            """
+            return await self.db_session.fetch_all(
+                query,
+                {
+                    "contract_description": contract_description,
+                    "service_provider_id": service_provider_id,
+                },
+            )
+
     async def create(
         self, group_data: GroupCreate, orga_id: int, service_provider_id: int
     ) -> GroupResponse:

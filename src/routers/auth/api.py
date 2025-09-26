@@ -4,9 +4,9 @@ from fastapi import APIRouter, Depends, Form, Header, HTTPException, Request, st
 
 from src.auth.o_auth import create_access_token
 from src.config import settings
-from src.dependencies import get_auth_service
+from src.dependencies import get_service_acounts_service
 from src.model import Token
-from src.services.auth import AuthService
+from src.services.service_accounts import ServiceAccountsService
 
 router = APIRouter(
     prefix="/token",
@@ -20,7 +20,9 @@ async def get_token(
     request: Request,
     authorization: str | None = Header(None),
     grant_type: str = Form(...),
-    auth_service: AuthService = Depends(get_auth_service),
+    service_accounts_service: ServiceAccountsService = Depends(
+        get_service_acounts_service
+    ),
 ):
     """
     OAuth2 pour un flow “Client Credentials”.
@@ -66,7 +68,7 @@ async def get_token(
 
     try:
         # Authenticate client
-        service_account = await auth_service.authenticate(
+        service_account = await service_accounts_service.authenticate(
             client_id=str(client_id), client_secret=str(client_secret)
         )
 

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import UUID4, EmailStr
 
@@ -22,7 +22,9 @@ async def home_page(
     user_sub: UUID4 | None = request.session.get("user_sub", None)
 
     if not user_email or not user_sub:
-        raise ValueError("User email or sub not found in session.")
+        raise HTTPException(
+            status_code=403, detail="User email or sub not found in session."
+        )
 
     user = await activation_service.activate_user(user_email, user_sub)
 

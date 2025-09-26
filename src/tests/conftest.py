@@ -1,11 +1,15 @@
+from uuid import UUID
+
 import pytest
 from databases import Database
+from fastapi import HTTPException, Request
 from fastapi.testclient import TestClient
 
 from src.auth.o_auth import decode_access_token
 
 from ..config import settings
 from ..database import DatabaseWithSchema, get_db
+from ..dependencies.context import RequestContext, get_context
 from ..main import app
 
 # Create a test database instance
@@ -44,6 +48,27 @@ def override_decode_access_token():
     return {"service_provider_id": 1, "service_account_id": 1}
 
 
+def override_get_context(request: Request):
+    """Override decode_access_token to return fake data without JWT validation"""
+    raw_user_sub = request.query_params.get("acting_user_sub", None)
+    valid_acting_user_sub = None
+    if raw_user_sub:
+        try:
+            valid_acting_user_sub = UUID(raw_user_sub, version=4)
+        except (ValueError, TypeError):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid UUID format for user_sub in session: {raw_user_sub}",
+            )
+
+    return RequestContext(
+        service_provider_id=1,
+        service_account_id=1,
+        acting_user_sub=valid_acting_user_sub,
+        context_type="oauth",
+    )
+
+
 @pytest.fixture(scope="session", autouse=True)
 def test_override_setup():
     """
@@ -63,6 +88,7 @@ def test_override_setup():
     app.router.on_shutdown.append(test_db_shutdown)
 
     app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_context] = override_get_context
     app.dependency_overrides[decode_access_token] = override_decode_access_token
 
     # Also override alternative import paths if they exist

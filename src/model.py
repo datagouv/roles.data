@@ -221,6 +221,7 @@ class LOG_ACTIONS(Enum):
     UPDATE_ORGANISATION = "Organisation updated"
 
     # Service provider actions
+    CREATE_GROUP_SERVICE_PROVIDER_RELATION = "Group service provider relation created"
     UPDATE_GROUP_SERVICE_PROVIDER_RELATION = "Group service provider relation updated"
 
 
@@ -251,3 +252,115 @@ class LogResponse(BaseModel):
     created_at: str  # ISO format string
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# --- DataPass Webhook Models ---
+
+
+class DataPassOrganization(BaseModel):
+    """DataPass organization payload."""
+
+    id: int
+    name: str
+    siret: str
+
+
+class DataPassApplicant(BaseModel):
+    """DataPass applicant payload."""
+
+    id: int
+    email: EmailStr
+    given_name: str
+    family_name: str
+    phone_number: str
+    job_title: str
+
+
+class DataPassData(BaseModel):
+    """DataPass authorization request data payload."""
+
+    intitule: str
+    scopes: list[str]
+    contact_technique_given_name: str
+    contact_technique_family_name: str
+    contact_technique_phone_number: str
+    contact_technique_job_title: str
+    contact_technique_email: EmailStr
+
+
+class DataPassAuthorizationRequest(BaseModel):
+    """DataPass authorization request payload."""
+
+    id: int
+    public_id: str
+    state: str
+    form_uid: str
+    organization: DataPassOrganization
+    applicant: DataPassApplicant
+    data: DataPassData
+
+
+class DataPassWebhookPayload(BaseModel):
+    """Complete DataPass webhook payload."""
+
+    event: str
+    fired_at: int
+    model_type: str
+    data: DataPassAuthorizationRequest
+
+
+class DataPassWebhookWrapper:
+    """
+    Wrapper class for DataPass webhook payload with helper methods.
+
+    This class provides convenient methods to navigate and extract
+    information from the DataPass webhook payload.
+    """
+
+    def __init__(
+        self, verified_payload: DataPassWebhookPayload, environment: str | None
+    ):
+        self.env = environment
+        self.payload = verified_payload
+
+    @property
+    def id(self):
+        return self.payload.data.id
+
+    @property
+    def is_demande_creating_an_habilitation(self):
+        return (
+            self.payload.event == "approve" and self.payload.data.state == "validated"
+        )
+
+    @property
+    def applicant_email(self):
+        return self.payload.data.applicant.email
+
+    @property
+    def organisation_siret(self) -> Siret:
+        siret = validate_siret(self.payload.data.organization.siret)
+        return siret
+
+    @property
+    def intitule_demande(self):
+        return self.payload.data.data.intitule
+
+    @property
+    def scopes(self):
+        return " ".join(self.payload.data.data.scopes)
+
+    @property
+    def demande_url(self):
+        env_slug = "" if self.env == "prod" else f"{self.env}."
+        return HttpUrl(
+            f"https://{env_slug.lower()}datapass.api.gouv.fr/demandes/{self.id}"
+        )
+
+    @property
+    def demande_description(self):
+        return f"DATAPASS_DEMANDE_{self.id}"
+
+    @property
+    def demande_form_uid(self):
+        return self.payload.data.form_uid

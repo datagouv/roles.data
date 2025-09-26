@@ -1,4 +1,4 @@
-from fastapi import HTTPException, status
+from pydantic import HttpUrl
 
 from src.model import ScopeBase
 from src.repositories.scopes import ScopesRepository
@@ -29,23 +29,34 @@ class ScopesService:
             else None,
         )
 
-    async def update(
+    async def update_or_create(
         self,
         service_provider_id: int,
         group_id: int,
-        scopes: str | None = None,
+        scopes: str = "",
         contract_description: str | None = None,
-        contract_url: str | None = None,
+        contract_url: HttpUrl | None = None,
     ) -> None:
         existing_scopes = await self.scopes_repository.get(
             service_provider_id, group_id
         )
+
+        # Url must be str or None url. HttpUrl is a constraint, but db expect a str.
+        contract_url_str = None if not contract_url else str(contract_url)
+
         if existing_scopes is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Scopes for group {group_id} and service provider {service_provider_id} not found",
+            return await self.scopes_repository.create(
+                service_provider_id,
+                group_id,
+                scopes,
+                contract_description,
+                contract_url_str,
             )
 
         return await self.scopes_repository.update(
-            service_provider_id, group_id, scopes, contract_description, contract_url
+            service_provider_id,
+            group_id,
+            scopes,
+            contract_description,
+            contract_url_str,
         )

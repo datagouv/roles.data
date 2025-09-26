@@ -1,7 +1,5 @@
 from fastapi import HTTPException, status
-from pydantic import UUID4, EmailStr
-
-from src.services.services_provider import ServiceProvidersService
+from pydantic import UUID4, EmailStr, HttpUrl
 
 from ..model import (
     GroupCreate,
@@ -14,6 +12,7 @@ from ..model import (
 )
 from ..repositories import groups, users_in_group
 from . import organisations, roles, scopes, users
+from .service_providers import ServiceProvidersService
 from .ui.email import EmailService
 
 
@@ -114,6 +113,17 @@ class GroupsService:
 
     async def list_groups(self) -> list[GroupWithScopesResponse]:
         return await self.groups_repository.get_all(self.service_provider_id)
+
+    async def search_groups_by_contract(
+        self, contract_description: str
+    ) -> list[GroupResponse]:
+        """
+        Search for groups that match a given contract description.
+        """
+
+        return await self.groups_repository.search_by_contract(
+            contract_description, self.service_provider_id
+        )
 
     async def search_groups(
         self, user_email: EmailStr
@@ -294,25 +304,25 @@ class GroupsService:
             is_admin=role.is_admin,
         )
 
-    async def update_scopes(
+    async def update_or_create_scopes(
         self,
         group_id: int,
-        scopes: str | None = None,
+        scopes: str = "",
         contract_description: str | None = None,
-        contract_url: str | None = None,
+        contract_url: HttpUrl | None = None,
     ):
-        group = await self.get_group_by_id(group_id)
+        """
+        Update or establish a relation between a service_provider and a group
+        """
+        # verify service provider exists
         service_provider = (
             await self.service_provider_service.get_service_provider_by_id(
                 self.service_provider_id
             )
         )
 
-        # verify if the group is already linked to the service provider
-        await self.scopes_service.get_scopes_and_contract(service_provider.id, group.id)
-        # check if the group is linked to the service provider
-        return await self.scopes_service.update(
-            service_provider.id, group.id, scopes, contract_description, contract_url
+        return await self.scopes_service.update_or_create(
+            service_provider.id, group_id, scopes, contract_description, contract_url
         )
 
     def is_user_in_group(

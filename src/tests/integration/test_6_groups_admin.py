@@ -16,14 +16,14 @@ def test_update_group(client):
 
     new_name = random_name()
     responseNotVerified = client.put(
-        f"/groups/{new_group_data["id"]}?acting_user_sub={admin_sub}&group_name={new_name}"
+        f"/groups/{new_group_data['id']}?acting_user_sub={admin_sub}&group_name={new_name}"
     )
     # sub is unknown, so the request should fail
     assert responseNotVerified.status_code == 404
 
     verify_user(client, admin_email, admin_sub)
     response = client.put(
-        f"/groups/{new_group_data["id"]}?acting_user_sub={admin_sub}&group_name={new_name}"
+        f"/groups/{new_group_data['id']}?acting_user_sub={admin_sub}&group_name={new_name}"
     )
     assert response.status_code == 200
 
@@ -62,7 +62,7 @@ def test_user_not_admin(client):
     # Attempt to update the group with the non-admin user
     new_name = random_name()
     response = client.put(
-        f"/groups/{new_group_data["id"]}?acting_user_sub={random_sub}&group_name={new_name}"
+        f"/groups/{new_group_data['id']}?acting_user_sub={random_sub}&group_name={new_name}"
     )
 
     assert response.status_code == 403
@@ -86,7 +86,7 @@ def test_add_user_to_group_and_update_roles(client):
     role_2 = roles_response.json()[1]
 
     responseNotVerified = client.post(
-        f"/groups/{new_group_data["id"]}/users?acting_user_sub={admin_sub}",
+        f"/groups/{new_group_data['id']}/users?acting_user_sub={admin_sub}",
         json={"email": user_data["email"], "role_id": role_1["id"]},
     )
 
@@ -97,7 +97,7 @@ def test_add_user_to_group_and_update_roles(client):
 
     # Add user to group with role
     response = client.post(
-        f"/groups/{new_group_data["id"]}/users?acting_user_sub={admin_sub}",
+        f"/groups/{new_group_data['id']}/users?acting_user_sub={admin_sub}",
         json={"email": user_data["email"], "role_id": role_1["id"]},
     )
 
@@ -112,13 +112,13 @@ def test_add_user_to_group_and_update_roles(client):
 
     # Cannot add the same user again
     response_add_user_again = client.post(
-        f"/groups/{new_group_data["id"]}/users?acting_user_sub={admin_sub}",
+        f"/groups/{new_group_data['id']}/users?acting_user_sub={admin_sub}",
         json={"email": user_data["email"], "role_id": role_1["id"]},
     )
     assert response_add_user_again.status_code == 403
 
     # Verify user is in the group
-    group_details = client.get(f"/groups/{new_group_data["id"]}")
+    group_details = client.get(f"/groups/{new_group_data['id']}")
     group_users = group_details.json()["users"]
     find_user = next(user for user in group_users if user["id"] == user_id)
     assert find_user is not None
@@ -126,7 +126,7 @@ def test_add_user_to_group_and_update_roles(client):
 
     # Update user role in group
     updated_user_response = client.patch(
-        f"/groups/{new_group_data["id"]}/users/{user_id}?acting_user_sub={admin_sub}&role_id={role_2['id']}"
+        f"/groups/{new_group_data['id']}/users/{user_id}?acting_user_sub={admin_sub}&role_id={role_2['id']}"
     )
 
     updated_user = updated_user_response.json()
@@ -135,7 +135,7 @@ def test_add_user_to_group_and_update_roles(client):
     assert updated_user["is_admin"] is False
 
     # Verify user has new role in the group
-    group_details = client.get(f"/groups/{new_group_data["id"]}")
+    group_details = client.get(f"/groups/{new_group_data['id']}")
     group_users = group_details.json()["users"]
     find_user = next(user for user in group_users if user["id"] == user_id)
     assert find_user is not None
@@ -200,6 +200,6 @@ def test_cannot_remove_only_admin_from_group(client):
     assert response_delete_only_admin.status_code == 403
 
     response_change_only_admin_role = client.patch(
-        f"/groups/{new_group_data["id"]}/users/{admin_id}?acting_user_sub={admin_sub}&role_id={2}"
+        f"/groups/{new_group_data['id']}/users/{admin_id}?acting_user_sub={admin_sub}&role_id={2}"
     )
     assert response_change_only_admin_role.status_code == 403

@@ -1,13 +1,13 @@
 from pydantic import SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from .constants import DATAPASS_SERVICE_PROVIDER_ID
+
 
 class AppSettings(BaseSettings):
     """
     Application settings loaded from environment variables
     """
-
-    SENTRY_DSN: str = ""  # optional
 
     # Database settings - NO DEFAULTS (required)
     DB_HOST: str
@@ -37,6 +37,11 @@ class AppSettings(BaseSettings):
     # No algorithm needed - uses symmetric encryption
     SESSION_SECRET_KEY: str
 
+    # third party integrations configuration
+    DATAPASS_WEBHOOK_SECRET: str
+
+    SENTRY_DSN: str = ""  # optional
+
     PROCONNECT_CLIENT_ID: str
     PROCONNECT_CLIENT_SECRET: str
     PROCONNECT_URL_DISCOVER: str
@@ -50,8 +55,13 @@ class AppSettings(BaseSettings):
     SUPER_ADMIN_EMAILS: str = ""
 
     @property
+    def DATAPASS_SERVICE_PROVIDER_ID(self):
+        """Hard coded constant for DataPass service provider ID"""
+        return DATAPASS_SERVICE_PROVIDER_ID
+
+    @property
     def DATABASE_URL(self) -> str:
-        return f"postgresql://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT_TEST if self.DB_ENV=='test' else self.DB_PORT}/{self.DB_NAME}"  # type: ignore
+        return f"postgresql://{self.DB_USER}:{self.DB_PASSWORD}@{self.DB_HOST}:{self.DB_PORT_TEST if self.DB_ENV == 'test' else self.DB_PORT}/{self.DB_NAME}"  # type: ignore
 
     @property
     def IS_PRODUCTION(self) -> bool:
@@ -77,6 +87,16 @@ class AppSettings(BaseSettings):
         api_secret = values.data.get("API_SECRET_KEY")
         if api_secret and v == api_secret:
             raise ValueError("SESSION_SECRET_KEY must be different from API_SECRET_KEY")
+        return v
+
+    @field_validator("DATAPASS_WEBHOOK_SECRET")
+    def validate_datapass_webhook_secret(cls, v):
+        if not v or len(v.strip()) == 0:
+            raise ValueError("DATAPASS_WEBHOOK_SECRET cannot be empty")
+        if len(v) < 16:
+            raise ValueError(
+                "DATAPASS_WEBHOOK_SECRET must be at least 16 characters for security"
+            )
         return v
 
     model_config = SettingsConfigDict(env_file=".env")

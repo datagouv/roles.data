@@ -32,16 +32,16 @@ async def verified_datapass_signature(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid signature format"
         )
 
-    # Extract the signature hash
-    provided_signature = signature_header[7:]  # Remove "sha256=" prefix
-
     # Calculate expected signature
-    expected_signature = hmac.new(
-        settings.DATAPASS_WEBHOOK_SECRET.encode("utf-8"), body, hashlib.sha256
-    ).hexdigest()
+    expected_signature = (
+        "sha256="
+        + hmac.new(
+            settings.DATAPASS_WEBHOOK_SECRET.encode("utf-8"), body, hashlib.sha256
+        ).hexdigest()
+    )
 
     # Use secure comparison to prevent timing attacks
-    if not hmac.compare_digest(provided_signature, expected_signature):
+    if not hmac.compare_digest(signature_header, expected_signature):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid webhook signature"
         )

@@ -261,7 +261,7 @@ class DataPassOrganization(BaseModel):
     """DataPass organization payload."""
 
     id: int
-    name: str
+    name: str | None
     siret: str
 
 
@@ -270,10 +270,10 @@ class DataPassApplicant(BaseModel):
 
     id: int
     email: EmailStr
-    given_name: str
-    family_name: str
-    phone_number: str
-    job_title: str
+    given_name: str | None
+    family_name: str | None
+    phone_number: str | None
+    job_title: str | None
 
 
 class DataPassData(BaseModel):
@@ -281,11 +281,6 @@ class DataPassData(BaseModel):
 
     intitule: str
     scopes: list[str]
-    contact_technique_given_name: str
-    contact_technique_family_name: str
-    contact_technique_phone_number: str
-    contact_technique_job_title: str
-    contact_technique_email: EmailStr
 
 
 class DataPassAuthorizationRequest(BaseModel):

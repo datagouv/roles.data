@@ -69,11 +69,6 @@ def create_datapass_payload(
             "data": {
                 "intitule": intitule,
                 "scopes": scopes,
-                "contact_technique_given_name": "Tech",
-                "contact_technique_family_name": "Os",
-                "contact_technique_phone_number": "08366666666",
-                "contact_technique_job_title": "DSI",
-                "contact_technique_email": "tech@beta.gouv.fr",
             },
         },
     }

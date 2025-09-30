@@ -121,3 +121,26 @@ class AdminWriteRepository:
             """
             values = {"id": id, "name": name, "url": url}
             return await self.db_session.fetch_one(query, values)
+
+    async def delete_group(self, group_id: int) -> None:
+        """
+        Delete a group and all its related data.
+        This will cascade to remove users, scopes, and other relations.
+        """
+        async with self.db_session.transaction():
+            # Delete group_user_relations first (foreign key constraint)
+            await self.db_session.execute(
+                "DELETE FROM group_user_relations WHERE group_id = :group_id",
+                {"group_id": group_id},
+            )
+
+            # Delete group_service_provider_relations
+            await self.db_session.execute(
+                "DELETE FROM group_service_provider_relations WHERE group_id = :group_id",
+                {"group_id": group_id},
+            )
+
+            # Delete the group itself
+            await self.db_session.execute(
+                "DELETE FROM groups WHERE id = :group_id", {"group_id": group_id}
+            )

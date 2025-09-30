@@ -60,3 +60,19 @@ async def set_admin(
     await admin_service.set_admin(group_id, user_id)
 
     return RedirectResponse(url=f"/admin/groups/{group_id}", status_code=303)
+
+
+@router.delete("/{group_id}", response_class=RedirectResponse)
+async def delete_group(group_id: int, admin_service=Depends(get_admin_write_service)):
+    """
+    Allow super admin to delete a group and all its related data
+    """
+    if not isinstance(group_id, int) or group_id <= 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid group ID. It must be a positive integer.",
+        )
+
+    await admin_service.delete_group(group_id)
+
+    return RedirectResponse(url="/admin/groups", status_code=303)

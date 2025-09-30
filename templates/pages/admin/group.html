@@ -65,13 +65,28 @@
 
 {% block content %}
 <div class="fr-container">
+  <div class="fr-grid-row fr-grid-row--right">
+      <div class="fr-col-auto">
+        <button type="button"
+                class="fr-btn fr-btn--sm fr-btn--secondary"
+                hx-delete="/admin/groups/{{ details.id }}"
+                hx-confirm="Êtes-vous sûr de vouloir supprimer ce groupe ? Cette action est irréversible et supprimera toutes les données associées (utilisateurs, scopes, etc.)."
+                hx-target="body"
+                hx-push-url="/admin/groups">
+          ⚠️ Supprimer le groupe
+        </button>
+      </div>
+  </div>
   <h2>Informations générales</h2>
-  <ul>
-    <li>Name : {{ details.name }}</li>
-    <li>Creation : {{ details.created_at.strftime('%d/%m/%Y')}} {{ details.created_at.strftime('%H:%M:%S') }}</li>
-    <li>MAJ : {{ details.updated_at.strftime('%d/%m/%Y') }} {{ details.updated_at.strftime('%H:%M:%S') }}</li>
-    <li>Orga : {{details.organisation_name}} ({{ details.organisation_siret }})</li>
-  </ul>
+
+  <div class="fr-container">
+    <ul>
+      <li>Name : {{ details.name }}</li>
+      <li>Creation : {{ details.created_at.strftime('%d/%m/%Y')}} {{ details.created_at.strftime('%H:%M:%S') }}</li>
+      <li>MAJ : {{ details.updated_at.strftime('%d/%m/%Y') }} {{ details.updated_at.strftime('%H:%M:%S') }}</li>
+      <li>Orga : {{details.organisation_name}} ({{ details.organisation_siret }})</li>
+    </ul>
+  </div>
 
   <h2>Droits (scopes)</h2>
   {{ data_table(scopes_headers, scopes, scope_formatter) }}

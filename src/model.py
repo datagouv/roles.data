@@ -210,6 +210,7 @@ class LOG_ACTIONS(Enum):
     # Group actions
     CREATE_GROUP = "Group created"
     UPDATE_GROUP = "Group updated"
+    DELETE_GROUP = "Group deleted"
 
     # Group membership actions
     ADD_USER_TO_GROUP = "User added to group"

@@ -91,3 +91,10 @@ class AdminWriteService:
         return await self.admin_write_repository.update_service_provider(
             service_provider_id, name, url
         )
+
+    async def delete_group(self, group_id: int) -> None:
+        """
+        Delete a group and all its related data.
+        Only super admin can delete groups.
+        """
+        return await self.admin_write_repository.delete_group(group_id)

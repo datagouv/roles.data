@@ -2,9 +2,12 @@ import logging
 from collections.abc import Callable
 
 from fastapi import HTTPException, status
+from pydantic import EmailStr
 
 from ..model import DataPassWebhookWrapper, GroupCreate, GroupResponse, UserCreate
 from .groups import GroupsService
+from .ui.email import EmailService
+from .users import UsersService
 
 logger = logging.getLogger(__name__)
 
@@ -22,9 +25,13 @@ class DatapassService:
         self,
         datapass_groups_service: GroupsService,
         groups_service_factory: Callable[..., GroupsService],
+        email_service: EmailService,
+        user_service: UsersService,
     ):
         self.datapass_groups_service = datapass_groups_service
         self.groups_service_factory = groups_service_factory
+        self.email_service = email_service
+        self.user_service = user_service
 
     async def process_webhook(
         self, payload: DataPassWebhookWrapper, service_provider_id: int
@@ -62,6 +69,10 @@ class DatapassService:
                 payload.demande_url,
             )
 
+            await self.send_emails(
+                email=payload.applicant_email, group_name=group_linked_to_contract.name
+            )
+
             return group_linked_to_contract
 
         except HTTPException:
@@ -72,7 +83,9 @@ class DatapassService:
                 detail="Internal error while processing webhook",
             )
 
-    async def get_datapass_group_for_contract(self, payload: DataPassWebhookWrapper):
+    async def get_datapass_group_for_contract(
+        self, payload: DataPassWebhookWrapper
+    ) -> GroupResponse:
         """
         There should be only one group associated to Datapass provider, and its contract_description should match the demand_id
 
@@ -98,6 +111,8 @@ class DatapassService:
     async def create_group(self, payload: DataPassWebhookWrapper) -> GroupResponse:
         """
         Create a new group under the DataPass service provider.
+
+        We specifically do not send emails to user as datapass already did
         """
         group_data = GroupCreate(
             name=f"Groupe {payload.intitule_demande}",
@@ -111,3 +126,17 @@ class DatapassService:
         )
 
         return await self.datapass_groups_service.create_group(group_data)
+
+    async def send_emails(self, email: EmailStr, group_name: str):
+        user = await self.user_service.get_user_by_email(
+            email, only_verified_user=False
+        )
+
+        # Send an email for user that are not yet verified
+        if not user.is_verified:
+            self.email_service.confirmation_email(
+                recipients=[user.email],
+                group_name=group_name,
+                service_provider_name=None,
+                service_provider_url=None,
+            )

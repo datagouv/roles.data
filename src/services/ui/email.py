@@ -55,10 +55,10 @@ class EmailService:
         self,
         recipients: list[str],
         group_name: str,
-        service_provider_name: str,
+        service_provider_name: str | None,
         service_provider_url: HttpUrl | None,
     ):
-        subject = f"Activation de votre compte {service_provider_name}"
+        subject = f"Activation de votre compte {service_provider_name if service_provider_name is not None else ""}"
         template = "confirmation.html"
 
         context = {

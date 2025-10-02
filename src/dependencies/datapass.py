@@ -4,7 +4,8 @@ from ..auth.datapass import verified_datapass_signature
 from ..config import settings
 from ..model import DataPassWebhookWrapper
 from ..services.datapass import DatapassService
-from .services import get_groups_service_factory
+from .email import get_email_service
+from .services import get_groups_service_factory, get_users_service
 
 # =============================
 # Datapass webhook dependencies
@@ -26,6 +27,8 @@ async def get_verified_datapass_payload(request: Request):
 
 async def get_datapass_service(
     groups_service_factory=Depends(get_groups_service_factory),
+    email_service=Depends(get_email_service),
+    user_service=Depends(get_users_service),
 ) -> DatapassService:
     """
     Dependency function that provides a DatapassService instance.
@@ -34,6 +37,8 @@ async def get_datapass_service(
     create groups for other service providers.
     """
     datapass_groups_service = groups_service_factory(
-        settings.DATAPASS_SERVICE_PROVIDER_ID
+        settings.DATAPASS_SERVICE_PROVIDER_ID, should_send_emails=False
     )
-    return DatapassService(datapass_groups_service, groups_service_factory)
+    return DatapassService(
+        datapass_groups_service, groups_service_factory, email_service, user_service
+    )

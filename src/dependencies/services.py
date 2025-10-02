@@ -109,7 +109,9 @@ async def get_groups_service_factory(
     groups_repository = GroupsRepository(db, logs_service)
     users_in_group_repository = UsersInGroupRepository(db, logs_service)
 
-    def create_groups_service(service_provider_id: int) -> GroupsService:
+    def create_groups_service(
+        service_provider_id: int, should_send_emails=True
+    ) -> GroupsService:
         return GroupsService(
             groups_repository,
             users_in_group_repository,
@@ -118,8 +120,9 @@ async def get_groups_service_factory(
             organisations_service,
             service_provider_service,
             scopes_service,
-            email_service,
             service_provider_id,
+            email_service,
+            should_send_emails=should_send_emails,
         )
 
     return create_groups_service

@@ -37,8 +37,9 @@ class GroupsService:
         organisations_service: organisations.OrganisationsService,
         service_provider_service: ServiceProvidersService,
         scopes_service: scopes.ScopesService,
-        email_service: EmailService,
         service_provider_id: int,
+        email_service: EmailService,
+        should_send_emails: bool,
     ):
         self.groups_repository = groups_repository
         self.users_in_group_repository = users_in_group_repository
@@ -49,6 +50,7 @@ class GroupsService:
         self.scopes_service = scopes_service
         self.email_service = email_service
         self.service_provider_id = service_provider_id
+        self.should_send_emails = should_send_emails
 
     async def validate_group_data(self, group_data: GroupCreate) -> None:
         if not group_data.organisation_siret:
@@ -219,21 +221,22 @@ class GroupsService:
             )
         )
 
-        # Send email in background task to avoid blocking the response
-        if not user.is_verified:
-            self.email_service.confirmation_email(
-                recipients=[user.email],
-                group_name=group.name,
-                service_provider_name=service_provider.name,
-                service_provider_url=service_provider.url,
-            )
-        else:
-            self.email_service.nouveau_groupe_email(
-                recipients=[user.email],
-                group_name=group.name,
-                service_provider_name=service_provider.name,
-                service_provider_url=service_provider.url,
-            )
+        if self.should_send_emails:
+            # Send email in background task to avoid blocking the response
+            if not user.is_verified:
+                self.email_service.confirmation_email(
+                    recipients=[user.email],
+                    group_name=group.name,
+                    service_provider_name=service_provider.name,
+                    service_provider_url=service_provider.url,
+                )
+            else:
+                self.email_service.nouveau_groupe_email(
+                    recipients=[user.email],
+                    group_name=group.name,
+                    service_provider_name=service_provider.name,
+                    service_provider_url=service_provider.url,
+                )
 
         role = await self.roles_service.get_roles_by_id(role.id)
         return UserInGroupResponse(

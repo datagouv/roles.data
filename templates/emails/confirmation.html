@@ -43,11 +43,11 @@
 <body>
   <div class="content">
 
-    <h1>Activation de votre compte {{ service_provider_name }}</h1>
+    <h1>Activation de votre compte {% if service_provider_name %}{{ service_provider_name }}{% endif %}</h1>
 
     <p>Bonjour,</p>
 
-    <p>Vous avez été ajouté(e) au groupe "<i>{{ group_name }}</i>", qui vous donne accès à {% if service_provider_url %}<a href="{{ service_provider_url }}">{{ service_provider_name }}</a>{% else %}{{ service_provider_name }}{% endif %}.</p>
+    <p>Vous avez été ajouté(e) au groupe "<i>{{ group_name }}</i>"{% if service_provider_name %}, qui vous donne accès à {% if service_provider_url %}<a href="{{ service_provider_url }}">{{ service_provider_name }}</a>{% else %}{{ service_provider_name }}{% endif %}{% endif %}.</p>
 
     <p>Pour activer votre compte, cliquez sur le bouton ci-dessous et authentifiez-vous avec votre compte ProConnect :</p>
 

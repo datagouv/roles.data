@@ -348,9 +348,10 @@ class DataPassWebhookWrapper:
 
     @property
     def demande_url(self):
-        env_slug = "" if self.env == "prod" else f"{self.env}."
+        env = self.env.lower()
+        env_slug = "" if env in ("prod", "production") else f"{env}."
         return HttpUrl(
-            f"https://{env_slug.lower()}datapass.api.gouv.fr/demandes/{self.id}"
+            f"https://{env_slug}datapass.api.gouv.fr/demandes/{self.id}"
         )
 
     @property

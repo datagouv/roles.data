@@ -45,7 +45,7 @@ async def get_request_context(request: Request) -> RequestContext:
             context_type="webhook",
         )
 
-    # Web session (either admin or user)
+    # Web session - user_sub has been set in user session during login
     if hasattr(request, "session") and request.session.get("user_sub"):
         user_sub_str = request.session["user_sub"]
 
@@ -64,6 +64,8 @@ async def get_request_context(request: Request) -> RequestContext:
             acting_user_sub=acting_user_sub,
             context_type="web",
         )
+
+    # Resource server
 
     # OAuth API context (JWT token)
     authorization_header = request.headers.get("authorization")

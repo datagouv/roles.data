@@ -1,6 +1,7 @@
 import jwt
 from authlib.integrations.starlette_client import OAuth
 from authlib.integrations.starlette_client.apps import StarletteOAuth2App
+from fastapi import HTTPException, status
 
 from src.config import AppSettings, settings
 
@@ -45,6 +46,53 @@ class ProConnectOAuthProvider(OAuth):
             raise ValueError(f"Expected RS256, got {header.get('alg')}")
 
         return jwt.decode(userinfo_jwt, options={"verify_signature": False})
+
+    async def introspect_token(self, access_token: str) -> dict:
+        """
+        Introspect a ProConnect access token to validate it and get user info.
+
+        Args:
+            access_token: The access token to introspect
+        """
+        try:
+            metadata = await self.proconnect.load_server_metadata()
+            introspection_endpoint = metadata.get("introspection_endpoint")
+
+            if not introspection_endpoint:
+                raise Exception(
+                    "ProConnect introspection endpoint not found in metadata"
+                )
+
+            response = await self.proconnect.post(
+                introspection_endpoint,
+                token=access_token,
+                data={
+                    "token": access_token,
+                    "token_type_hint": "access_token",
+                },
+                auth=(
+                    self.proconnect.client_id,
+                    self.proconnect.client_secret,
+                ),
+            )
+
+            if response.status_code != 200:
+                raise Exception(f"Token introspection failed: {response.status_code}")
+
+            introspection_data = response.json()
+
+            # Check if token is active
+            if not introspection_data.get("active", False):
+                raise Exception("Token is not active or has expired")
+
+            return introspection_data
+
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=f"Token introspection error: {str(e)}",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
 
 
 pro_connect_provider = ProConnectOAuthProvider(settings)

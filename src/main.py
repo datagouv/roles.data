@@ -16,14 +16,12 @@ from .middleware.force_web_auth import ForceWebAuthenticationMiddleware
 from .routers import (
     groups,
     groups_admin,
-    groups_scopes,
     health,
     roles,
     users,
 )
 from .routers.auth import auth
 from .routers.web.admin import view as admin_home
-from .routers.web.ui import view as ui_home
 from .routers.webhooks import datapass
 
 app = FastAPI(redirect_slashes=True, redoc_url="/")
@@ -97,14 +95,13 @@ app.include_router(users.router)
 app.include_router(roles.router)
 app.include_router(groups.router)
 app.include_router(groups_admin.router)
-app.include_router(groups_scopes.router)
+app.include_router(groups.router)
 
 # webhooks (Datapass)
 app.include_router(datapass.router)
 
 # web interfaces - only use ProConnect
 app.include_router(admin_home.router, include_in_schema=False)
-app.include_router(ui_home.router, include_in_schema=False)
 
 # ===========
 # Middlewares

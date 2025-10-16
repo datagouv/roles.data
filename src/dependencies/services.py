@@ -10,6 +10,7 @@ from ..repositories.service_account import ServiceAccountRepository
 from ..repositories.service_providers import ServiceProvidersRepository
 from ..repositories.users import UsersRepository
 from ..repositories.users_in_group import UsersInGroupRepository
+from ..services.email.main import EmailService
 from ..services.groups import GroupsService
 from ..services.logs import LogsService
 from ..services.organisations import OrganisationsService
@@ -17,7 +18,6 @@ from ..services.roles import RolesService
 from ..services.scopes import ScopesService
 from ..services.service_accounts import ServiceAccountsService
 from ..services.service_providers import ServiceProvidersService
-from ..services.ui.email import EmailService
 from ..services.users import UsersService
 from .context import get_logs_service, get_service_provider_id
 from .email import get_email_service

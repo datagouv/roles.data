@@ -12,8 +12,8 @@ from ..model import (
 )
 from ..repositories import groups, users_in_group
 from . import organisations, roles, scopes, users
+from .email.main import EmailService
 from .service_providers import ServiceProvidersService
-from .ui.email import EmailService
 
 
 class GroupsService:

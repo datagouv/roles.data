@@ -311,7 +311,8 @@ erDiagram
 
 ### Architecture technique
 
-```mermaidgraph TB
+```mermaid
+graph TB
     subgraph "FastAPI Application"
         subgraph "Authentification"
             OAuth[OAuth2 Client Credentials<br/>JWT Tokens<br/>API externes]

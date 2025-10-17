@@ -75,7 +75,6 @@ La variable `DB_ENV` est utilisée pour distinguer les différents environnement
 - `local` : developpement local (seedé)
 - `test` : CI (seedé)
 - `dev` : intégration (seedé)
-- `preprod` : environnement iso prod pour tester les migrations et autres opérations de maintenance
 - `prod` environnement de production
 
 ### local
@@ -128,7 +127,6 @@ make test
 L'application est déployée sur différents environnements :
 
 - [dev] https://roles.dev.data.gouv.fr : données de test. À utiliser pour en intégration.
-- [preprod] https://roles.preprod.data.gouv.fr : à vocation à être iso prod (pull & replace avec les données de prod quotidiennement)
 - [prod] https://roles.data.gouv.fr
 
 Les déploiement se font via un message de commit formaté de la manière suivante : [ENV:VERSION].
@@ -136,9 +134,6 @@ Les déploiement se font via un message de commit formaté de la manière suivan
 ```
 # deploy on roles.dev.data.gouv.fr
 make deploy_dev
-
-# deploy on roles.preprod.data.gouv.fr
-make deploy_preprod
 
 # deploy on roles.data.gouv.fr
 make deploy_prod

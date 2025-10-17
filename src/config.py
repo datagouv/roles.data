@@ -65,7 +65,7 @@ class AppSettings(BaseSettings):
 
     @property
     def IS_PRODUCTION(self) -> bool:
-        return self.DB_ENV in ["preprod", "prod"]
+        return self.DB_ENV in ["prod"]
 
     # Add other settings as needed
     DEBUG: bool = False

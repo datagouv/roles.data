@@ -23,7 +23,7 @@ if [ -n "localhost" ] && [ -n "$DB_USER" ] && [ -n "$DB_PASSWORD" ] && [ -n "$DB
   # Check if DB_ENV is set
   if [ -z "${DB_ENV:-}" ]; then
       echo "❌ Error: DB_ENV environment variable is required"
-      echo "Valid values: local, dev, test, preprod, prod"
+      echo "Valid values: local, dev, test, prod"
       exit 1
   fi
 

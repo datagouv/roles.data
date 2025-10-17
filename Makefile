@@ -30,11 +30,6 @@ deploy_prod:
 	SKIP=conventional-pre-commit git commit --allow-empty -m "[www:minor]"  && \
 	git push origin main
 
-deploy_preprod:
-	git checkout main && \
-	SKIP=conventional-pre-commit git commit --allow-empty -m "[preprod:minor]"  && \
-	git push origin main
-
 deploy_dev:
 	git checkout main && \
 	SKIP=conventional-pre-commit git commit --allow-empty -m "[dev:minor]"  && \

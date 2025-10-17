@@ -5,15 +5,30 @@ from pydantic import UUID4
 from src.auth.o_auth import decode_access_token
 from src.dependencies import get_groups_service
 
-from ..model import GroupResponse, UserInGroupCreate, UserInGroupResponse
+from ..model import (
+    GroupResponse,
+    GroupWithScopesResponse,
+    UserInGroupCreate,
+    UserInGroupResponse,
+)
 from ..services.groups import GroupsService
 
 router = APIRouter(
     prefix="/groups",
-    tags=["Administration d’un groupe"],
+    tags=["Gestion des groupes par l'utilisateur"],
     dependencies=[Depends(decode_access_token)],
     responses={404: {"description": "Not found"}, 400: {"description": "Bad request"}},
 )
+
+
+@router.get("/", response_model=list[GroupWithScopesResponse])
+async def get_my_groups(
+    group_service: GroupsService = Depends(get_groups_service),
+):
+    """
+    Liste les groupes disponibles dont fait partie l’utilisateur
+    """
+    return await group_service.list_groups()
 
 
 @router.put("/{group_id}", response_model=GroupResponse)

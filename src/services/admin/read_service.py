@@ -10,7 +10,7 @@ class AdminReadService:
     """
     Service class for admin operations, providing methods to interact with the AdminRepository.
 
-    Should only be called from the UI!
+    Should only be called from the admin interface!
 
     Note on architecture :
     - admin operation are few and very sensitive

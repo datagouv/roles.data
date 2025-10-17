@@ -14,12 +14,6 @@ from src.config import settings
 
 # It is not the same as the main auth router and is only useful for web interfaces
 
-
-class CONNEXION_TYPE:
-    ADMIN = "admin"
-    UI = "ui"
-
-
 router = APIRouter(
     prefix="/pro-connect",
     responses={404: {"description": "Not found"}},
@@ -29,7 +23,6 @@ router = APIRouter(
 async def pro_connect_authorize_url(request: Request):
     """
     Generate the ProConnect authorization URL.
-    This is used for both admin and UI login.
     """
     if not settings.PROCONNECT_ENABLED:
         raise HTTPException(
@@ -44,17 +37,9 @@ async def pro_connect_authorize_url(request: Request):
     return authorize_url
 
 
-@router.get("/login/ui")
-async def login_ui(request: Request):
-    """ProConnect login for UI"""
-    request.session["connexion_type"] = CONNEXION_TYPE.UI
-    return await pro_connect_authorize_url(request)
-
-
 @router.get("/login/admin")
 async def login_admin(request: Request):
     """ProConnect login for admin"""
-    request.session["connexion_type"] = CONNEXION_TYPE.ADMIN
     return await pro_connect_authorize_url(request)
 
 
@@ -67,38 +52,18 @@ async def callback(request: Request):
         # Store the user info in the session, it'll be used when logging out from ProConnect.
         userinfo = await pro_connect_provider.userinfo(token=token)
 
-        connexion_type = request.session.get("connexion_type", None)
-        del request.session["connexion_type"]
-
-        if connexion_type == CONNEXION_TYPE.UI:
-            request.session["id_token"] = token["id_token"]
-            request.session["user_email"] = userinfo["email"]
-            request.session["user_sub"] = userinfo["sub"]
-            request.session["is_super_admin"] = False
-
-            return RedirectResponse(
-                url="/ui/activation/succes", status_code=status.HTTP_302_FOUND
-            )
-
-        if connexion_type == CONNEXION_TYPE.ADMIN:
-            if userinfo["email"] not in settings.SUPER_ADMIN_EMAILS:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail="You are not authorized to access this resource.",
-                )
-
-            request.session["id_token"] = token["id_token"]
-            request.session["is_super_admin"] = True
-            request.session["user_email"] = userinfo["email"]
-            request.session["user_sub"] = userinfo["sub"]
-
-            return RedirectResponse(url="/admin", status_code=status.HTTP_302_FOUND)
-
-        if not connexion_type:
+        if userinfo["email"] not in settings.SUPER_ADMIN_EMAILS:
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Connexion type not set in session.",
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You are not authorized to access this resource.",
             )
+
+        request.session["id_token"] = token["id_token"]
+        request.session["is_super_admin"] = True
+        request.session["user_email"] = userinfo["email"]
+        request.session["user_sub"] = userinfo["sub"]
+
+        return RedirectResponse(url="/admin", status_code=status.HTTP_302_FOUND)
 
     except OAuthError as e:
         raise HTTPException(

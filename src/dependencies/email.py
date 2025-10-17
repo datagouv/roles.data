@@ -1,5 +1,5 @@
 from ..repositories.email import EmailRepository
-from ..services.ui.email import EmailService
+from ..services.email.main import EmailService
 
 # =================
 # Mail dependencies

@@ -5,8 +5,8 @@ from fastapi import HTTPException, status
 from pydantic import EmailStr
 
 from ..model import DataPassWebhookWrapper, GroupCreate, GroupResponse, UserCreate
+from .email.main import EmailService
 from .groups import GroupsService
-from .ui.email import EmailService
 from .users import UsersService
 
 logger = logging.getLogger(__name__)

@@ -21,14 +21,5 @@ class ForceWebAuthenticationMiddleware(BaseHTTPMiddleware):
             response = await call_next(request)
             return response
 
-        if path.startswith("/ui") and not path.startswith("/ui/activation"):
-            user_email = request.session.get("user_email", None)
-
-            if not user_email:
-                return RedirectResponse(url="/ui/activation", status_code=302)
-
-            response = await call_next(request)
-            return response
-
         response = await call_next(request)
         return response

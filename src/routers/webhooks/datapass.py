@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/webhooks/datapass",
-    tags=["Webhook"],
+    tags=["Gestion des groupes par le fournisseur de service"],
     responses={
         400: {"description": "Invalid webhook payload"},
         401: {"description": "Invalid webhook signature"},

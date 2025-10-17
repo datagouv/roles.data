@@ -70,7 +70,7 @@ Cette commande est systématiquement testée dans la CI par la Github Action `do
 
 ### Schéma de base de données
 
-Le schéma ci-dessous représente la structure complète de la base de données après application de toutes les migrations :
+Le schéma ci-dessous représente la structure de la base de données (selon les migrations, ce schéma peut différer légèrement de la structure réelle) :
 
 ```mermaid
 erDiagram
@@ -79,27 +79,6 @@ erDiagram
         int id PK
         char_14 siret UK "UNIQUE, format: 14 digits"
         varchar_255 name "nullable"
-        timestamptz created_at
-        timestamptz updated_at
-    }
-
-    groups ||--o{ parent_child_relations : "parent"
-    groups ||--o{ parent_child_relations : "child"
-    groups ||--o{ group_user_relations : "has"
-    groups ||--o{ group_service_provider_relations : "has"
-    groups {
-        int id PK
-        int orga_id FK
-        varchar_255 name
-        timestamptz created_at
-        timestamptz updated_at
-    }
-
-    parent_child_relations {
-        int id PK
-        int parent_group_id FK
-        int child_group_id FK
-        boolean inherit_scopes "default: false"
         timestamptz created_at
         timestamptz updated_at
     }
@@ -131,6 +110,28 @@ erDiagram
         timestamptz created_at
         timestamptz updated_at
     }
+
+    groups ||--o{ "parent_child_relations (pas utilisée)" : "parent"
+    groups ||--o{ "parent_child_relations (pas utilisée)" : "child"
+    groups ||--o{ group_user_relations : "has"
+    groups ||--o{ group_service_provider_relations : "has"
+    groups {
+        int id PK
+        int orga_id FK
+        varchar_255 name
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    "parent_child_relations (pas utilisée)" {
+        int id PK
+        int parent_group_id FK
+        int child_group_id FK
+        boolean inherit_scopes "default: false"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
 
     service_providers ||--o{ group_service_provider_relations : "provides"
     service_providers ||--o{ service_accounts : "has"
@@ -177,12 +178,11 @@ erDiagram
 ```
 
 **Notes importantes :**
-- Les relations `group_user_relations` créent une association many-to-many entre groupes, utilisateurs et rôles
-- La table `parent_child_relations` permet de créer une hiérarchie de groupes
-- La table `audit_logs` n'utilise pas de clés étrangères pour permettre l'historique même après suppression
-- Le champ `sub_pro_connect` a un index unique partiel (seulement quand non NULL)
-- Deux rôles principaux : `administrateur` (is_admin=true) et `utilisateur` (is_admin=false)
-- Le service provider `Datapass` (id=999) est un provider système hardcodé
+- `Datapass` (id=999) est le seul fournisseur de service hardcodé
+- `group_service_provider_relations` : association many-to-many entre groupes, et fournisseurs de service, qui porte les droits(scopes)
+- `group_user_relations` : association many-to-many entre groupes, utilisateurs et rôles
+- `audit_logs` n'utilise pas de clés étrangères pour conserver l'historique même après suppression de la ressource
+- `parent_child_relations` permet de créer une hiérarchie de groupes (la table existe mais n’est pas actuellement utilisée)
 
 ### environnements
 

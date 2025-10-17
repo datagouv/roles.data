@@ -163,10 +163,9 @@ make lint
 Cf [documentation contributeur](CONTRIBUTING.md)
 
 
-## Comprendre l’architecture
+## Comprendre l'architecture
 
 ### Le parcours utilisateur
-
 
 ```mermaid
 flowchart TD
@@ -308,3 +307,78 @@ erDiagram
 - `group_user_relations` : association many-to-many entre groupes, utilisateurs et rôles
 - `audit_logs` n'utilise pas de clés étrangères pour conserver l'historique même après suppression de la ressource
 - `parent_child_relations` permet de créer une hiérarchie de groupes (la table existe mais n’est pas actuellement utilisée)
+
+
+### Architecture technique
+
+```mermaidgraph TB
+    subgraph "FastAPI Application"
+        subgraph "Authentification"
+            OAuth[OAuth2 Client Credentials<br/>JWT Tokens<br/>API externes]
+            PCAuth[ProConnect OAuth2<br/>Session Cookies<br/>Interface Web]
+            DPAuth[Datapass HMAC<br/>Signature<br/>Webhooks]
+        end
+
+        subgraph "Routers - Couche HTTP"
+            RAPI[API Routers<br/>users, groups, roles, scopes]
+            RWebhook[Webhook Router<br/>datapass]
+            RWebUI[Web UI Routers<br/>admin, activation]
+        end
+
+        subgraph "Dependency Injection"
+            CTX[Context<br/>service_provider_id<br/>service_account_id<br/>acting_user_sub]
+            DBConn[db_conn<br/>swappable pour tests]
+            Logger[LogsRepository]
+            Repositories[Instanciation des repositories métiers]
+            Services[Instanciation des services métiers]
+        end
+
+
+        subgraph "Services - Logique métier"
+            ServicesMetiers[Utilisation des services instantiés lors de l’injection de dépendances]
+        end
+
+        subgraph "Repositories - appels externes"
+            RepositoriesMetiers[Utilisation des repositories instantiés lors de l’injection de dépendances]
+             end
+    end
+
+    subgraph "Base de données"
+        DB[(PostgreSQL)]
+    end
+
+    OAuth -->CTX
+    PCAuth -->CTX
+    DPAuth -->CTX
+
+    OAuth-->RAPI
+    PCAuth-->RWebUI
+    DPAuth-->RWebhook
+
+    CTX --> Logger
+    DBConn --> Repositories
+    Logger--> Repositories
+    Repositories --> Services
+    Services -->|Injection des instances| RAPI & RWebUI & RWebhook
+
+    RAPI & RWebUI & RWebhook --> ServicesMetiers
+    ServicesMetiers --> RepositoriesMetiers
+
+    RepositoriesMetiers -->|Using db_conn| DB
+    RepositoriesMetiers-->|log écriture using LogsRepository| DB
+```
+
+**Patterns d'authentification :**
+- **OAuth2 Client Credentials** : Service accounts avec JWT pour les API externes
+- **ProConnect OAuth2** : Authentication utilisateur via OpenID Connect pour l'interface web
+- **Datapass HMAC** : Vérification de signature pour les webhooks entrants
+
+**Injection de dépendances :**
+- **Context** : Extrait des credentials d'authentification, contient `service_provider_id`, `service_account_id`, `acting_user_sub`
+- **DB Connection** : Session de base de données (`db_session`), swappable pour les tests (permet d'utiliser une DB de test isolée)
+- **LogsService** : Injecté avec le context pour tracer les actions dans `audit_logs`
+
+**Architecture en couches :**
+- **Routers** : Gestion des requêtes HTTP, validation des entrées, sérialisation des réponses
+- **Services** : Logique métier, orchestration entre repositories, gestion des emails
+- **Repositories** : Requêtes SQL directes, transactions, logging des actions via LogsService

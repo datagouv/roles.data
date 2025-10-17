@@ -68,6 +68,122 @@ Cette commande est systématiquement testée dans la CI par la Github Action `do
 
 ## Base de données
 
+### Schéma de base de données
+
+Le schéma ci-dessous représente la structure complète de la base de données après application de toutes les migrations :
+
+```mermaid
+erDiagram
+    organisations ||--o{ groups : "contains"
+    organisations {
+        int id PK
+        char_14 siret UK "UNIQUE, format: 14 digits"
+        varchar_255 name "nullable"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    groups ||--o{ parent_child_relations : "parent"
+    groups ||--o{ parent_child_relations : "child"
+    groups ||--o{ group_user_relations : "has"
+    groups ||--o{ group_service_provider_relations : "has"
+    groups {
+        int id PK
+        int orga_id FK
+        varchar_255 name
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    parent_child_relations {
+        int id PK
+        int parent_group_id FK
+        int child_group_id FK
+        boolean inherit_scopes "default: false"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    users ||--o{ group_user_relations : "belongs_to"
+    users {
+        int id PK
+        varchar_255 email UK "UNIQUE"
+        varchar_255 sub_pro_connect "UNIQUE when not NULL"
+        boolean is_verified "default: false"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    roles ||--o{ group_user_relations : "defines"
+    roles {
+        int id PK
+        varchar_255 role_name UK "UNIQUE"
+        boolean is_admin "default: false"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    group_user_relations {
+        int id PK
+        int group_id FK
+        int user_id FK
+        int role_id FK
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    service_providers ||--o{ group_service_provider_relations : "provides"
+    service_providers ||--o{ service_accounts : "has"
+    service_providers {
+        int id PK
+        varchar_255 name
+        varchar_500 url "nullable, must be http(s)"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    group_service_provider_relations {
+        int id PK
+        int service_provider_id FK
+        int group_id FK
+        text scopes "default: empty string"
+        text contract_description "default: empty string"
+        varchar_500 contract_url "nullable, must be http(s)"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    service_accounts {
+        int id PK
+        int service_provider_id FK
+        boolean is_active "default: false"
+        varchar_255 name "UNIQUE per service_provider_id"
+        text hashed_password
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    audit_logs {
+        int id PK
+        int service_provider_id "no FK"
+        int service_account_id "no FK"
+        varchar_50 action_type "CREATE, UPDATE, DELETE, etc."
+        varchar_50 resource_type "user, group, organisation, etc."
+        int resource_id "nullable"
+        jsonb new_values "nullable"
+        varchar_255 acting_user_sub "nullable"
+        timestamptz created_at
+    }
+```
+
+**Notes importantes :**
+- Les relations `group_user_relations` créent une association many-to-many entre groupes, utilisateurs et rôles
+- La table `parent_child_relations` permet de créer une hiérarchie de groupes
+- La table `audit_logs` n'utilise pas de clés étrangères pour permettre l'historique même après suppression
+- Le champ `sub_pro_connect` a un index unique partiel (seulement quand non NULL)
+- Deux rôles principaux : `administrateur` (is_admin=true) et `utilisateur` (is_admin=false)
+- Le service provider `Datapass` (id=999) est un provider système hardcodé
+
 ### environnements
 
 La variable `DB_ENV` est utilisée pour distinguer les différents environnements :

@@ -161,3 +161,224 @@ make lint
 ## Contribuer
 
 Cf [documentation contributeur](CONTRIBUTING.md)
+
+
+## Comprendre l'architecture
+
+### Le parcours utilisateur
+
+```mermaid
+flowchart TD
+    U((Utilisateur))
+    U-->D
+    subgraph Dinum
+        subgraph Datapass:
+            D[1. Nouvelle demande]-->|Validation|C[2. Habilitation]
+            D-->|Refus|X[Demande refusée]
+        end
+        subgraph Roles.data:
+            C-->|3. Création d’un groupe avec les droits associés| R[(Listes des groupes)]
+        end
+        subgraph ProConnect:
+            L[Login]
+        end
+    end
+    C-->|4. Envoi d’un mail a l'utilisateur l’invitant a se connecter| U
+    U-->|5. Clic sur le lien contenu dans le mail|A
+    A<-->|6. Se ProConnecte|L
+    subgraph Fournisseur de Service
+        A[Accès au service]
+        A<-->|7. Récupération des droits de l’utilisateur|R
+    end
+```
+
+### Le schéma relationnel de la base de données
+
+Le schéma ci-dessous représente la structure de la base de données (selon les migrations, ce schéma peut différer légèrement de la structure réelle) :
+
+```mermaid
+erDiagram
+    organisations ||--o{ groups : "contains"
+    organisations {
+        int id PK
+        char_14 siret UK "UNIQUE, format: 14 digits"
+        varchar_255 name "nullable"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    users ||--o{ group_user_relations : "belongs_to"
+    users {
+        int id PK
+        varchar_255 email UK "UNIQUE"
+        varchar_255 sub_pro_connect "UNIQUE when not NULL"
+        boolean is_verified "default: false"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    roles ||--o{ group_user_relations : "defines"
+    roles {
+        int id PK
+        varchar_255 role_name UK "UNIQUE"
+        boolean is_admin "default: false"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    group_user_relations {
+        int id PK
+        int group_id FK
+        int user_id FK
+        int role_id FK
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    groups ||--o{ "parent_child_relations (pas utilisée)" : "parent"
+    groups ||--o{ "parent_child_relations (pas utilisée)" : "child"
+    groups ||--o{ group_user_relations : "has"
+    groups ||--o{ group_service_provider_relations : "has"
+    groups {
+        int id PK
+        int orga_id FK
+        varchar_255 name
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    "parent_child_relations (pas utilisée)" {
+        int id PK
+        int parent_group_id FK
+        int child_group_id FK
+        boolean inherit_scopes "default: false"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+
+    service_providers ||--o{ group_service_provider_relations : "provides"
+    service_providers ||--o{ service_accounts : "has"
+    service_providers {
+        int id PK
+        varchar_255 name
+        varchar_500 url "nullable, must be http(s)"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    group_service_provider_relations {
+        int id PK
+        int service_provider_id FK
+        int group_id FK
+        text scopes "default: empty string"
+        text contract_description "default: empty string"
+        varchar_500 contract_url "nullable, must be http(s)"
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    service_accounts {
+        int id PK
+        int service_provider_id FK
+        boolean is_active "default: false"
+        varchar_255 name "UNIQUE per service_provider_id"
+        text hashed_password
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    audit_logs {
+        int id PK
+        int service_provider_id "no FK"
+        int service_account_id "no FK"
+        varchar_50 action_type "CREATE, UPDATE, DELETE, etc."
+        varchar_50 resource_type "user, group, organisation, etc."
+        int resource_id "nullable"
+        jsonb new_values "nullable"
+        varchar_255 acting_user_sub "nullable"
+        timestamptz created_at
+    }
+```
+
+**Notes importantes :**
+- `Datapass` (id=999) est le seul fournisseur de service hardcodé
+- `group_service_provider_relations` : association many-to-many entre groupes, et fournisseurs de service, qui porte les droits(scopes)
+- `group_user_relations` : association many-to-many entre groupes, utilisateurs et rôles
+- `audit_logs` n'utilise pas de clés étrangères pour conserver l'historique même après suppression de la ressource
+- `parent_child_relations` permet de créer une hiérarchie de groupes (la table existe mais n’est pas actuellement utilisée)
+
+
+### Architecture technique
+
+```mermaidgraph TB
+    subgraph "FastAPI Application"
+        subgraph "Authentification"
+            OAuth[OAuth2 Client Credentials<br/>JWT Tokens<br/>API externes]
+            PCAuth[ProConnect OAuth2<br/>Session Cookies<br/>Interface Web]
+            DPAuth[Datapass HMAC<br/>Signature<br/>Webhooks]
+        end
+
+        subgraph "Routers - Couche HTTP"
+            RAPI[API Routers<br/>users, groups, roles, scopes]
+            RWebhook[Webhook Router<br/>datapass]
+            RWebUI[Web UI Routers<br/>admin, activation]
+        end
+
+        subgraph "Dependency Injection"
+            CTX[Context<br/>service_provider_id<br/>service_account_id<br/>acting_user_sub]
+            DBConn[db_conn<br/>swappable pour tests]
+            Logger[LogsRepository]
+            Repositories[Instanciation des repositories métiers]
+            Services[Instanciation des services métiers]
+        end
+
+
+        subgraph "Services - Logique métier"
+            ServicesMetiers[Utilisation des services instantiés lors de l’injection de dépendances]
+        end
+
+        subgraph "Repositories - appels externes"
+            RepositoriesMetiers[Utilisation des repositories instantiés lors de l’injection de dépendances]
+             end
+    end
+
+    subgraph "Base de données"
+        DB[(PostgreSQL)]
+    end
+
+    OAuth -->CTX
+    PCAuth -->CTX
+    DPAuth -->CTX
+
+    OAuth-->RAPI
+    PCAuth-->RWebUI
+    DPAuth-->RWebhook
+
+    CTX --> Logger
+    DBConn --> Repositories
+    Logger--> Repositories
+    Repositories --> Services
+    Services -->|Injection des instances| RAPI & RWebUI & RWebhook
+
+    RAPI & RWebUI & RWebhook --> ServicesMetiers
+    ServicesMetiers --> RepositoriesMetiers
+
+    RepositoriesMetiers -->|Using db_conn| DB
+    RepositoriesMetiers-->|log écriture using LogsRepository| DB
+```
+
+**Patterns d'authentification :**
+- **OAuth2 Client Credentials** : Service accounts avec JWT pour les API externes
+- **ProConnect OAuth2** : Authentication utilisateur via OpenID Connect pour l'interface web
+- **Datapass HMAC** : Vérification de signature pour les webhooks entrants
+
+**Injection de dépendances :**
+- **Context** : Extrait des credentials d'authentification, contient `service_provider_id`, `service_account_id`, `acting_user_sub`
+- **DB Connection** : Session de base de données (`db_session`), swappable pour les tests (permet d'utiliser une DB de test isolée)
+- **LogsService** : Injecté avec le context pour tracer les actions dans `audit_logs`
+
+**Architecture en couches :**
+- **Routers** : Gestion des requêtes HTTP, validation des entrées, sérialisation des réponses
+- **Services** : Logique métier, orchestration entre repositories, gestion des emails
+- **Repositories** : Requêtes SQL directes, transactions, logging des actions via LogsService

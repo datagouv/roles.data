@@ -27,10 +27,10 @@ db_init:
 
 deploy_prod:
 	git checkout main && \
-	SKIP=conventional-pre-commit git commit --allow-empty -m "[www:minor]"  && \
+	SKIP=conventional-pre-commit git commit --allow-empty -m "[www:minor] ₍^. .^₎⟆"  && \
 	git push origin main
 
 deploy_dev:
 	git checkout main && \
-	SKIP=conventional-pre-commit git commit --allow-empty -m "[dev:minor]"  && \
+	SKIP=conventional-pre-commit git commit --allow-empty -m "[dev:minor] ₍^. .^₎Ⳋ"  && \
 	git push origin main

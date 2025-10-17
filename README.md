@@ -68,7 +68,132 @@ Cette commande est systématiquement testée dans la CI par la Github Action `do
 
 ## Base de données
 
-### Schéma de base de données
+### environnements
+
+La variable `DB_ENV` est utilisée pour distinguer les différents environnements :
+
+- `local` : developpement local (seedé)
+- `test` : CI (seedé)
+- `dev` : intégration (seedé)
+- `prod` environnement de production
+
+### local
+
+```
+# lancer les DB pour les environnements local et test
+docker-compose-up
+
+# se connecter
+psql -h localhost -p 5432 -U d-roles -d d-roles
+
+# executer les migrations et la seed
+make db_init
+```
+
+### Scripts de provisionnement de la base de données
+
+Les scripts appliqués à la base de donnée sont executés dans cet ordre :
+
+- `schema.sql` - creation du schema (uniquement les environnements local, test)
+- `create.sql` - création de la base de données
+- `migrations/*` - migrations successives
+- `seed.sql` - données de tests (uniquement les environnements local, test, dev)
+
+#### Migrations
+
+Ajouter un fichier `db/migrations/{YYYYMMDD}_{description}.sql` avec le SQL nécessaire pour la migration
+
+#### Seed
+
+Mettre a jour le fichier seeds (selon l'environnement) dans `db/seeds/{environnement}/seed.sql`
+
+## Tests
+
+Les tests d'intégration tournent sur pytest. La DB postgres-test est une DB différent de la DB de dev, pré-stubbé et isolée.
+
+```
+# démarrer la DB
+make docker_local
+
+# test de migrations/seed
+# make db_init
+
+# lancer les tests
+make test
+```
+
+## Déploiements
+
+L'application est déployée sur différents environnements :
+
+- [dev] https://roles.dev.data.gouv.fr : données de test. À utiliser pour en intégration.
+- [prod] https://roles.data.gouv.fr
+
+Les déploiement se font via un message de commit formaté de la manière suivante : [ENV:VERSION].
+
+```
+# deploy on roles.dev.data.gouv.fr
+make deploy_dev
+
+# deploy on roles.data.gouv.fr
+make deploy_prod
+```
+
+NB : ces commandes déploient la branche `main` uniquement.
+
+## Conventions de code
+
+### Pre-commit
+
+```
+uv add pre-commit
+pre-commit install --install-hooks
+```
+
+### Formatting et linting
+
+Ce projet utilise Ruff pour le formatage et le linting :
+
+```
+make lint
+```
+
+## Contribuer
+
+Cf [documentation contributeur](CONTRIBUTING.md)
+
+
+## Comprendre l’architecture
+
+### Le parcours utilisateur
+
+
+```mermaid
+flowchart TD
+    U((Utilisateur))
+    U-->D
+    subgraph Dinum
+        subgraph Datapass:
+            D[1. Nouvelle demande]-->|Validation|C[2. Habilitation]
+            D-->|Refus|X[Demande refusée]
+        end
+        subgraph Roles.data:
+            C-->|3. Création d’un groupe avec les droits associés| R[(Listes des groupes)]
+        end
+        subgraph ProConnect:
+            L[Login]
+        end
+    end
+    C-->|4. Envoi d’un mail a l'utilisateur l’invitant a se connecter| U
+    U-->|5. Clic sur le lien contenu dans le mail|A
+    A<-->|6. Se ProConnecte|L
+    subgraph Fournisseur de Service
+        A[Accès au service]
+        A<-->|7. Récupération des droits de l’utilisateur|R
+    end
+```
+
+### Le schéma relationnel de la base de données
 
 Le schéma ci-dessous représente la structure de la base de données (selon les migrations, ce schéma peut différer légèrement de la structure réelle) :
 
@@ -183,97 +308,3 @@ erDiagram
 - `group_user_relations` : association many-to-many entre groupes, utilisateurs et rôles
 - `audit_logs` n'utilise pas de clés étrangères pour conserver l'historique même après suppression de la ressource
 - `parent_child_relations` permet de créer une hiérarchie de groupes (la table existe mais n’est pas actuellement utilisée)
-
-### environnements
-
-La variable `DB_ENV` est utilisée pour distinguer les différents environnements :
-
-- `local` : developpement local (seedé)
-- `test` : CI (seedé)
-- `dev` : intégration (seedé)
-- `prod` environnement de production
-
-### local
-
-```
-# lancer les DB pour les environnements local et test
-docker-compose-up
-
-# se connecter
-psql -h localhost -p 5432 -U d-roles -d d-roles
-
-# executer les migrations et la seed
-make db_init
-```
-
-### Scripts de provisionnement de la base de données
-
-Les scripts appliqués à la base de donnée sont executés dans cet ordre :
-
-- `schema.sql` - creation du schema (uniquement les environnements local, test)
-- `create.sql` - création de la base de données
-- `migrations/*` - migrations successives
-- `seed.sql` - données de tests (uniquement les environnements local, test, dev)
-
-#### Migrations
-
-Ajouter un fichier `db/migrations/{YYYYMMDD}_{description}.sql` avec le SQL nécessaire pour la migration
-
-#### Seed
-
-Mettre a jour le fichier seeds (selon l'environnement) dans `db/seeds/{environnement}/seed.sql`
-
-## Tests
-
-Les tests d'intégration tournent sur pytest. La DB postgres-test est une DB différent de la DB de dev, pré-stubbé et isolée.
-
-```
-# démarrer la DB
-make docker_local
-
-# test de migrations/seed
-# make db_init
-
-# lancer les tests
-make test
-```
-
-## Déploiements
-
-L'application est déployée sur différents environnements :
-
-- [dev] https://roles.dev.data.gouv.fr : données de test. À utiliser pour en intégration.
-- [prod] https://roles.data.gouv.fr
-
-Les déploiement se font via un message de commit formaté de la manière suivante : [ENV:VERSION].
-
-```
-# deploy on roles.dev.data.gouv.fr
-make deploy_dev
-
-# deploy on roles.data.gouv.fr
-make deploy_prod
-```
-
-NB : ces commandes déploient la branche `main` uniquement.
-
-## Conventions de code
-
-### Pre-commit
-
-```
-uv add pre-commit
-pre-commit install --install-hooks
-```
-
-### Formatting et linting
-
-Ce projet utilise Ruff pour le formatage et le linting :
-
-```
-make lint
-```
-
-## Contribuer
-
-Cf [documentation contributeur](CONTRIBUTING.md)

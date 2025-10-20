@@ -24,8 +24,8 @@ VALUES
   (5, 'amandine.audras@beta.gouv.fr', false) ON CONFLICT (id) DO NOTHING;
 
 -- Create the service provider "test"
-INSERT INTO :schema_name.service_providers (id, name, url)
-VALUES (1, 'droles-test', 'https://data.gouv.fr') ON CONFLICT (id) DO NOTHING;
+INSERT INTO :schema_name.service_providers (id, name, url, proconnect_client_id)
+VALUES (1, 'droles-test', 'https://data.gouv.fr', 'test_proconnect_client_id') ON CONFLICT (id) DO NOTHING;
 
 -- Add the users to the group with their respective roles
 -- User 1 is an admin (role_id = 1)

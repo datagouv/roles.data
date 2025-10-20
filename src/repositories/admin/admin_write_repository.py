@@ -98,28 +98,37 @@ class AdminWriteRepository:
             )
 
     async def create_service_provider(
-        self, name: str, url: str
+        self, name: str, url: str, proconnect_client_id: str | None = None
     ) -> ServiceProviderResponse:
         async with self.db_session.transaction():
             query = """
-                INSERT INTO service_providers (name, url, created_at, updated_at)
-                VALUES (:name, :url, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+                INSERT INTO service_providers (name, url, proconnect_client_id, created_at, updated_at)
+                VALUES (:name, :url, :proconnect_client_id, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
                 RETURNING *
             """
-            values = {"name": name, "url": url}  # URL is optional, can be set later
+            values = {
+                "name": name,
+                "url": url,
+                "proconnect_client_id": proconnect_client_id,
+            }
             return await self.db_session.fetch_one(query, values)
 
     async def update_service_provider(
-        self, id: int, name: str, url: str
+        self, id: int, name: str, url: str, proconnect_client_id: str | None = None
     ) -> ServiceProviderResponse:
         async with self.db_session.transaction():
             query = """
                 UPDATE service_providers
-                SET name=:name, url=:url, updated_at= CURRENT_TIMESTAMP
+                SET name=:name, url=:url, proconnect_client_id=:proconnect_client_id, updated_at= CURRENT_TIMESTAMP
                 WHERE service_providers.id = :id
                 RETURNING *
             """
-            values = {"id": id, "name": name, "url": url}
+            values = {
+                "id": id,
+                "name": name,
+                "url": url,
+                "proconnect_client_id": proconnect_client_id,
+            }
             return await self.db_session.fetch_one(query, values)
 
     async def delete_group(self, group_id: int) -> None:

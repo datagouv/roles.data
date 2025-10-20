@@ -75,21 +75,27 @@ class AdminWriteService:
         return await self.admin_write_repository.set_admin(group_id, user_id)
 
     async def create_service_provider(
-        self, name: str, url: str
+        self, name: str, url: str, proconnect_client_id: str | None = None
     ) -> ServiceProviderResponse:
         """
         Create a new service provider.
         """
-        return await self.admin_write_repository.create_service_provider(name, url)
+        return await self.admin_write_repository.create_service_provider(
+            name, url, proconnect_client_id
+        )
 
     async def update_service_provider(
-        self, service_provider_id: int, name: str, url: str
+        self,
+        service_provider_id: int,
+        name: str,
+        url: str,
+        proconnect_client_id: str | None = None,
     ) -> ServiceProviderResponse:
         """
-        Update a service provider name and url
+        Update a service provider name, url, and proconnect_client_id
         """
         return await self.admin_write_repository.update_service_provider(
-            service_provider_id, name, url
+            service_provider_id, name, url, proconnect_client_id
         )
 
     async def delete_group(self, group_id: int) -> None:

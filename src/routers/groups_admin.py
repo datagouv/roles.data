@@ -1,10 +1,14 @@
-# ------- USER ROUTER FILE -------
 from fastapi import APIRouter, Depends, Path, Query
-from pydantic import UUID4
+from pydantic import UUID4, EmailStr
 
-from src.auth.o_auth import decode_access_token
 from src.dependencies import get_groups_service
 
+from ..dependencies.auth.resource_server import (
+    get_acting_user_sub_from_proconnect_token,
+    get_claims_from_proconnect_token,
+    proconnect_resource_server,
+)
+from ..dependencies.services import get_users_service
 from ..model import (
     GroupResponse,
     GroupWithScopesResponse,
@@ -12,36 +16,43 @@ from ..model import (
     UserInGroupResponse,
 )
 from ..services.groups import GroupsService
+from ..services.users import UsersService
 
 router = APIRouter(
     prefix="/groups",
     tags=["Gestion des groupes par l'utilisateur"],
-    dependencies=[Depends(decode_access_token)],
+    dependencies=[Depends(get_claims_from_proconnect_token)],
     responses={404: {"description": "Not found"}, 400: {"description": "Bad request"}},
 )
+
+# This router uses ProConnect resource server authentication
+proconnect_resource_server(router)
 
 
 @router.get("/", response_model=list[GroupWithScopesResponse])
 async def get_my_groups(
-    group_service: GroupsService = Depends(get_groups_service),
+    user_email: EmailStr = Query(..., description="Mail de l’utilisateur"),
+    acting_user_sub: UUID4 = Depends(get_acting_user_sub_from_proconnect_token),
+    groups_service: GroupsService = Depends(get_groups_service),
+    users_service: UsersService = Depends(get_users_service),
 ):
     """
-    Liste les groupes disponibles dont fait partie l’utilisateur
+    Recherche les groupes d’un utilisateur, avec son adresse e-mail et son sub ProConnect.
     """
-    return await group_service.list_groups()
+    await users_service.get_user_by_sub(acting_user_sub)
+
+    return await groups_service.search_groups(user_email=user_email)
 
 
 @router.put("/{group_id}", response_model=GroupResponse)
 async def update_name(
     group_id: int = Path(..., description="ID du groupe"),
     group_name: str = Query(..., description="Nouveau nom"),
-    acting_user_sub: UUID4 = Query(
-        ..., description="Sub ProConnect de l’utilisateur effectuant la requête"
-    ),
+    acting_user_sub: UUID4 = Depends(get_acting_user_sub_from_proconnect_token),
     groups_service: GroupsService = Depends(get_groups_service),
 ):
     """
-    Mise à jour du nom d’un groupe.
+    Mise à jour du nom d'un groupe.
     """
     await groups_service.verify_acting_user_rights(acting_user_sub, group_id)
     return await groups_service.update_group(group_id, group_name)
@@ -52,17 +63,15 @@ async def update_name(
 async def add_user(
     user_in_group: UserInGroupCreate,
     group_id: int = Path(..., description="ID du groupe"),
-    acting_user_sub: UUID4 = Query(
-        ..., description="Sub ProConnect de l’utilisateur effectuant la requête"
-    ),
+    acting_user_sub: UUID4 = Depends(get_acting_user_sub_from_proconnect_token),
     groups_service: GroupsService = Depends(get_groups_service),
 ) -> UserInGroupResponse:
     """
-    Ajout d’un utilisateur
+    Ajout d'un utilisateur
 
-    Si l’utilisateur n’existe pas, il est automatiquement créé dans la base de données.
+    Si l'utilisateur n'existe pas, il est automatiquement créé dans la base de données.
 
-    Si le groupe ou le rôle n’existe pas, une erreur 404 sera levée.
+    Si le groupe ou le rôle n'existe pas, une erreur 404 sera levée.
     """
     await groups_service.verify_acting_user_rights(acting_user_sub, group_id)
 
@@ -74,17 +83,15 @@ async def add_user(
 @router.patch("/{group_id}/users/{user_id}", status_code=200)
 async def update_user_role(
     group_id: int = Path(..., description="ID du groupe"),
-    user_id: int = Path(..., description="ID de l’utilisateur"),
-    acting_user_sub: UUID4 = Query(
-        ..., description="Sub ProConnect de l’utilisateur effectuant la requête"
-    ),
+    user_id: int = Path(..., description="ID de l'utilisateur"),
     role_id: int = Query(..., description="ID du nouveau rôle"),
+    acting_user_sub: UUID4 = Depends(get_acting_user_sub_from_proconnect_token),
     groups_service: GroupsService = Depends(get_groups_service),
 ):
     """
-    Met à jour le rôle d’un utilisateur dans un groupe
+    Met à jour le rôle d'un utilisateur dans un groupe
 
-    Si le groupe, l’utilisateur ou le rôle n’existe pas, une erreur 404 sera levée.
+    Si le groupe, l'utilisateur ou le rôle n'existe pas, une erreur 404 sera levée.
     """
     await groups_service.verify_acting_user_rights(acting_user_sub, group_id)
     return await groups_service.update_user_in_group(group_id, user_id, role_id)
@@ -93,16 +100,14 @@ async def update_user_role(
 @router.delete("/{group_id}/users/{user_id}", status_code=204)
 async def remove_user(
     group_id: int = Path(..., description="ID du groupe"),
-    user_id: int = Path(..., description="ID de l’utilisateur"),
-    acting_user_sub: UUID4 = Query(
-        ..., description="Sub ProConnect de l’utilisateur effectuant la requête"
-    ),
+    user_id: int = Path(..., description="ID de l'utilisateur"),
+    acting_user_sub: UUID4 = Depends(get_acting_user_sub_from_proconnect_token),
     groups_service: GroupsService = Depends(get_groups_service),
 ):
     """
-    Retire un utilisateur d’un groupe.
+    Retire un utilisateur d'un groupe.
 
-    Si le groupe, ou l’utilisateur, une erreur 404 sera levée.
+    Si le groupe, ou l'utilisateur, une erreur 404 sera levée.
     """
     await groups_service.verify_acting_user_rights(acting_user_sub, group_id)
     return await groups_service.remove_user_from_group(group_id, user_id)

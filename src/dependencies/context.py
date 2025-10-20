@@ -1,14 +1,16 @@
 from dataclasses import dataclass
 from uuid import UUID
 
-from fastapi import Depends, HTTPException, Request
+from fastapi import Depends, HTTPException, Request, status
 from pydantic import UUID4
 
-from src.auth.o_auth import decode_access_token
-
 from ..config import settings
+from ..database import get_db
 from ..repositories.logs import LogsRepository
+from ..repositories.service_providers import ServiceProvidersRepository
 from ..services.logs import LogsService
+from .auth.o_auth import decode_access_token
+from .auth.resource_server import get_claims_from_proconnect_token, is_resource_server
 
 
 @dataclass
@@ -24,7 +26,7 @@ class RequestContext:
     context_type: str
 
 
-async def get_request_context(request: Request) -> RequestContext:
+async def get_request_context(request: Request, db=Depends(get_db)) -> RequestContext:
     """
     Auto-detect request context and return unified context object.
 
@@ -65,13 +67,39 @@ async def get_request_context(request: Request) -> RequestContext:
             context_type="web",
         )
 
-    # Resource server
-
-    # OAuth API context (JWT token)
+    # Both OAuth API and Resource server use a bearer (JWT token)
     authorization_header = request.headers.get("authorization")
     if authorization_header and authorization_header.startswith("Bearer "):
+        token_string = authorization_header.split(" ")[1]
+
+        # Resource server (ProConnect)
+        if is_resource_server(request):
+            # Introspect ProConnect token (pass token string directly)
+            acting_user_sub, _, client_id = await get_claims_from_proconnect_token(
+                credentials=token_string
+            )
+
+            service_provider_repository = ServiceProvidersRepository(db)
+            service_provider = (
+                await service_provider_repository.get_by_proconnect_client_id(client_id)
+            )
+
+            if not service_provider:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail=f"No service provider configured for ProConnect client_id: {client_id}",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+
+            return RequestContext(
+                service_provider_id=service_provider.id,
+                service_account_id=0,
+                acting_user_sub=acting_user_sub,
+                context_type="resource_server",
+            )
+
+        # OAuth2 Client Credentials (self-issued JWT)
         try:
-            token_string = authorization_header.split(" ")[1]
             token = decode_access_token(token_string)
 
             # Extract acting_user_sub from query parameters if present
@@ -98,7 +126,7 @@ async def get_request_context(request: Request) -> RequestContext:
 
     raise HTTPException(
         status_code=500,
-        detail="No valid OAuth token, webhook path, or web session found.",
+        detail="No valid ResourceServer token, OAuth token, webhook path, or web session found.",
     )
 
 

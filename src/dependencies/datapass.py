@@ -1,9 +1,9 @@
 from fastapi import Depends, Request
 
-from ..auth.datapass import verified_datapass_signature
 from ..config import settings
 from ..model import DataPassWebhookWrapper
 from ..services.datapass import DatapassService
+from .auth.datapass import verified_datapass_signature
 from .email import get_email_service
 from .services import get_groups_service_factory, get_users_service
 

@@ -15,8 +15,8 @@ from .documentation import api_description, api_summary, api_tags_metadata
 from .middleware.force_web_auth import ForceWebAuthenticationMiddleware
 from .routers import (
     groups,
-    groups_admin,
     health,
+    resource_server,
     roles,
     users,
 )
@@ -94,7 +94,7 @@ app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(roles.router)
 app.include_router(groups.router)
-app.include_router(groups_admin.router)
+app.include_router(resource_server.router)
 app.include_router(groups.router)
 
 # webhooks (Datapass)

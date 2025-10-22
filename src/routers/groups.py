@@ -1,10 +1,9 @@
 # ------- USER ROUTER FILE -------
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Path, Query
 from pydantic import UUID4, EmailStr, HttpUrl
 
-from src.auth.o_auth import decode_access_token
-from src.dependencies import get_groups_service
-
+from ..dependencies import get_groups_service
+from ..dependencies.auth.o_auth import decode_access_token
 from ..model import (
     GroupCreate,
     GroupResponse,
@@ -31,6 +30,17 @@ async def list_service_provider_groups(
     return await group_service.list_groups()
 
 
+@router.get("/{group_id}", response_model=GroupWithUsersAndScopesResponse)
+async def by_id(
+    group_id: int = Path(..., description="ID du groupe à récupérer"),
+    group_service: GroupsService = Depends(get_groups_service),
+):
+    """
+    Récupère un groupe par son ID. Inclut les utilisateurs, leurs rôles et les droits du groupes sur le fournisseur de service.
+    """
+    return await group_service.get_group_with_users_and_scopes(group_id)
+
+
 # TODO deprecate this route
 @router.get("/search", response_model=list[GroupWithUsersAndScopesResponse])
 async def search_service_provider_groups_by_user(
@@ -47,15 +57,6 @@ async def search_service_provider_groups_by_user(
 @router.post("/", response_model=GroupResponse, status_code=201)
 async def create(
     group: GroupCreate,
-    # sub de l'utilisateur, utilisé par les dépendances
-    acting_user_sub: UUID4 = Query(
-        None,
-        description="Sub ProConnect de l’utilisateur effectuant la demande de création de groupe. Si l’appel est executé côté serveur, signalez-le avec le paramètre `no_acting_user`",
-    ),
-    no_acting_user: bool = Query(
-        False,
-        description="Indique si l'appel est effectué côté serveur. Permet de créer un groupe sans l'intervention d’un utilisateur ProConnecté. Si mis à `True`, `acting_user_sub` n'est pas requis.",
-    ),
     groups_service: GroupsService = Depends(get_groups_service),
 ) -> GroupResponse:
     """
@@ -63,13 +64,6 @@ async def create(
 
     Si l’organisation n’existe pas encore, elle est créée automatiquement.
     """
-
-    if not no_acting_user and not acting_user_sub:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Either provide an acting_user_sub or make the call from the server side",
-        )
-
     return await groups_service.create_group(group)
 
 

@@ -1,4 +1,4 @@
-from src.tests.helpers import random_user
+from src.tests.helpers import get_user, random_user
 
 
 def test_create_user(client):
@@ -45,11 +45,7 @@ def test_get_user_by_email(client):
     client.post("/users/", json=user_data)
 
     # Get user by email
-    response = client.get("/users/search", params={"email": user_data["email"]})
-
-    # Check response
-    assert response.status_code == 200
-    user = response.json()
+    user = get_user(client, user_data["email"])
     assert user["email"] == user_data["email"]
 
     # Verify not found case

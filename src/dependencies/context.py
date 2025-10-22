@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from uuid import UUID
 
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import Depends, HTTPException, Request
 from pydantic import UUID4
 
 from ..config import settings
@@ -10,7 +10,7 @@ from ..repositories.logs import LogsRepository
 from ..repositories.service_providers import ServiceProvidersRepository
 from ..services.logs import LogsService
 from .auth.o_auth import decode_access_token
-from .auth.resource_server import get_claims_from_proconnect_token, is_resource_server
+from .auth.pro_connect_resource_server import get_claims_from_proconnect_token
 
 
 @dataclass
@@ -26,7 +26,7 @@ class RequestContext:
     context_type: str
 
 
-async def get_request_context(request: Request, db=Depends(get_db)) -> RequestContext:
+async def get_context(request: Request, db=Depends(get_db)) -> RequestContext:
     """
     Auto-detect request context and return unified context object.
 
@@ -55,10 +55,7 @@ async def get_request_context(request: Request, db=Depends(get_db)) -> RequestCo
         try:
             acting_user_sub = UUID(user_sub_str, version=4)
         except (ValueError, TypeError):
-            raise HTTPException(
-                status_code=400,
-                detail=f"Invalid UUID format for user_sub in session: {user_sub_str}",
-            )
+            raise Exception("Invalid UUID format for user_sub")
 
         return RequestContext(
             service_provider_id=0,
@@ -72,11 +69,10 @@ async def get_request_context(request: Request, db=Depends(get_db)) -> RequestCo
     if authorization_header and authorization_header.startswith("Bearer "):
         token_string = authorization_header.split(" ")[1]
 
-        # Resource server (ProConnect)
-        if is_resource_server(request):
+        if request.url.path.startswith("/resource_server/"):
             # Introspect ProConnect token (pass token string directly)
             acting_user_sub, _, client_id = await get_claims_from_proconnect_token(
-                credentials=token_string
+                token_string
             )
 
             service_provider_repository = ServiceProvidersRepository(db)
@@ -85,11 +81,7 @@ async def get_request_context(request: Request, db=Depends(get_db)) -> RequestCo
             )
 
             if not service_provider:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail=f"No service provider configured for ProConnect client_id: {client_id}",
-                    headers={"WWW-Authenticate": "Bearer"},
-                )
+                raise Exception("No service provider matching proconnect client id")
 
             return RequestContext(
                 service_provider_id=service_provider.id,
@@ -102,22 +94,11 @@ async def get_request_context(request: Request, db=Depends(get_db)) -> RequestCo
         try:
             token = decode_access_token(token_string)
 
-            # Extract acting_user_sub from query parameters if present
-            acting_user_sub = None
-            acting_user_sub_str = request.query_params.get("acting_user_sub")
-            if acting_user_sub_str:
-                try:
-                    acting_user_sub = UUID(acting_user_sub_str, version=4)
-                except (ValueError, TypeError):
-                    raise HTTPException(
-                        status_code=400,
-                        detail=f"Invalid UUID format for acting_user_sub: {acting_user_sub_str}",
-                    )
-
+            # acting_user_sub is always None for server to server interaction (OAuth)
             return RequestContext(
                 service_provider_id=token.get("service_provider_id", 0),
                 service_account_id=token.get("service_account_id", 0),
-                acting_user_sub=acting_user_sub,
+                acting_user_sub=None,
                 context_type="oauth",
             )
         except Exception:
@@ -133,13 +114,6 @@ async def get_request_context(request: Request, db=Depends(get_db)) -> RequestCo
 # ====================
 # Context dependencies
 # ====================
-
-
-async def get_context(request: Request) -> RequestContext:
-    """
-    Dependency that provides unified request context with auto-detection.
-    """
-    return await get_request_context(request)
 
 
 async def get_logs_service(

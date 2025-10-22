@@ -3,10 +3,9 @@ from pydantic import UUID4, EmailStr
 
 from src.dependencies import get_groups_service
 
-from ..dependencies.auth.resource_server import (
+from ..dependencies.auth.pro_connect_resource_server import (
     get_acting_user_sub_from_proconnect_token,
     get_claims_from_proconnect_token,
-    proconnect_resource_server,
 )
 from ..dependencies.services import get_users_service
 from ..model import (
@@ -19,14 +18,11 @@ from ..services.groups import GroupsService
 from ..services.users import UsersService
 
 router = APIRouter(
-    prefix="/groups",
+    prefix="/resource_server/groups",
     tags=["Gestion des groupes par l'utilisateur"],
     dependencies=[Depends(get_claims_from_proconnect_token)],
     responses={404: {"description": "Not found"}, 400: {"description": "Bad request"}},
 )
-
-# This router uses ProConnect resource server authentication
-proconnect_resource_server(router)
 
 
 @router.get("/", response_model=list[GroupWithScopesResponse])
@@ -39,7 +35,7 @@ async def get_my_groups(
     """
     Recherche les groupes d’un utilisateur, avec son adresse e-mail et son sub ProConnect.
     """
-    await users_service.get_user_by_sub(acting_user_sub)
+    await users_service.verify_user_sub(user_email, acting_user_sub)
 
     return await groups_service.search_groups(user_email=user_email)
 
@@ -58,7 +54,6 @@ async def update_name(
     return await groups_service.update_group(group_id, group_name)
 
 
-# Group’s users manipulation
 @router.post("/{group_id}/users", status_code=201)
 async def add_user(
     user_in_group: UserInGroupCreate,

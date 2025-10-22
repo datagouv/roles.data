@@ -40,15 +40,33 @@ def random_name():
     return f"Test Name {''.join(random.choices(string.ascii_lowercase, k=5))}"
 
 
-def create_group(client):
+def create_group(client, admin_email=None):
     """Create a group for testing."""
     new_group_data = random_group()
+
+    if admin_email:
+        new_group_data["admin"]["email"] = admin_email
+
     response = client.post("/groups/?no_acting_user=True", json=new_group_data)
     assert response.status_code == 201
     group = response.json()
     assert group["name"] == new_group_data["name"]
     new_group_data["id"] = group["id"]
     return new_group_data
+
+
+def get_user(client, user_email):
+    response = client.get("/users/search", params={"email": user_email})
+    assert response.status_code == 200
+    user = response.json()
+    return user
+
+
+def get_group(client, group_id):
+    response = client.get(f"/groups/{group_id}")
+    assert response.status_code == 200
+    group = response.json()
+    return group
 
 
 # MailHog testing helpers
@@ -109,18 +127,3 @@ def mock_session(session_data: dict):
 
     with patch("starlette.requests.Request.session", mock_session_obj):
         yield
-
-
-def verify_user(client, user_email, user_sub):
-    """Activate a user by email and sub."""
-
-    session_data = {
-        "user_email": user_email,
-        "user_sub": user_sub,
-        "is_super_admin": False,
-    }
-
-    with mock_session(session_data):
-        # Activate the user via UI success page
-        activation_success_response = client.get("/ui/activation/succes")
-        assert activation_success_response.status_code == 200

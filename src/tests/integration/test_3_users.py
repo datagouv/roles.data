@@ -5,7 +5,7 @@ def test_create_user(client):
     """Test creating a new user."""
     user_data = random_user()
 
-    response = client.post("/users/", json=user_data)
+    response = client.post("/users/", json={"email": user_data["email"]})
 
     # Check response
     assert response.status_code == 201  # Should be 201 Created
@@ -18,7 +18,7 @@ def test_get_user_by_id(client):
     """Test retrieving a user by ID."""
     # First create a user to get
     user_data = random_user()
-    create_response = client.post("/users/", json=user_data)
+    create_response = client.post("/users/", json={"email": user_data["email"]})
     user_id = create_response.json()["id"]
 
     response = client.get(f"/users/{user_id}")
@@ -42,7 +42,7 @@ def test_get_nonexistent_user(client):
 def test_get_user_by_email(client):
     """Test retrieving a user by email."""
     user_data = random_user()
-    client.post("/users/", json=user_data)
+    client.post("/users/", json={"email": user_data["email"]})
 
     # Get user by email
     user = get_user(client, user_data["email"])

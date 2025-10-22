@@ -2,7 +2,8 @@ from uuid import UUID
 
 import pytest
 from databases import Database
-from fastapi import Request
+from fastapi import Depends, Request
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.testclient import TestClient
 from pydantic import UUID4, EmailStr
 
@@ -10,12 +11,16 @@ from src.dependencies.auth.o_auth import decode_access_token
 
 from ..config import settings
 from ..database import DatabaseWithSchema, get_db
-from ..dependencies.auth.pro_connect_bearer_token import decode_proconnect_bearer_token
 from ..dependencies.auth.pro_connect_resource_server import (
     get_claims_from_proconnect_token,
 )
 from ..dependencies.context import RequestContext, get_context
 from ..main import app
+from ..repositories.users_sub import UserSubsRepository
+from ..services.user_subs import UserSubsService
+
+# Create bearer scheme for testing
+bearer_scheme = HTTPBearer()
 
 # Create a test database instance
 test_db = Database(settings.DATABASE_URL)
@@ -53,20 +58,36 @@ def override_decode_access_token():
     return {"service_provider_id": 1, "service_account_id": 1}
 
 
-def override_decode_proconnect_bearer_token():
-    return ""
-
-
-async def override_get_claims_from_proconnect_token() -> tuple[UUID4, EmailStr, str]:
+async def override_get_claims_from_proconnect_token(
+    credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
+    db=Depends(get_db),
+) -> tuple[UUID4, EmailStr, int]:
     """
     Override get_claims_from_proconnect_token for testing.
-    Returns mock ProConnect claims based on query parameters.
+
+    Parses test token format: test:<sub>:<email>:<client_id>
+    Example: test:00000000-0000-4000-8000-000000000001:user@example.com:test_client_1
+
+    Returns: (proconnect_sub, proconnect_email, service_provider_id)
+
+    Note: Bypasses ProConnect introspection, pair function, and service provider lookup
+    for test simplicity. Returns service_provider_id=1 for all test tokens.
     """
-    return (
-        UUID("00000000-0000-4000-8000-000000000000"),
-        "test@example.com",
-        "test_proconnect_client_id",
-    )
+    fake_test_token = credentials.credentials
+
+    if fake_test_token.startswith("test:"):
+        parts = fake_test_token.split(":")
+        try:
+            sub = UUID(parts[1])
+            email = parts[2]
+            await UserSubsService(UserSubsRepository(db)).pair(email, sub)
+
+            return (sub, email, 1)
+        except (ValueError, IndexError) as error:
+            print(error)
+            pass
+
+    raise Exception("Must provide a valid Bearer header")
 
 
 def override_get_context(request: Request):
@@ -108,18 +129,12 @@ def test_override_setup():
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_context] = override_get_context
     app.dependency_overrides[decode_access_token] = override_decode_access_token
-    app.dependency_overrides[decode_proconnect_bearer_token] = (
-        override_decode_proconnect_bearer_token
-    )
     app.dependency_overrides[get_claims_from_proconnect_token] = (
         override_get_claims_from_proconnect_token
     )
 
     # Also override alternative import paths if they exist
     try:
-        from dependencies.auth.pro_connect_resource_server import (
-            decode_proconnect_bearer_token as alt_decode_proconnect_bearer_token,
-        )
         from dependencies.auth.pro_connect_resource_server import (
             get_claims_from_proconnect_token as alt_get_claims_from_proconnect_token,
         )
@@ -128,9 +143,6 @@ def test_override_setup():
         )
 
         app.dependency_overrides[alt_decode_access_token] = override_decode_access_token
-        app.dependency_overrides[alt_decode_proconnect_bearer_token] = (
-            override_decode_proconnect_bearer_token
-        )
         app.dependency_overrides[alt_get_claims_from_proconnect_token] = (
             override_get_claims_from_proconnect_token
         )

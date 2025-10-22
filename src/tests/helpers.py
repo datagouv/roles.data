@@ -2,7 +2,7 @@ import random
 import string
 from contextlib import contextmanager
 from unittest.mock import Mock, patch
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import httpx
 
@@ -31,7 +31,7 @@ def random_user():
     """Generate a random user for testing."""
     return {
         "email": f"test_{uuid4()}@beta.gouv.fr",
-        "sub_pro_connect": f"sub_{uuid4()}",
+        "sub_pro_connect": uuid4(),
     }
 
 
@@ -67,6 +67,15 @@ def get_group(client, group_id):
     assert response.status_code == 200
     group = response.json()
     return group
+
+
+def resource_server_auth_headers(sub: str | UUID, email: str) -> dict:
+    """
+    Create fake Authorization header for resource server tests.
+    """
+    sub_str = str(sub)
+    token = f"test:{sub_str}:{email}"
+    return {"Authorization": f"Bearer {token}"}
 
 
 # MailHog testing helpers

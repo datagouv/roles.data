@@ -1,6 +1,7 @@
 # ------- SERVICE FILE -------
 from uuid import UUID
 
+from asyncpg import UniqueViolationError
 from fastapi import HTTPException, status
 
 from ..repositories.users_sub import UserSubsRepository
@@ -14,24 +15,27 @@ class UserSubsService:
         """
         If sub is not yet saved, save it in database
 
-        If saved (mail,sub) does not match -> raise an exception
-
-        If user not found raise a 404
+        If saved (mail,sub) does not match or user not found raise a 403
         """
         saved_sub = await self.user_subs_repository.get(user_email)
 
-        print(saved_sub, user_sub, user_email)
-
         if saved_sub == "":
-            await self.user_subs_repository.set(user_email, user_sub)
+            try:
+                await self.user_subs_repository.set(user_email, user_sub)
+                return
+            except UniqueViolationError:
+                raise HTTPException(
+                    status.HTTP_403_FORBIDDEN,
+                    detail="Sub already paired to a different email",
+                )
 
         if not saved_sub:
             raise HTTPException(
-                status.HTTP_404_NOT_FOUND, detail=f"User {user_email} not found"
+                status.HTTP_403_FORBIDDEN, detail=f"User {user_email} not found"
             )
 
-        if saved_sub != user_sub:
+        if str(saved_sub) != str(user_sub):
             raise HTTPException(
-                status.HTTP_423_LOCKED,
+                status.HTTP_403_FORBIDDEN,
                 detail=f"User {user_email} already saved with a different sub",
             )

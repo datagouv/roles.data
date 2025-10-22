@@ -2,7 +2,6 @@ import logging
 from collections.abc import Callable
 
 from fastapi import HTTPException, status
-from pydantic import EmailStr
 
 from ..model import DataPassWebhookWrapper, GroupCreate, GroupResponse, UserCreate
 from .email.main import EmailService
@@ -69,10 +68,6 @@ class DatapassService:
                 payload.demande_url,
             )
 
-            await self.send_emails(
-                email=payload.applicant_email, group_name=group_linked_to_contract.name
-            )
-
             return group_linked_to_contract
 
         except HTTPException:
@@ -126,17 +121,3 @@ class DatapassService:
         )
 
         return await self.datapass_groups_service.create_group(group_data)
-
-    async def send_emails(self, email: EmailStr, group_name: str):
-        user = await self.user_service.get_user_by_email(
-            email, only_verified_user=False
-        )
-
-        # Send an email for user that are not yet verified
-        if not user.is_verified:
-            self.email_service.confirmation_email(
-                recipients=[user.email],
-                group_name=group_name,
-                service_provider_name=None,
-                service_provider_url=None,
-            )

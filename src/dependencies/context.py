@@ -5,9 +5,7 @@ from fastapi import Depends, HTTPException, Request
 from pydantic import UUID4
 
 from ..config import settings
-from ..database import get_db
 from ..repositories.logs import LogsRepository
-from ..repositories.service_providers import ServiceProvidersRepository
 from ..services.logs import LogsService
 from .auth.o_auth import decode_access_token
 from .auth.pro_connect_resource_server import get_claims_from_proconnect_token
@@ -26,7 +24,7 @@ class RequestContext:
     context_type: str
 
 
-async def get_context(request: Request, db=Depends(get_db)) -> RequestContext:
+async def get_context(request: Request) -> RequestContext:
     """
     Auto-detect request context and return unified context object.
 
@@ -71,20 +69,14 @@ async def get_context(request: Request, db=Depends(get_db)) -> RequestContext:
 
         if request.url.path.startswith("/resource_server/"):
             # Introspect ProConnect token (pass token string directly)
-            acting_user_sub, _, client_id = await get_claims_from_proconnect_token(
-                token_string
-            )
-
-            service_provider_repository = ServiceProvidersRepository(db)
-            service_provider = (
-                await service_provider_repository.get_by_proconnect_client_id(client_id)
-            )
-
-            if not service_provider:
-                raise Exception("No service provider matching proconnect client id")
+            (
+                acting_user_sub,
+                _,
+                service_provider_id,
+            ) = await get_claims_from_proconnect_token(token_string)
 
             return RequestContext(
-                service_provider_id=service_provider.id,
+                service_provider_id=service_provider_id,
                 service_account_id=0,
                 acting_user_sub=acting_user_sub,
                 context_type="resource_server",

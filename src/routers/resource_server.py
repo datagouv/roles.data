@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Path, Query
-from pydantic import UUID4, EmailStr
+from pydantic import UUID4
 
 from src.dependencies import get_groups_service
 
@@ -7,7 +7,6 @@ from ..dependencies.auth.pro_connect_resource_server import (
     get_acting_user_sub_from_proconnect_token,
     get_claims_from_proconnect_token,
 )
-from ..dependencies.services import get_users_service
 from ..model import (
     GroupResponse,
     GroupWithScopesResponse,
@@ -15,7 +14,6 @@ from ..model import (
     UserInGroupResponse,
 )
 from ..services.groups import GroupsService
-from ..services.users import UsersService
 
 router = APIRouter(
     prefix="/resource_server/groups",
@@ -27,17 +25,13 @@ router = APIRouter(
 
 @router.get("/", response_model=list[GroupWithScopesResponse])
 async def get_my_groups(
-    user_email: EmailStr = Query(..., description="Mail de l’utilisateur"),
     acting_user_sub: UUID4 = Depends(get_acting_user_sub_from_proconnect_token),
     groups_service: GroupsService = Depends(get_groups_service),
-    users_service: UsersService = Depends(get_users_service),
 ):
     """
     Recherche les groupes d’un utilisateur, avec son adresse e-mail et son sub ProConnect.
     """
-    await users_service.verify_user_sub(user_email, acting_user_sub)
-
-    return await groups_service.search_groups(user_email=user_email)
+    return await groups_service.search_groups(user_sub=acting_user_sub)
 
 
 @router.put("/{group_id}", response_model=GroupResponse)
@@ -50,7 +44,7 @@ async def update_name(
     """
     Mise à jour du nom d'un groupe.
     """
-    await groups_service.verify_acting_user_rights(acting_user_sub, group_id)
+    await groups_service.is_admin(acting_user_sub, group_id)
     return await groups_service.update_group(group_id, group_name)
 
 
@@ -68,8 +62,7 @@ async def add_user(
 
     Si le groupe ou le rôle n'existe pas, une erreur 404 sera levée.
     """
-    await groups_service.verify_acting_user_rights(acting_user_sub, group_id)
-
+    await groups_service.is_admin(acting_user_sub, group_id)
     return await groups_service.add_user_to_group(
         group_id, user_email=user_in_group.email, role_id=user_in_group.role_id
     )
@@ -88,7 +81,7 @@ async def update_user_role(
 
     Si le groupe, l'utilisateur ou le rôle n'existe pas, une erreur 404 sera levée.
     """
-    await groups_service.verify_acting_user_rights(acting_user_sub, group_id)
+    await groups_service.is_admin(acting_user_sub, group_id)
     return await groups_service.update_user_in_group(group_id, user_id, role_id)
 
 
@@ -104,5 +97,5 @@ async def remove_user(
 
     Si le groupe, ou l'utilisateur, une erreur 404 sera levée.
     """
-    await groups_service.verify_acting_user_rights(acting_user_sub, group_id)
+    await groups_service.is_admin(acting_user_sub, group_id)
     return await groups_service.remove_user_from_group(group_id, user_id)

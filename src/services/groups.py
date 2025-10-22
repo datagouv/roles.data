@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import HTTPException, status
 from pydantic import UUID4, EmailStr, HttpUrl
 
@@ -58,9 +60,7 @@ class GroupsService:
                 status_code=status.HTTP_400_BAD_REQUEST, detail="Siret is required."
             )
 
-    async def verify_acting_user_rights(
-        self, acting_user_sub: UUID4, group_id: int
-    ) -> None:
+    async def is_admin(self, acting_user_sub: UUID4, group_id: int) -> None:
         """
         Verify if the user is an admin of the group.
         """
@@ -73,7 +73,7 @@ class GroupsService:
         if acting_user.id not in [u.id for u in group_users if u.is_admin]:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"User with sub {acting_user_sub} is not admin of the group.",
+                detail="User is not admin of the group.",
             )
 
     async def get_group_by_id(self, group_id: int) -> GroupResponse:
@@ -128,7 +128,7 @@ class GroupsService:
         )
 
     async def search_groups(
-        self, user_email: EmailStr
+        self, user_sub: UUID
     ) -> list[GroupWithUsersAndScopesResponse]:
         """
         Search for groups by user email.
@@ -136,9 +136,7 @@ class GroupsService:
         This method will return all groups that the user is a member of, regardless of their role.
         """
 
-        user = await self.users_service.get_user_by_email(
-            user_email, only_verified_user=True
-        )
+        user = await self.users_service.get_user_by_sub(user_sub)
         groups = await self.groups_repository.search_by_user(
             user.id, self.service_provider_id
         )
@@ -195,9 +193,7 @@ class GroupsService:
                 UserCreate(email=user_email)
             )
         elif user_id is not None:
-            user = await self.users_service.get_user_by_id(
-                user_id, only_verified_user=False
-            )
+            user = await self.users_service.get_user_by_id(user_id)
         else:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -222,21 +218,12 @@ class GroupsService:
         )
 
         if self.should_send_emails:
-            # Send email in background task to avoid blocking the response
-            if not user.is_verified:
-                self.email_service.confirmation_email(
-                    recipients=[user.email],
-                    group_name=group.name,
-                    service_provider_name=service_provider.name,
-                    service_provider_url=service_provider.url,
-                )
-            else:
-                self.email_service.nouveau_groupe_email(
-                    recipients=[user.email],
-                    group_name=group.name,
-                    service_provider_name=service_provider.name,
-                    service_provider_url=service_provider.url,
-                )
+            self.email_service.nouveau_groupe_email(
+                recipients=[user.email],
+                group_name=group.name,
+                service_provider_name=service_provider.name,
+                service_provider_url=service_provider.url,
+            )
 
         role = await self.roles_service.get_roles_by_id(role.id)
         return UserInGroupResponse(
@@ -247,9 +234,7 @@ class GroupsService:
         )
 
     async def remove_user_from_group(self, group_id: int, user_id: int):
-        user = await self.users_service.get_user_by_id(
-            user_id, only_verified_user=False
-        )
+        user = await self.users_service.get_user_by_id(user_id)
         group = await self.get_group_with_users_and_scopes(group_id)
 
         if self.is_user_admin(group, user_id):
@@ -277,9 +262,7 @@ class GroupsService:
     async def update_user_in_group(self, group_id: int, user_id: int, role_id: int):
         # check if the user, is in the group
         role = await self.roles_service.get_roles_by_id(role_id)
-        user = await self.users_service.get_user_by_id(
-            user_id, only_verified_user=False
-        )
+        user = await self.users_service.get_user_by_id(user_id)
         group = await self.get_group_with_users_and_scopes(group_id)
 
         if not self.is_user_in_group(group, user_id):

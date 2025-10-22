@@ -2,13 +2,17 @@
 from fastapi import Depends, HTTPException, status
 from pydantic import UUID4, EmailStr
 
+from ...database import get_db
+from ...repositories.service_providers import ServiceProvidersRepository
+from ...repositories.users_sub import UserSubsRepository
+from ...services.user_subs import UserSubsService
 from .pro_connect import pro_connect_provider
 from .pro_connect_bearer_token import decode_proconnect_bearer_token
 
 
 async def get_claims_from_proconnect_token(
-    proconnect_access_token=Depends(decode_proconnect_bearer_token),
-) -> tuple[UUID4, EmailStr, str]:
+    proconnect_access_token=Depends(decode_proconnect_bearer_token), db=Depends(get_db)
+) -> tuple[UUID4, EmailStr, int]:
     """
     ProConnect Resource Server authentication - supports both direct call and dependency injection.
 
@@ -35,7 +39,18 @@ async def get_claims_from_proconnect_token(
     proconnect_email: EmailStr = introspection_data.get("email")  # type: ignore
     client_id: str = introspection_data.get("client_id")  # type: ignore
 
-    return (proconnect_sub, proconnect_email, client_id)
+    # check or save email-sub pair
+    await UserSubsService(UserSubsRepository(db)).pair(proconnect_email, proconnect_sub)
+
+    service_providers_repository = ServiceProvidersRepository(db)
+    service_provider = await service_providers_repository.get_by_proconnect_client_id(
+        client_id
+    )
+
+    if not service_provider:
+        raise Exception("No service provider matching proconnect client id")
+
+    return (proconnect_sub, proconnect_email, service_provider.id)
 
 
 async def get_acting_user_sub_from_proconnect_token(

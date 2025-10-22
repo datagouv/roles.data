@@ -1,6 +1,6 @@
 # ------- USER ROUTER FILE -------
 from fastapi import APIRouter, Depends, Path, Query
-from pydantic import UUID4, EmailStr, HttpUrl
+from pydantic import HttpUrl
 
 from ..dependencies import get_groups_service
 from ..dependencies.auth.o_auth import decode_access_token
@@ -39,19 +39,6 @@ async def by_id(
     Récupère un groupe par son ID. Inclut les utilisateurs, leurs rôles et les droits du groupes sur le fournisseur de service.
     """
     return await group_service.get_group_with_users_and_scopes(group_id)
-
-
-# TODO deprecate this route
-@router.get("/search", response_model=list[GroupWithUsersAndScopesResponse])
-async def search_service_provider_groups_by_user(
-    user_email: EmailStr = Query(..., description="Mail de l’utilisateur"),
-    user_sub: UUID4 = Query(None, description="Legacy (facultatif)"),
-    group_service: GroupsService = Depends(get_groups_service),
-):
-    """
-    Recherche les groupes d’un utilisateur, avec son adresse e-mail et son sub ProConnect.
-    """
-    return await group_service.search_groups(user_email=user_email)
 
 
 @router.post("/", response_model=GroupResponse, status_code=201)

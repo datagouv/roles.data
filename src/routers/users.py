@@ -39,7 +39,7 @@ async def by_email(
     """
     Retourne un utilisateur identifié par son adresse e-mail.
     """
-    return await users_service.get_user_by_email(email=email, only_verified_user=False)
+    return await users_service.get_user_by_email(email=email)
 
 
 @router.get("/{user_id}", status_code=200)
@@ -49,4 +49,4 @@ async def by_id(
     """
     Retourne un utilisateur identifié par son ID.
     """
-    return await users_service.get_user_by_id(user_id, only_verified_user=False)
+    return await users_service.get_user_by_id(user_id)

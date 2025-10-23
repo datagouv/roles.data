@@ -8,7 +8,6 @@ and that users can only access and modify their own groups.
 from src.tests.helpers import (
     create_group,
     get_group,
-    get_user,
     random_user,
     resource_server_auth_headers,
 )
@@ -24,7 +23,7 @@ def test_list_groups_for_user(client):
 
     # Call resource server endpoint with this user's credentials
     headers = resource_server_auth_headers(user["sub_pro_connect"], user["email"])
-    response = client.get("/resource_server/groups/", headers=headers)
+    response = client.get("/resource-server/groups/", headers=headers)
 
     assert response.status_code == 200
     groups = response.json()
@@ -47,7 +46,7 @@ def test_list_groups_for_different_users(client):
 
     # User1 should only see their group
     headers1 = resource_server_auth_headers(user1["sub_pro_connect"], user1["email"])
-    response1 = client.get("/resource_server/groups/", headers=headers1)
+    response1 = client.get("/resource-server/groups/", headers=headers1)
     assert response1.status_code == 200
     groups1 = response1.json()
     group1_ids = [g["id"] for g in groups1]
@@ -56,7 +55,7 @@ def test_list_groups_for_different_users(client):
 
     # User2 should only see their group
     headers2 = resource_server_auth_headers(user2["sub_pro_connect"], user2["email"])
-    response2 = client.get("/resource_server/groups/", headers=headers2)
+    response2 = client.get("/resource-server/groups/", headers=headers2)
     assert response2.status_code == 200
     groups2 = response2.json()
     group2_ids = [g["id"] for g in groups2]
@@ -76,7 +75,7 @@ def test_update_group_name_as_admin(client):
     new_name = "Updated Group Name"
     headers = resource_server_auth_headers(admin["sub_pro_connect"], admin["email"])
     response = client.put(
-        f"/resource_server/groups/{group_id}",
+        f"/resource-server/groups/{group_id}",
         params={"group_name": new_name},
         headers=headers,
     )
@@ -105,7 +104,7 @@ def test_update_group_name_unauthorized(client):
         non_admin["sub_pro_connect"], non_admin["email"]
     )
     response = client.put(
-        f"/resource_server/groups/{group_id}",
+        f"/resource-server/groups/{group_id}",
         params={"group_name": new_name},
         headers=headers,
     )
@@ -126,7 +125,7 @@ def test_add_user_to_group_as_admin(client):
     # Add new user to group
     headers = resource_server_auth_headers(admin["sub_pro_connect"], admin["email"])
     response = client.post(
-        f"/resource_server/groups/{group_id}/users",
+        f"/resource-server/groups/{group_id}/users",
         json={
             "email": new_member["email"],
             "role_id": 2,
@@ -158,7 +157,7 @@ def test_add_user_to_group_unauthorized(client):
         non_admin["sub_pro_connect"], non_admin["email"]
     )
     response = client.post(
-        f"/resource_server/groups/{group_id}/users",
+        f"/resource-server/groups/{group_id}/users",
         json={"email": new_member["email"], "role_id": 2},
         headers=headers,
     )
@@ -179,19 +178,19 @@ def test_update_user_role_as_admin(client):
     # Add member to group
     headers = resource_server_auth_headers(admin["sub_pro_connect"], admin["email"])
     response = client.post(
-        f"/resource_server/groups/{group_id}/users",
+        f"/resource-server/groups/{group_id}/users",
         json={"email": member["email"], "role_id": 2},  # role_id=2 is member
         headers=headers,
     )
     assert response.status_code == 201
 
-    # Get the member's user_id
-    member = get_user(client, member["email"])
-    member_id = member["id"]
+    # Get the member's user_id from the response
+    member_data = response.json()
+    member_id = member_data["id"]
 
     # Update member's role to admin (role_id=1)
     response = client.patch(
-        f"/resource_server/groups/{group_id}/users/{member_id}",
+        f"/resource-server/groups/{group_id}/users/{member_id}",
         params={"role_id": 1},
         headers=headers,
     )
@@ -220,13 +219,14 @@ def test_update_user_role_unauthorized(client):
         admin["sub_pro_connect"], admin["email"]
     )
     response = client.post(
-        f"/resource_server/groups/{group_id}/users",
+        f"/resource-server/groups/{group_id}/users",
         json={"email": member["email"], "role_id": 2},
         headers=admin_headers,
     )
     assert response.status_code == 201
 
-    member_data = get_user(client, member["email"])
+    # Get the member's user_id from the response
+    member_data = response.json()
     member_id = member_data["id"]
 
     # Try to update role as non-admin
@@ -234,7 +234,7 @@ def test_update_user_role_unauthorized(client):
         non_admin["sub_pro_connect"], non_admin["email"]
     )
     response = client.patch(
-        f"/resource_server/groups/{group_id}/users/{member_id}",
+        f"/resource-server/groups/{group_id}/users/{member_id}",
         params={"role_id": 1},
         headers=non_admin_headers,
     )
@@ -254,19 +254,19 @@ def test_remove_user_from_group_as_admin(client):
     # Add member
     headers = resource_server_auth_headers(admin["sub_pro_connect"], admin["email"])
     response = client.post(
-        f"/resource_server/groups/{group_id}/users",
+        f"/resource-server/groups/{group_id}/users",
         json={"email": member["email"], "role_id": 2},
         headers=headers,
     )
     assert response.status_code == 201
 
-    # Get member's user_id
-    member_data = get_user(client, member["email"])
+    # Get member's user_id from the response
+    member_data = response.json()
     member_id = member_data["id"]
 
     # Remove member from group
     response = client.delete(
-        f"/resource_server/groups/{group_id}/users/{member_id}",
+        f"/resource-server/groups/{group_id}/users/{member_id}",
         headers=headers,
     )
 
@@ -291,13 +291,14 @@ def test_remove_user_from_group_unauthorized(client):
         admin["sub_pro_connect"], admin["email"]
     )
     response = client.post(
-        f"/resource_server/groups/{group_id}/users",
+        f"/resource-server/groups/{group_id}/users",
         json={"email": member["email"], "role_id": 2},
         headers=admin_headers,
     )
     assert response.status_code == 201
 
-    member_data = get_user(client, member["email"])
+    # Get member's user_id from the response
+    member_data = response.json()
     member_id = member_data["id"]
 
     # Try to remove user as non-admin
@@ -305,7 +306,7 @@ def test_remove_user_from_group_unauthorized(client):
         non_admin["sub_pro_connect"], non_admin["email"]
     )
     response = client.delete(
-        f"/resource_server/groups/{group_id}/users/{member_id}",
+        f"/resource-server/groups/{group_id}/users/{member_id}",
         headers=non_admin_headers,
     )
 
@@ -315,7 +316,7 @@ def test_remove_user_from_group_unauthorized(client):
 def test_resource_server_without_bearer_token(client):
     """Test that resource server endpoints require authentication."""
     # Try to access resource server endpoint without bearer token
-    response = client.get("/resource_server/groups/")
+    response = client.get("/resource-server/groups/")
 
     # Should fail with 403 Forbidden (missing bearer token)
     assert response.status_code == 403

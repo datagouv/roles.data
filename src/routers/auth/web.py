@@ -60,6 +60,7 @@ async def callback(request: Request):
             )
 
         request.session["id_token"] = token["id_token"]
+        request.session["access_token"] = token["access_token"]
         request.session["is_super_admin"] = True
         request.session["user_email"] = userinfo["email"]
         request.session["user_sub"] = userinfo["sub"]

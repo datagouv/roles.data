@@ -1,4 +1,4 @@
-from src.tests.helpers import get_user, random_user
+from src.tests.helpers import random_user
 
 
 def test_create_user(client):
@@ -36,18 +36,4 @@ def test_get_nonexistent_user(client):
     response = client.get("/users/999999")
 
     # Should return 404 Not Found
-    assert response.status_code == 404
-
-
-def test_get_user_by_email(client):
-    """Test retrieving a user by email."""
-    user_data = random_user()
-    client.post("/users/", json={"email": user_data["email"]})
-
-    # Get user by email
-    user = get_user(client, user_data["email"])
-    assert user["email"] == user_data["email"]
-
-    # Verify not found case
-    response = client.get("/users/search", params={"email": "notfound@example.com"})
     assert response.status_code == 404

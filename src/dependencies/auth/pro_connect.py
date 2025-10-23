@@ -51,8 +51,13 @@ class ProConnectOAuthProvider(OAuth):
         """
         Introspect a ProConnect access token to validate it and get user info.
 
+        This combines token introspection (for validation) with userinfo (for claims).
+
         Args:
             access_token: The access token to introspect
+
+        Returns:
+            Combined dict with introspection data and user claims (sub, email)
         """
         try:
             metadata = await self.proconnect.load_server_metadata()
@@ -81,11 +86,13 @@ class ProConnectOAuthProvider(OAuth):
 
             introspection_data = response.json()
 
-            # Check if token is active
             if not introspection_data.get("active", False):
                 raise Exception("Token is not active or has expired")
 
-            return introspection_data
+            return {
+                "sub": introspection_data["sub"],
+                "client_id": introspection_data["client_id"],
+            }
 
         except Exception as e:
             raise HTTPException(

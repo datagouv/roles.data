@@ -1,6 +1,5 @@
 # ------- USER ROUTER FILE -------
 from fastapi import APIRouter, Depends
-from pydantic import EmailStr
 
 from ..dependencies import get_users_service
 from ..dependencies.auth.o_auth import decode_access_token
@@ -29,17 +28,6 @@ async def create(
     Cela permet de créér un utilisateur et de l'ajouter à un groupe sans connaitre son sub.
     """
     return await users_service.create_user_if_doesnt_exist(user)
-
-
-@router.get("/search", response_model=UserResponse)
-async def by_email(
-    email: EmailStr,
-    users_service: UsersService = Depends(get_users_service),
-) -> UserResponse:
-    """
-    Retourne un utilisateur identifié par son adresse e-mail.
-    """
-    return await users_service.get_user_by_email(email=email)
 
 
 @router.get("/{user_id}", status_code=200)

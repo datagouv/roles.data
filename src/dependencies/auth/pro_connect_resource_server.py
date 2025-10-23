@@ -1,4 +1,7 @@
 # Security scheme for Bearer token extraction
+from uuid import UUID
+
+from databases import Database
 from fastapi import Depends, HTTPException, status
 from pydantic import UUID4, EmailStr
 
@@ -11,7 +14,8 @@ from .pro_connect_bearer_token import decode_proconnect_bearer_token
 
 
 async def get_claims_from_proconnect_token(
-    proconnect_access_token=Depends(decode_proconnect_bearer_token), db=Depends(get_db)
+    proconnect_access_token=Depends(decode_proconnect_bearer_token),
+    db: Database = Depends(get_db),
 ) -> tuple[UUID4, EmailStr, int]:
     """
     ProConnect Resource Server authentication - supports both direct call and dependency injection.
@@ -27,7 +31,7 @@ async def get_claims_from_proconnect_token(
         proconnect_access_token
     )
 
-    for claim in ["sub", "email", "client_id"]:
+    for claim in ["sub", "client_id"]:
         if not introspection_data.get(claim):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -35,13 +39,20 @@ async def get_claims_from_proconnect_token(
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-    proconnect_sub: UUID4 = introspection_data.get("sub")  # type: ignore
-    proconnect_email: EmailStr = introspection_data.get("email")  # type: ignore
+    proconnect_sub: UUID = introspection_data.get("sub")  # type: ignore
     client_id: str = introspection_data.get("client_id")  # type: ignore
 
-    # check or save email-sub pair
-    await UserSubsService(UserSubsRepository(db)).pair(proconnect_email, proconnect_sub)
+    # Verify sub and email pairing
+    user_sub_service = UserSubsService(UserSubsRepository(db))
+    proconnect_email = await user_sub_service.get_email(proconnect_sub)
 
+    if not proconnect_email:
+        # sub does not exist in DB, we fetch the user email and save them both in DB
+        user_info_data = await pro_connect_provider.userinfo(proconnect_access_token)
+        proconnect_email = user_info_data.get("email")
+        await user_sub_service.pair(proconnect_email, proconnect_sub)
+
+    # Verify service provider pairing
     service_providers_repository = ServiceProvidersRepository(db)
     service_provider = await service_providers_repository.get_by_proconnect_client_id(
         client_id

@@ -55,13 +55,6 @@ def create_group(client, admin_email=None):
     return new_group_data
 
 
-def get_user(client, user_email):
-    response = client.get("/users/search", params={"email": user_email})
-    assert response.status_code == 200
-    user = response.json()
-    return user
-
-
 def get_group(client, group_id):
     response = client.get(f"/groups/{group_id}")
     assert response.status_code == 200

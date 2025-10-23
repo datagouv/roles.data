@@ -10,19 +10,6 @@ class UsersService:
     def __init__(self, user_repository: UsersRepository):
         self.user_repository = user_repository
 
-    async def get_user_by_email(self, email: str) -> UserResponse:
-        """
-        Retrieve user by email
-        """
-        users = await self.user_repository.get_by_emails([email])
-        if len(users) == 0:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"User with email {email} not found",
-            )
-
-        return users[0]
-
     async def get_user_by_id(self, user_id: int) -> UserResponse:
         """
         Retrieve user by ID
@@ -65,13 +52,6 @@ class UsersService:
         if group_id not in usersByGroupId:
             return []
         return usersByGroupId[group_id]
-
-    async def check_user_exists(self, email: str) -> bool:
-        existing_user = await self.user_repository.get_by_emails([email])
-
-        if len(existing_user) == 1:
-            return True
-        return False
 
     async def create_user_if_doesnt_exist(self, user_data: UserCreate) -> UserResponse:
         """

@@ -1,10 +1,12 @@
 from dataclasses import dataclass
 from uuid import UUID
 
+from databases import Database
 from fastapi import Depends, HTTPException, Request
 from pydantic import UUID4
 
 from ..config import settings
+from ..database import get_db
 from ..repositories.logs import LogsRepository
 from ..services.logs import LogsService
 from .auth.o_auth import decode_access_token
@@ -24,7 +26,9 @@ class RequestContext:
     context_type: str
 
 
-async def get_context(request: Request) -> RequestContext:
+async def get_context(
+    request: Request, db: Database = Depends(get_db)
+) -> RequestContext:
     """
     Auto-detect request context and return unified context object.
 
@@ -67,13 +71,13 @@ async def get_context(request: Request) -> RequestContext:
     if authorization_header and authorization_header.startswith("Bearer "):
         token_string = authorization_header.split(" ")[1]
 
-        if request.url.path.startswith("/resource_server/"):
+        if request.url.path.startswith("/resource-server/"):
             # Introspect ProConnect token (pass token string directly)
             (
                 acting_user_sub,
                 _,
                 service_provider_id,
-            ) = await get_claims_from_proconnect_token(token_string)
+            ) = await get_claims_from_proconnect_token(token_string, db)
 
             return RequestContext(
                 service_provider_id=service_provider_id,

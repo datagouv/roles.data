@@ -60,7 +60,7 @@ def override_decode_access_token():
 
 async def override_get_claims_from_proconnect_token(
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
-    db=Depends(get_db),
+    db: DatabaseWithSchema = Depends(get_db),
 ) -> tuple[UUID4, EmailStr, int]:
     """
     Override get_claims_from_proconnect_token for testing.
@@ -79,8 +79,12 @@ async def override_get_claims_from_proconnect_token(
         parts = fake_test_token.split(":")
         try:
             sub = UUID(parts[1])
-            email = parts[2]
-            await UserSubsService(UserSubsRepository(db)).pair(email, sub)
+            user_sub_service = UserSubsService(UserSubsRepository(db))
+            email = await user_sub_service.get_email(sub)
+
+            if not email:
+                email = parts[2]
+                await user_sub_service.pair(email, sub)
 
             return (sub, email, 1)
         except (ValueError, IndexError) as error:
@@ -92,7 +96,7 @@ async def override_get_claims_from_proconnect_token(
 
 def override_get_context(request: Request):
     """Override decode_access_token to return fake data without JWT validation"""
-    if request.url.path.startswith("/resource_server/"):
+    if request.url.path.startswith("/resource-server/"):
         return RequestContext(
             service_provider_id=1,
             service_account_id=0,

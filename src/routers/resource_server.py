@@ -16,7 +16,7 @@ from ..model import (
 from ..services.groups import GroupsService
 
 router = APIRouter(
-    prefix="/resource_server/groups",
+    prefix="/resource-server/groups",
     tags=["Gestion des groupes par l'utilisateur"],
     dependencies=[Depends(get_claims_from_proconnect_token)],
     responses={404: {"description": "Not found"}, 400: {"description": "Bad request"}},

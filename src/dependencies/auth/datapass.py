@@ -5,8 +5,7 @@ import json
 from fastapi import HTTPException, status
 
 from src.config import settings
-
-from ...model import DataPassWebhookPayload
+from src.model import DataPassWebhookPayload
 
 
 async def verified_datapass_signature(

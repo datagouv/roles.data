@@ -2,15 +2,15 @@
 from fastapi import APIRouter, Depends, Path, Query
 from pydantic import HttpUrl
 
-from ..dependencies import get_groups_service
-from ..dependencies.auth.o_auth import decode_access_token
-from ..model import (
+from src.dependencies import get_groups_service
+from src.dependencies.auth.o_auth import decode_access_token
+from src.model import (
     GroupCreate,
     GroupResponse,
     GroupWithScopesResponse,
     GroupWithUsersAndScopesResponse,
 )
-from ..services.groups import GroupsService
+from src.services.groups import GroupsService
 
 router = APIRouter(
     prefix="/groups",

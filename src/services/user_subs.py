@@ -5,7 +5,7 @@ from asyncpg import UniqueViolationError
 from fastapi import HTTPException, status
 from pydantic import EmailStr
 
-from ..repositories.users_sub import UserSubsRepository
+from src.repositories.users_sub import UserSubsRepository
 
 
 class UserSubsService:

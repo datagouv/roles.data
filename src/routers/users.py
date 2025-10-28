@@ -1,10 +1,10 @@
 # ------- USER ROUTER FILE -------
 from fastapi import APIRouter, Depends
 
-from ..dependencies import get_users_service
-from ..dependencies.auth.o_auth import decode_access_token
-from ..model import UserCreate, UserResponse
-from ..services.users import UsersService
+from src.dependencies import get_users_service
+from src.dependencies.auth.o_auth import decode_access_token
+from src.model import UserCreate, UserResponse
+from src.services.users import UsersService
 
 router = APIRouter(
     prefix="/users",

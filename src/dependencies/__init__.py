@@ -2,7 +2,7 @@
 # This allows existing imports like `from src.dependencies import get_logs_service` to continue working
 
 # Context dependencies
-from .context import (
+from src.dependencies.context import (
     get_context,
     get_logs_service,
     get_service_account_id,
@@ -10,13 +10,13 @@ from .context import (
 )
 
 # Webhook dependencies
-from .datapass import get_verified_datapass_payload
+from src.dependencies.datapass import get_verified_datapass_payload
 
 # Email dependencies
-from .email import get_email_service
+from src.dependencies.email import get_email_service
 
 # Service dependencies
-from .services import (
+from src.dependencies.services import (
     get_groups_service,
     get_groups_service_factory,
     get_organisations_service,
@@ -28,7 +28,7 @@ from .services import (
 )
 
 # Admin dependencies
-from .web import (
+from src.dependencies.web import (
     get_admin_read_service,
     get_admin_write_service,
     get_proconnected_user_email,

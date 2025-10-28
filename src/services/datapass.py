@@ -3,10 +3,10 @@ from collections.abc import Callable
 
 from fastapi import HTTPException, status
 
-from ..model import DataPassWebhookWrapper, GroupCreate, GroupResponse, UserCreate
-from .email.main import EmailService
-from .groups import GroupsService
-from .users import UsersService
+from src.model import DataPassWebhookWrapper, GroupCreate, GroupResponse, UserCreate
+from src.services.email.main import EmailService
+from src.services.groups import GroupsService
+from src.services.users import UsersService
 
 logger = logging.getLogger(__name__)
 

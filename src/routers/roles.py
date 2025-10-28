@@ -1,9 +1,9 @@
 # ------- USER ROUTER FILE -------
 from fastapi import APIRouter, Depends
 
-from ..dependencies import get_roles_service
-from ..model import RoleResponse
-from ..services.roles import RolesService
+from src.dependencies import get_roles_service
+from src.model import RoleResponse
+from src.services.roles import RolesService
 
 router = APIRouter(
     prefix="/roles",

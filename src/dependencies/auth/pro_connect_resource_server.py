@@ -5,12 +5,14 @@ from databases import Database
 from fastapi import Depends, HTTPException, status
 from pydantic import UUID4, EmailStr
 
-from ...database import get_db
-from ...repositories.service_providers import ServiceProvidersRepository
-from ...repositories.users_sub import UserSubsRepository
-from ...services.user_subs import UserSubsService
-from .pro_connect import pro_connect_provider
-from .pro_connect_bearer_token import decode_proconnect_bearer_token
+from src.database import get_db
+from src.dependencies.auth.pro_connect import pro_connect_provider
+from src.dependencies.auth.pro_connect_bearer_token import (
+    decode_proconnect_bearer_token,
+)
+from src.repositories.service_providers import ServiceProvidersRepository
+from src.repositories.users_sub import UserSubsRepository
+from src.services.user_subs import UserSubsService
 
 
 async def get_claims_from_proconnect_token(

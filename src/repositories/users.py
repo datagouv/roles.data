@@ -1,15 +1,14 @@
 # ------- REPOSITORY FILE -------
 from pydantic import UUID4
 
-from src.services.logs import LogsService
-
-from ..model import (
+from src.model import (
     LOG_ACTIONS,
     LOG_RESOURCE_TYPES,
     UserCreate,
     UserResponse,
     UserWithRoleResponse,
 )
+from src.services.logs import LogsService
 
 
 class UsersRepository:

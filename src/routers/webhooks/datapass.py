@@ -4,14 +4,14 @@ import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from ...dependencies import (
+from src.dependencies import (
     get_verified_datapass_payload,
 )
-from ...dependencies.datapass import get_datapass_service
-from ...model import (
+from src.dependencies.datapass import get_datapass_service
+from src.model import (
     DataPassWebhookWrapper,
 )
-from ...services.datapass import DatapassService
+from src.services.datapass import DatapassService
 
 logger = logging.getLogger(__name__)
 

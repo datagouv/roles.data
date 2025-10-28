@@ -3,8 +3,8 @@ import logging
 
 from pydantic import HttpUrl
 
-from ...config import settings
-from ...repositories.email import EmailRepository
+from src.config import settings
+from src.repositories.email import EmailRepository
 
 logger = logging.getLogger(__name__)
 

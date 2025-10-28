@@ -4,10 +4,9 @@ from fastapi import APIRouter, Depends, Form, Header, HTTPException, Request, st
 
 from src.config import settings
 from src.dependencies import get_service_acounts_service
+from src.dependencies.auth.o_auth import create_access_token
 from src.model import Token
 from src.services.service_accounts import ServiceAccountsService
-
-from ...dependencies.auth.o_auth import create_access_token
 
 router = APIRouter(
     prefix="/token",

@@ -1,7 +1,7 @@
 from pydantic import SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from .constants import DATAPASS_SERVICE_PROVIDER_ID
+from src.constants import DATAPASS_SERVICE_PROVIDER_ID
 
 
 class AppSettings(BaseSettings):

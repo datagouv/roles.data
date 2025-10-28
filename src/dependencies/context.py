@@ -5,12 +5,14 @@ from databases import Database
 from fastapi import Depends, HTTPException, Request
 from pydantic import UUID4
 
-from ..config import settings
-from ..database import get_db
-from ..repositories.logs import LogsRepository
-from ..services.logs import LogsService
-from .auth.o_auth import decode_access_token
-from .auth.pro_connect_resource_server import get_claims_from_proconnect_token
+from src.config import settings
+from src.database import get_db
+from src.dependencies.auth.o_auth import decode_access_token
+from src.dependencies.auth.pro_connect_resource_server import (
+    get_claims_from_proconnect_token,
+)
+from src.repositories.logs import LogsRepository
+from src.services.logs import LogsService
 
 
 @dataclass

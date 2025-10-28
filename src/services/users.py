@@ -2,8 +2,8 @@
 from fastapi import HTTPException, status
 from pydantic import UUID4
 
-from ..model import UserCreate, UserResponse, UserWithRoleResponse
-from ..repositories.users import UsersRepository
+from src.model import UserCreate, UserResponse, UserWithRoleResponse
+from src.repositories.users import UsersRepository
 
 
 class UsersService:

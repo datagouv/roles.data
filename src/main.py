@@ -9,20 +9,20 @@ from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 from starlette.middleware.sessions import SessionMiddleware
 
-from .config import settings
-from .database import shutdown, startup
-from .documentation import api_description, api_summary, api_tags_metadata
-from .middleware.force_web_auth import ForceWebAuthenticationMiddleware
-from .routers import (
+from src.config import settings
+from src.database import shutdown, startup
+from src.documentation import api_description, api_summary, api_tags_metadata
+from src.middleware.force_web_auth import ForceWebAuthenticationMiddleware
+from src.routers import (
     groups,
     health,
     resource_server,
     roles,
     users,
 )
-from .routers.auth import auth
-from .routers.web.admin import view as admin_home
-from .routers.webhooks import datapass
+from src.routers.auth import auth
+from src.routers.web.admin import view as admin_home
+from src.routers.webhooks import datapass
 
 app = FastAPI(redirect_slashes=True, redoc_url="/")
 

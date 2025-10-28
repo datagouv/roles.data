@@ -7,17 +7,16 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.testclient import TestClient
 from pydantic import UUID4, EmailStr
 
+from src.config import settings
+from src.database import DatabaseWithSchema, get_db
 from src.dependencies.auth.o_auth import decode_access_token
-
-from ..config import settings
-from ..database import DatabaseWithSchema, get_db
-from ..dependencies.auth.pro_connect_resource_server import (
+from src.dependencies.auth.pro_connect_resource_server import (
     get_claims_from_proconnect_token,
 )
-from ..dependencies.context import RequestContext, get_context
-from ..main import app
-from ..repositories.users_sub import UserSubsRepository
-from ..services.user_subs import UserSubsService
+from src.dependencies.context import RequestContext, get_context
+from src.main import app
+from src.repositories.users_sub import UserSubsRepository
+from src.services.user_subs import UserSubsService
 
 # Create bearer scheme for testing
 bearer_scheme = HTTPBearer()

@@ -2,18 +2,17 @@ from fastapi import APIRouter, Depends, Path, Query
 from pydantic import UUID4
 
 from src.dependencies import get_groups_service
-
-from ..dependencies.auth.pro_connect_resource_server import (
+from src.dependencies.auth.pro_connect_resource_server import (
     get_acting_user_sub_from_proconnect_token,
     get_claims_from_proconnect_token,
 )
-from ..model import (
+from src.model import (
     GroupResponse,
     GroupWithScopesResponse,
     UserInGroupCreate,
     UserInGroupResponse,
 )
-from ..services.groups import GroupsService
+from src.services.groups import GroupsService
 
 router = APIRouter(
     prefix="/resource-server/groups",

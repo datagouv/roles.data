@@ -3,8 +3,8 @@ from uuid import uuid4
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
-from .....dependencies import get_admin_write_service
-from .....services.admin.write_service import AdminWriteService
+from src.dependencies import get_admin_write_service
+from src.services.admin.write_service import AdminWriteService
 
 router = APIRouter(
     prefix="/service-providers/{service_provider_id}/accounts",

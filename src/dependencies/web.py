@@ -2,11 +2,11 @@ from databases import Database
 from fastapi import Depends, HTTPException, Request
 from pydantic import EmailStr
 
-from ..database import get_db
-from ..repositories.admin.admin_read_repository import AdminReadRepository
-from ..repositories.admin.admin_write_repository import AdminWriteRepository
-from ..services.admin.read_service import AdminReadService
-from ..services.admin.write_service import AdminWriteService
+from src.database import get_db
+from src.repositories.admin.admin_read_repository import AdminReadRepository
+from src.repositories.admin.admin_write_repository import AdminWriteRepository
+from src.services.admin.read_service import AdminReadService
+from src.services.admin.write_service import AdminWriteService
 
 # =====================
 # Web dependencies

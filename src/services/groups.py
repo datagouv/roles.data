@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import HTTPException, status
 from pydantic import UUID4, EmailStr, HttpUrl
 
-from ..model import (
+from src.model import (
     GroupCreate,
     GroupResponse,
     GroupWithScopesResponse,
@@ -12,10 +12,10 @@ from ..model import (
     UserCreate,
     UserInGroupResponse,
 )
-from ..repositories import groups, users_in_group
-from . import organisations, roles, scopes, users
-from .email.main import EmailService
-from .service_providers import ServiceProvidersService
+from src.repositories import groups, users_in_group
+from src.services import organisations, roles, scopes, users
+from src.services.email.main import EmailService
+from src.services.service_providers import ServiceProvidersService
 
 
 class GroupsService:

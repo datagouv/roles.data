@@ -35,7 +35,6 @@ INSERT INTO :schema_name.group_user_relations (group_id, user_id, role_id)
 VALUES
   (1, 1, 1),
   (1, 2, 2),
-  (1, 3, 2),
   (1, 4, 2),
   (1, 5, 2) ON CONFLICT (group_id, user_id) DO NOTHING;
 

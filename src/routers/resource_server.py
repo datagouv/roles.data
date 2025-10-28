@@ -8,7 +8,7 @@ from src.dependencies.auth.pro_connect_resource_server import (
 )
 from src.model import (
     GroupResponse,
-    GroupWithScopesResponse,
+    GroupWithUsersAndScopesResponse,
     UserInGroupCreate,
     UserInGroupResponse,
 )
@@ -22,7 +22,7 @@ router = APIRouter(
 )
 
 
-@router.get("/", response_model=list[GroupWithScopesResponse])
+@router.get("/", response_model=list[GroupWithUsersAndScopesResponse])
 async def get_my_groups(
     acting_user_sub: UUID4 = Depends(get_acting_user_sub_from_proconnect_token),
     groups_service: GroupsService = Depends(get_groups_service),

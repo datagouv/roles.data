@@ -18,7 +18,6 @@ INSERT INTO :schema_name.users (id, email)
 VALUES
   (1, 'user@yopmail.com'),
   (2, 'xavier.jouppe@beta.gouv.fr'),
-  (3, 'robin.monnier@beta.gouv.fr'),
   (4, 'hajar.ait-el-kadi@beta.gouv.fr'),
   (5, 'amandine.audras@beta.gouv.fr'),
   (6, 'user-not-in-group@beta.gouv.fr')

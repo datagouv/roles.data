@@ -45,7 +45,7 @@ class ProConnectOAuthProvider(OAuth):
         if header.get("alg") != "RS256":
             raise ValueError(f"Expected RS256, got {header.get('alg')}")
 
-        return jwt.decode(userinfo_jwt, options={"algorithms": "RS256"})
+        return jwt.decode(userinfo_jwt, options={"verify_signature": False})
 
     async def introspect_token(self, access_token: str) -> dict:
         """

@@ -45,7 +45,7 @@ class ProConnectOAuthProvider(OAuth):
         if header.get("alg") != "RS256":
             raise ValueError(f"Expected RS256, got {header.get('alg')}")
 
-        return jwt.decode(userinfo_jwt, options={"verify_signature": False})
+        return jwt.decode(userinfo_jwt, options={"algorithms": "RS256"})
 
     async def introspect_token(self, access_token: str) -> dict:
         """
@@ -88,6 +88,10 @@ class ProConnectOAuthProvider(OAuth):
 
             if not introspection_data.get("active", False):
                 raise Exception("Token is not active or has expired")
+
+            for claim in ["sub", "client_id"]:
+                if not introspection_data.get(claim):
+                    raise Exception(f"Token does not contain '{claim}' claim")
 
             return {
                 "sub": introspection_data["sub"],

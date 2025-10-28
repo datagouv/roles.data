@@ -8,7 +8,7 @@ class UserSubsRepository:
     """
     This repository manipulates the user sub (set/get)
 
-    It is separated from UsersRepository, that do not manipulate the sub directly for security purpose
+    It is separated from UsersRepository, that does not handle the sub directly for security purpose
     """
 
     def __init__(self, db_session):

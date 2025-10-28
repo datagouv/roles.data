@@ -1,15 +1,14 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 
-from templates.template_manager import admin_template_manager
-
-from .pages import (
+from src.routers.web.admin.pages import (
     groups_view,
     logs_view,
     service_account_view,
     service_providers_view,
     users_view,
 )
+from templates.template_manager import admin_template_manager
 
 router = APIRouter(
     prefix="/admin",

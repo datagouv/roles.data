@@ -1,9 +1,8 @@
 from fastapi import HTTPException, status
 
 from src.model import ServiceAccountResponse
+from src.repositories.service_account import ServiceAccountRepository
 from src.utils.security import verify_password
-
-from ..repositories.service_account import ServiceAccountRepository
 
 
 class ServiceAccountsService:

@@ -1,26 +1,26 @@
 from databases import Database
 from fastapi import Depends
 
-from ..database import get_db
-from ..repositories.groups import GroupsRepository
-from ..repositories.organisations import OrganisationsRepository
-from ..repositories.roles import RolesRepository
-from ..repositories.scopes import ScopesRepository
-from ..repositories.service_account import ServiceAccountRepository
-from ..repositories.service_providers import ServiceProvidersRepository
-from ..repositories.users import UsersRepository
-from ..repositories.users_in_group import UsersInGroupRepository
-from ..services.groups import GroupsService
-from ..services.logs import LogsService
-from ..services.organisations import OrganisationsService
-from ..services.roles import RolesService
-from ..services.scopes import ScopesService
-from ..services.service_accounts import ServiceAccountsService
-from ..services.service_providers import ServiceProvidersService
-from ..services.ui.email import EmailService
-from ..services.users import UsersService
-from .context import get_logs_service, get_service_provider_id
-from .email import get_email_service
+from src.database import get_db
+from src.dependencies.context import get_logs_service, get_service_provider_id
+from src.dependencies.email import get_email_service
+from src.repositories.groups import GroupsRepository
+from src.repositories.organisations import OrganisationsRepository
+from src.repositories.roles import RolesRepository
+from src.repositories.scopes import ScopesRepository
+from src.repositories.service_account import ServiceAccountRepository
+from src.repositories.service_providers import ServiceProvidersRepository
+from src.repositories.users import UsersRepository
+from src.repositories.users_in_group import UsersInGroupRepository
+from src.services.email.main import EmailService
+from src.services.groups import GroupsService
+from src.services.logs import LogsService
+from src.services.organisations import OrganisationsService
+from src.services.roles import RolesService
+from src.services.scopes import ScopesService
+from src.services.service_accounts import ServiceAccountsService
+from src.services.service_providers import ServiceProvidersService
+from src.services.users import UsersService
 
 # ============
 # API services

@@ -2,10 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import HttpUrl, ValidationError
 
+from src.dependencies import get_admin_read_service, get_admin_write_service
+from src.services.admin.write_service import AdminWriteService
 from templates.template_manager import Breadcrumb, admin_template_manager
-
-from .....dependencies import get_admin_read_service, get_admin_write_service
-from .....services.admin.write_service import AdminWriteService
 
 router = APIRouter(
     prefix="/service-providers",
@@ -53,6 +52,12 @@ async def create_service_provider_form(request: Request):
                     "placeholder": "ex: https://data.gouv.fr",
                     "name": "url",
                 },
+                {
+                    "label": "ProConnect Client ID",
+                    "label_hint": "ID du client ProConnect (facultatif)",
+                    "placeholder": "ex: client_12345",
+                    "name": "proconnect_client_id",
+                },
             ],
         },
         breadcrumbs=[
@@ -74,6 +79,7 @@ async def create_service_provider(
     """
     form = await request.form()
     name = str(form.get("name", ""))
+    proconnect_client_id = str(form.get("proconnect_client_id", "")) or None
 
     url = ""
 
@@ -86,7 +92,7 @@ async def create_service_provider(
         )
 
     service_provider = await admin_service.create_service_provider(
-        name=name, url=str(url)
+        name=name, url=str(url), proconnect_client_id=proconnect_client_id
     )
 
     return RedirectResponse(
@@ -153,6 +159,13 @@ async def update_service_provider_form(
                     "name": "url",
                     "defaultValue": service_provider.url,
                 },
+                {
+                    "label": "ProConnect Client ID",
+                    "label_hint": "ID du client ProConnect (facultatif)",
+                    "placeholder": "ex: client_12345",
+                    "name": "proconnect_client_id",
+                    "defaultValue": service_provider.proconnect_client_id or "",
+                },
             ],
         },
         breadcrumbs=[
@@ -175,6 +188,7 @@ async def update_service_provider(
     """
     form = await request.form()
     name = str(form.get("name", ""))
+    proconnect_client_id = str(form.get("proconnect_client_id", "")) or None
 
     url = ""
 
@@ -187,7 +201,10 @@ async def update_service_provider(
         )
 
     await admin_service.update_service_provider(
-        service_provider_id=service_provider_id, name=name, url=str(url)
+        service_provider_id=service_provider_id,
+        name=name,
+        url=str(url),
+        proconnect_client_id=proconnect_client_id,
     )
 
     return RedirectResponse(url="/admin/service-providers", status_code=303)

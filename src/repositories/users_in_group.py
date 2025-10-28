@@ -1,10 +1,9 @@
 # ------- REPOSITORY FILE -------
-from src.services.logs import LogsService
-
-from ..model import (
+from src.model import (
     LOG_ACTIONS,
     LOG_RESOURCE_TYPES,
 )
+from src.services.logs import LogsService
 
 
 class UsersInGroupRepository:

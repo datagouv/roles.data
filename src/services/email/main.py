@@ -3,8 +3,8 @@ import logging
 
 from pydantic import HttpUrl
 
-from ...config import settings
-from ...repositories.email import EmailRepository
+from src.config import settings
+from src.repositories.email import EmailRepository
 
 logger = logging.getLogger(__name__)
 
@@ -35,34 +35,6 @@ class EmailService:
         template = "nouveau-groupe.html"
 
         context = {
-            "group_name": group_name,
-            "service_provider_name": service_provider_name,
-            "service_provider_url": service_provider_url,
-        }
-
-        asyncio.create_task(
-            self.email_repository.send(
-                recipients=recipients,
-                subject=subject,
-                template=template,
-                context=context,
-                retry=3,
-                retry_delay=30,
-            )
-        )
-
-    def confirmation_email(
-        self,
-        recipients: list[str],
-        group_name: str,
-        service_provider_name: str | None,
-        service_provider_url: HttpUrl | None,
-    ):
-        subject = f"Activation de votre compte {service_provider_name if service_provider_name is not None else ""}"
-        template = "confirmation.html"
-
-        context = {
-            "confirmation_link": self.confirmation_link,
             "group_name": group_name,
             "service_provider_name": service_provider_name,
             "service_provider_url": service_provider_url,

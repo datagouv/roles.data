@@ -1,5 +1,5 @@
 # ------- REPOSITORY FILE -------
-from ..model import RoleResponse
+from src.model import RoleResponse
 
 
 class RolesRepository:

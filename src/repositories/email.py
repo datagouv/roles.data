@@ -4,7 +4,7 @@ from pathlib import Path
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
 from jinja2 import Environment, FileSystemLoader
 
-from ..config import settings
+from src.config import settings
 
 
 class EmailRepository:

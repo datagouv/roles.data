@@ -4,15 +4,14 @@ from typing import Any
 
 import httpx
 
-from src.services.logs import LogsService
-
-from ..model import (
+from src.model import (
     LOG_ACTIONS,
     LOG_RESOURCE_TYPES,
     OrganisationCreate,
     OrganisationResponse,
     Siret,
 )
+from src.services.logs import LogsService
 
 
 class OrganisationsRepository:

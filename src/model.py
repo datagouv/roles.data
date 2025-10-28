@@ -72,7 +72,6 @@ class UserCreate(UserBase):
 
 class UserResponse(UserBase):
     id: int
-    is_verified: bool
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -348,11 +347,9 @@ class DataPassWebhookWrapper:
 
     @property
     def demande_url(self):
-        env = self.env.lower()
+        env = self.env.lower() if self.env else ""
         env_slug = "" if env in ("prod", "production") else f"{env}."
-        return HttpUrl(
-            f"https://{env_slug}datapass.api.gouv.fr/demandes/{self.id}"
-        )
+        return HttpUrl(f"https://{env_slug}datapass.api.gouv.fr/demandes/{self.id}")
 
     @property
     def demande_description(self):

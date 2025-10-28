@@ -2,7 +2,7 @@ from typing import AsyncGenerator
 
 import databases
 
-from .config import settings
+from src.config import settings
 
 
 # Optimized database wrapper that sets schema once per transaction

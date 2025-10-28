@@ -1,10 +1,9 @@
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
 
+from src.dependencies import get_admin_read_service
+from src.services.admin.read_service import AdminReadService
 from templates.template_manager import Breadcrumb, admin_template_manager
-
-from .....dependencies import get_admin_read_service
-from .....services.admin.read_service import AdminReadService
 
 router = APIRouter(
     prefix="/users",

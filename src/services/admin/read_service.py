@@ -3,14 +3,14 @@ from os import error
 
 from fastapi import HTTPException, status
 
-from ...repositories.admin.admin_read_repository import AdminReadRepository
+from src.repositories.admin.admin_read_repository import AdminReadRepository
 
 
 class AdminReadService:
     """
     Service class for admin operations, providing methods to interact with the AdminRepository.
 
-    Should only be called from the UI!
+    Should only be called from the admin interface!
 
     Note on architecture :
     - admin operation are few and very sensitive

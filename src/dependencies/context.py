@@ -1,14 +1,18 @@
 from dataclasses import dataclass
 from uuid import UUID
 
+from databases import Database
 from fastapi import Depends, HTTPException, Request
 from pydantic import UUID4
 
-from src.auth.o_auth import decode_access_token
-
-from ..config import settings
-from ..repositories.logs import LogsRepository
-from ..services.logs import LogsService
+from src.config import settings
+from src.database import get_db
+from src.dependencies.auth.o_auth import decode_access_token
+from src.dependencies.auth.pro_connect_resource_server import (
+    get_claims_from_proconnect_token,
+)
+from src.repositories.logs import LogsRepository
+from src.services.logs import LogsService
 
 
 @dataclass
@@ -24,7 +28,9 @@ class RequestContext:
     context_type: str
 
 
-async def get_request_context(request: Request) -> RequestContext:
+async def get_context(
+    request: Request, db: Database = Depends(get_db)
+) -> RequestContext:
     """
     Auto-detect request context and return unified context object.
 
@@ -45,7 +51,7 @@ async def get_request_context(request: Request) -> RequestContext:
             context_type="webhook",
         )
 
-    # Web session (either admin or user)
+    # Web session - user_sub has been set in user session during login
     if hasattr(request, "session") and request.session.get("user_sub"):
         user_sub_str = request.session["user_sub"]
 
@@ -53,10 +59,7 @@ async def get_request_context(request: Request) -> RequestContext:
         try:
             acting_user_sub = UUID(user_sub_str, version=4)
         except (ValueError, TypeError):
-            raise HTTPException(
-                status_code=400,
-                detail=f"Invalid UUID format for user_sub in session: {user_sub_str}",
-            )
+            raise Exception("Invalid UUID format for user_sub")
 
         return RequestContext(
             service_provider_id=0,
@@ -65,29 +68,35 @@ async def get_request_context(request: Request) -> RequestContext:
             context_type="web",
         )
 
-    # OAuth API context (JWT token)
+    # Both OAuth API and Resource server use a bearer (JWT token)
     authorization_header = request.headers.get("authorization")
     if authorization_header and authorization_header.startswith("Bearer "):
+        token_string = authorization_header.split(" ")[1]
+
+        if request.url.path.startswith("/resource-server/"):
+            # Introspect ProConnect token (pass token string directly)
+            (
+                acting_user_sub,
+                _,
+                service_provider_id,
+            ) = await get_claims_from_proconnect_token(token_string, db)
+
+            return RequestContext(
+                service_provider_id=service_provider_id,
+                service_account_id=0,
+                acting_user_sub=acting_user_sub,
+                context_type="resource_server",
+            )
+
+        # OAuth2 Client Credentials (self-issued JWT)
         try:
-            token_string = authorization_header.split(" ")[1]
             token = decode_access_token(token_string)
 
-            # Extract acting_user_sub from query parameters if present
-            acting_user_sub = None
-            acting_user_sub_str = request.query_params.get("acting_user_sub")
-            if acting_user_sub_str:
-                try:
-                    acting_user_sub = UUID(acting_user_sub_str, version=4)
-                except (ValueError, TypeError):
-                    raise HTTPException(
-                        status_code=400,
-                        detail=f"Invalid UUID format for acting_user_sub: {acting_user_sub_str}",
-                    )
-
+            # acting_user_sub is always None for server to server interaction (OAuth)
             return RequestContext(
                 service_provider_id=token.get("service_provider_id", 0),
                 service_account_id=token.get("service_account_id", 0),
-                acting_user_sub=acting_user_sub,
+                acting_user_sub=None,
                 context_type="oauth",
             )
         except Exception:
@@ -96,20 +105,13 @@ async def get_request_context(request: Request) -> RequestContext:
 
     raise HTTPException(
         status_code=500,
-        detail="No valid OAuth token, webhook path, or web session found.",
+        detail="No valid ResourceServer token, OAuth token, webhook path, or web session found.",
     )
 
 
 # ====================
 # Context dependencies
 # ====================
-
-
-async def get_context(request: Request) -> RequestContext:
-    """
-    Dependency that provides unified request context with auto-detection.
-    """
-    return await get_request_context(request)
 
 
 async def get_logs_service(

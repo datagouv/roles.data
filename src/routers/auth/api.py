@@ -2,9 +2,9 @@ import base64
 
 from fastapi import APIRouter, Depends, Form, Header, HTTPException, Request, status
 
-from src.auth.o_auth import create_access_token
 from src.config import settings
 from src.dependencies import get_service_acounts_service
+from src.dependencies.auth.o_auth import create_access_token
 from src.model import Token
 from src.services.service_accounts import ServiceAccountsService
 

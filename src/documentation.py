@@ -41,23 +41,19 @@ api_tags_metadata = [
         "description": "Ping de l’application",
     },
     {
-        "name": "Utilisateurs",
-        "description": "Création et récupération des utilisateurs (les utilisateurs sont indépendants du fournisseur de service)",
-    },
-    {
         "name": "Rôles",
-        "description": "Les rôles disponibles pour les utilisateurs (les utilisateurs sont indépendants du fournisseur de service)",
+        "description": "Permet à n'importe qui de lister les rôles disponibles pour les utilisateurs",
     },
     {
-        "name": "Groupes",
-        "description": "Création, et récupération des groupes",
+        "name": "Utilisateurs",
+        "description": "Permet à un fournisseur de service de créer un utilisateur ou de récuperer ses informations (les utilisateurs sont indépendants du fournisseur de service)",
     },
     {
-        "name": "Administration d’un groupe",
-        "description": "Doit nécessairement être exécuté par un administrateur du groupe",
+        "name": "Gestion des groupes par le fournisseur de service",
+        "description": "Permet à un fournisseur de service de gérer ses groupes, via OAuth ou intégration logicielle (datapass)",
     },
     {
-        "name": "Gestion des droits d'un groupe",
-        "description": "Permet de gérer les droits d'accès d'un groupe sur un fournisseur de service",
+        "name": "Gestion des groupes par l'utilisateur",
+        "description": "Permet à un utilisateur pro-connecté d’interagir avec ses groupes (resource server)",
     },
 ]

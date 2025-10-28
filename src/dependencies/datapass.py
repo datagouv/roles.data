@@ -1,11 +1,11 @@
 from fastapi import Depends, Request
 
-from ..auth.datapass import verified_datapass_signature
-from ..config import settings
-from ..model import DataPassWebhookWrapper
-from ..services.datapass import DatapassService
-from .email import get_email_service
-from .services import get_groups_service_factory, get_users_service
+from src.config import settings
+from src.dependencies.auth.datapass import verified_datapass_signature
+from src.dependencies.email import get_email_service
+from src.dependencies.services import get_groups_service_factory, get_users_service
+from src.model import DataPassWebhookWrapper
+from src.services.datapass import DatapassService
 
 # =============================
 # Datapass webhook dependencies

@@ -1,7 +1,7 @@
 import asyncio
 
-from ..model import OrganisationCreate
-from ..repositories.organisations import OrganisationsRepository
+from src.model import OrganisationCreate
+from src.repositories.organisations import OrganisationsRepository
 
 
 class OrganisationsService:

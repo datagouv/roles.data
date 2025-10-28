@@ -14,18 +14,19 @@ INSERT INTO :schema_name.groups (id, name, orga_id)
 VALUES (1, 'stack technique', 1) ON CONFLICT (id) DO NOTHING;
 
 -- Create users with different emails
-INSERT INTO :schema_name.users (id, email, is_verified)
+INSERT INTO :schema_name.users (id, email)
 VALUES
-  (1, 'user@yopmail.com', false),
-  (2, 'xavier.jouppe@beta.gouv.fr', false),
-  (3, 'robin.monnier@beta.gouv.fr', false),
-  (4, 'hajar.ait-el-kadi@beta.gouv.fr', false),
-  (6, 'user-not-in-group@beta.gouv.fr', false),
-  (5, 'amandine.audras@beta.gouv.fr', false) ON CONFLICT (id) DO NOTHING;
+  (1, 'user@yopmail.com'),
+  (2, 'xavier.jouppe@beta.gouv.fr'),
+  (4, 'hajar.ait-el-kadi@beta.gouv.fr'),
+  (5, 'amandine.audras@beta.gouv.fr'),
+  (6, 'user-not-in-group@beta.gouv.fr')
+  ON CONFLICT (id) DO NOTHING;
+
 
 -- Create the service provider "test"
-INSERT INTO :schema_name.service_providers (id, name, url)
-VALUES (1, 'droles-test', 'https://data.gouv.fr') ON CONFLICT (id) DO NOTHING;
+INSERT INTO :schema_name.service_providers (id, name, url, proconnect_client_id)
+VALUES (1, 'droles-test', 'https://data.gouv.fr', 'test_proconnect_client_id') ON CONFLICT (id) DO NOTHING;
 
 -- Add the users to the group with their respective roles
 -- User 1 is an admin (role_id = 1)
@@ -34,7 +35,6 @@ INSERT INTO :schema_name.group_user_relations (group_id, user_id, role_id)
 VALUES
   (1, 1, 1),
   (1, 2, 2),
-  (1, 3, 2),
   (1, 4, 2),
   (1, 5, 2) ON CONFLICT (group_id, user_id) DO NOTHING;
 

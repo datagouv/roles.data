@@ -1,41 +1,16 @@
 # ------- SERVICE FILE -------
-from xmlrpc.client import boolean
-
 from fastapi import HTTPException, status
 from pydantic import UUID4
 
-from ..model import UserCreate, UserResponse, UserWithRoleResponse
-from ..repositories.users import UsersRepository
+from src.model import UserCreate, UserResponse, UserWithRoleResponse
+from src.repositories.users import UsersRepository
 
 
 class UsersService:
     def __init__(self, user_repository: UsersRepository):
         self.user_repository = user_repository
 
-    async def get_user_by_email(
-        self, email: str, only_verified_user: boolean = True
-    ) -> UserResponse:
-        """
-        Retrieve user by email
-        """
-        users = await self.user_repository.get_by_emails([email])
-        if len(users) == 0:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"User with email {email} not found",
-            )
-
-        user = users[0]
-        if only_verified_user and not user.is_verified:
-            raise HTTPException(
-                status_code=status.HTTP_423_LOCKED,
-                detail="User is not yet verified.",
-            )
-        return user
-
-    async def get_user_by_id(
-        self, user_id: int, only_verified_user: boolean = True
-    ) -> UserResponse:
+    async def get_user_by_id(self, user_id: int) -> UserResponse:
         """
         Retrieve user by ID
         """
@@ -45,11 +20,7 @@ class UsersService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"User with ID {user_id} not found",
             )
-        if only_verified_user and not user.is_verified:
-            raise HTTPException(
-                status_code=status.HTTP_423_LOCKED,
-                detail="User is not yet verified.",
-            )
+
         return user
 
     async def get_user_by_sub(self, user_sub: UUID4) -> UserResponse:
@@ -60,7 +31,7 @@ class UsersService:
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"User with sub {user_sub} is not found, either it does not exist or it is not verified",
+                detail="User not found, either it does not exist or it is not verified",
             )
         return user
 
@@ -81,13 +52,6 @@ class UsersService:
         if group_id not in usersByGroupId:
             return []
         return usersByGroupId[group_id]
-
-    async def check_user_exists(self, email: str) -> bool:
-        existing_user = await self.user_repository.get_by_emails([email])
-
-        if len(existing_user) == 1:
-            return True
-        return False
 
     async def create_user_if_doesnt_exist(self, user_data: UserCreate) -> UserResponse:
         """

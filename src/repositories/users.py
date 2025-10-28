@@ -14,7 +14,7 @@ from ..model import (
 
 class UsersRepository:
     """
-    This repository manipulates the user
+    This repository handles the user
 
     It DOES not access the sub
     """

@@ -29,23 +29,30 @@ class ProConnectOAuthProvider(OAuth):
         Custom userinfo method that handles JWT response
         NB : there is an authlib method for this, but it expects a json when PC returns a JWT (text).
         """
-        metadata = await self.proconnect.load_server_metadata()
-        userinfo_endpoint = metadata["userinfo_endpoint"]
+        try:
+            metadata = await self.proconnect.load_server_metadata()
+            userinfo_endpoint = metadata["userinfo_endpoint"]
 
-        resp = await self.proconnect.get(
-            userinfo_endpoint, token=token, headers={"Accept": "application/jwt"}
-        )
+            resp = await self.proconnect.get(
+                userinfo_endpoint, token=token, headers={"Accept": "application/jwt"}
+            )
 
-        if resp.status_code != 200:
-            raise Exception(f"Failed to get userinfo: {resp.status_code}")
+            if resp.status_code != 200:
+                raise Exception(f"Failed to get userinfo: {resp.status_code}")
 
-        userinfo_jwt = resp.text
-        header = jwt.get_unverified_header(userinfo_jwt)
+            userinfo_jwt = resp.text
+            header = jwt.get_unverified_header(userinfo_jwt)
 
-        if header.get("alg") != "RS256":
-            raise ValueError(f"Expected RS256, got {header.get('alg')}")
+            if header.get("alg") != "RS256":
+                raise ValueError(f"Expected RS256, got {header.get('alg')}")
 
-        return jwt.decode(userinfo_jwt, options={"verify_signature": False})
+            return jwt.decode(userinfo_jwt, options={"verify_signature": False})
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=f"UserInfo error: {str(e)}",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
 
     async def introspect_token(self, access_token: str) -> dict:
         """

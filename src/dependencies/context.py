@@ -52,7 +52,11 @@ async def get_context(
         )
 
     # Web session - user_sub has been set in user session during login
-    if hasattr(request, "session") and request.session.get("user_sub"):
+    if (
+        request.url.path.startswith("/admin")
+        and hasattr(request, "session")
+        and request.session.get("user_sub")
+    ):
         user_sub_str = request.session["user_sub"]
 
         acting_user_sub = None

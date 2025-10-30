@@ -65,12 +65,10 @@ if settings.SENTRY_DSN != "":
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     if isinstance(exc, HTTPException):
-        # Log specific HTTPExceptions to Sentry: 5xx errors and 403 Forbidden
-        if exc.status_code >= 500 or exc.status_code == 403:
-            sentry_sdk.capture_exception(exc)
-            app_logger.error(
-                f"HTTPException {exc.status_code}: {exc.detail}", exc_info=True
-            )
+        sentry_sdk.capture_exception(exc)
+        app_logger.error(
+            f"HTTPException {exc.status_code}: {exc.detail}", exc_info=True
+        )
         raise exc
     else:
         # Non-HTTPException errors

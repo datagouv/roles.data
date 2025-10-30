@@ -28,7 +28,7 @@ class UserSubsService:
 
         if sub is None:
             raise HTTPException(
-                status.HTTP_403_FORBIDDEN, detail=f"User {user_email} not found"
+                status.HTTP_404_NOT_FOUND, detail=f"User {user_email} not found"
             )
 
         if str(sub) != "":

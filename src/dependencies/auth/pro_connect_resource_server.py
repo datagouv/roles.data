@@ -50,7 +50,9 @@ async def get_claims_from_proconnect_token(
 
     if not proconnect_email:
         # sub does not exist in DB, we fetch the user email and save them both in DB
-        user_info_data = await pro_connect_provider.userinfo(proconnect_access_token)
+        user_info_data = await pro_connect_provider.userinfo(
+            {"access_token": proconnect_access_token}
+        )
         proconnect_email = user_info_data.get("email")
         await user_sub_service.pair(proconnect_email, proconnect_sub)
 

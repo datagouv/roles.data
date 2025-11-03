@@ -374,6 +374,7 @@ graph TB
 
 **Patterns d'authentification :**
 - **OAuth2 Client Credentials** : Service accounts avec JWT pour les API externes
+- **ResourceServer Credentials** : Utilisation de roles par API en mode resource server
 - **ProConnect OAuth2** : Authentication utilisateur via OpenID Connect pour l'interface web
 - **Datapass HMAC** : Vérification de signature pour les webhooks entrants
 
@@ -386,3 +387,84 @@ graph TB
 - **Routers** : Gestion des requêtes HTTP, validation des entrées, sérialisation des réponses
 - **Services** : Logique métier, orchestration entre repositories, gestion des emails
 - **Repositories** : Requêtes SQL directes, transactions, logging des actions via LogsService
+
+### Resource server
+
+Le resource server permet a un Fournisseur de service de récupérer des resources, par API avec le seul jeton ProConnect (passé en header authorization).
+
+Le resource server (dans notre cas, l'API de roles sur ses endpoints /resource-server) demande a ProConnect une vérification de l'access_token que pro connect a créé pour l'utilisateur, dans le cadre du fournisseur de service (eg. annuaire des entreprises). 
+
+```mermaid
+flowchart TD
+    U((Utilisateur))
+    U-->Login
+    Login -->|Redirect| LPC
+    LPC-->|Redirect| Callback
+
+        
+    subgraph Fournisseur de Service
+        Login[Page de connexion]
+        Callback[Création de la session utilisateur - stockage des token ProConnect]
+        Callback --> Connected[L’utilisateur est connecté et poursuis sa navigation]
+        Connected--> GetRS[L’utilisateur a besoin d'une resource]
+
+    end
+
+
+    GetRS-->|Transmet l’access_token| RS[Besoin d’une resource]
+    RS-->|Transmet l’access_token| II
+    II -->|Retourne le sub, client_id et autres claims| RS
+    RS -->|Resource demandée| GetRS
+    subgraph Resource Server
+        RS[API]
+    end
+
+    subgraph ProConnect
+        LPC[ProConnexion]
+        II[Vérification du token]
+    end
+```
+
+Cas pratique : resource serveru sur Annuaire des Entreprises + Roles + ProConnect
+
+```mermaid
+flowchart TD
+    U((Utilisateur))
+    U-->Login
+    Login -->|Redirect| LPC
+    LPC-->|Redirect| AgentConnected
+
+        
+    subgraph "Fournisseur de Service : Annuaire des Entreprises"
+        Login[Connexion]
+        AgentConnected[Agent connecté]
+    end
+
+
+    AgentConnected-->|"API REST - Authorization : Bearer {access_token_pro_connect}"| RS
+
+    subgraph "Resource Server : roles.data"
+        RS[L’agent appartient-il a un groupe?]
+        RS --> TokenValidation[Est ce que le token est valide ?]
+        TokenValidation --> UserId[Si le sub n'est pas trouvé dans la base :<br/><br/>- Soit seul son mail est enregistré dans la base<br/><br/>- Soit il n'existe pas dans la base<br/><br/>Besoin de récupérer son email]
+        UserId --> GetGroups[Si nécessaire le couple sub+email est enregistré dans la DB<br/><br/> Avec le client_id, on récupère les groupes dont fait partie l'utilisateur pour l'Annuaire des Entreprises]
+
+        GetGroups --> DB
+        GetGroups-->|Groups| AgentConnected
+        GetGroups-->|404 si l’utilisateur n'existe ni par son mail ni par son sub| AgentConnected
+        TokenValidation<-->|recherche l’utilisateur avec son sub| DB
+        TokenValidation<-->|recherche le fournisseur de service avec le client_id| DB
+        DB[Base de donnée]
+    end
+    
+    TokenValidation-->|access_token_pro_connect| II
+    II-->|client_id, sub| TokenValidation
+    UserId-->|access_token_pro_connect| UI
+    UI-->|email| UserId
+
+    subgraph ProConnect
+        LPC[ProConnexion]
+        II[Route /introspect vérification du token]
+        UI[Route /userinfo]
+    end
+```

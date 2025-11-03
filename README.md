@@ -315,6 +315,7 @@ erDiagram
 graph TB
     subgraph "FastAPI Application"
         subgraph "Authentification"
+            RSAuth[ResourceServer Credentials<br/> OAuth2 ProConnect token<br/>Fournisseur de service connectés a ProConnect uniquement]
             OAuth[OAuth2 Client Credentials<br/>JWT Tokens<br/>API externes]
             PCAuth[ProConnect OAuth2<br/>Session Cookies<br/>Interface Web]
             DPAuth[Datapass HMAC<br/>Signature<br/>Webhooks]
@@ -349,10 +350,12 @@ graph TB
     end
 
     OAuth -->CTX
+    RSAuth -->CTX
     PCAuth -->CTX
     DPAuth -->CTX
 
     OAuth-->RAPI
+    RSAuth-->RAPI
     PCAuth-->RWebUI
     DPAuth-->RWebhook
 

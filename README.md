@@ -425,42 +425,49 @@ flowchart TD
     end
 ```
 
-Cas pratique : resource serveru sur Annuaire des Entreprises + Roles + ProConnect
+**Cas pratique :** resource serveur sur Annuaire des Entreprises + Roles + ProConnect. 
 
 ```mermaid
 flowchart TD
     U((Utilisateur))
     U-->Login
     Login -->|Redirect| LPC
-    LPC-->|Redirect| AgentConnected
+    LPC-->|Redirect| Callback
 
         
     subgraph "Fournisseur de Service : Annuaire des Entreprises"
         Login[Connexion]
-        AgentConnected[Agent connecté]
+        Callback[Callback de connexion et de création de session utilisateur]
     end
 
 
-    AgentConnected-->|"API REST - Authorization : Bearer {access_token_pro_connect}"| RS
+    Callback-->|"API REST - Authorization : Bearer {access_token_pro_connect}"| RS
 
     subgraph "Resource Server : roles.data"
-        RS[L’agent appartient-il a un groupe?]
-        RS --> TokenValidation[Est ce que le token est valide ?]
-        TokenValidation --> UserId[Si le sub n'est pas trouvé dans la base :<br/><br/>- Soit seul son mail est enregistré dans la base<br/><br/>- Soit il n'existe pas dans la base<br/><br/>Besoin de récupérer son email]
-        UserId --> GetGroups[Si nécessaire le couple sub+email est enregistré dans la DB<br/><br/> Avec le client_id, on récupère les groupes dont fait partie l'utilisateur pour l'Annuaire des Entreprises]
-
-        GetGroups --> DB
-        GetGroups-->|Groups| AgentConnected
-        GetGroups-->|404 si l’utilisateur n'existe ni par son mail ni par son sub| AgentConnected
-        TokenValidation<-->|recherche l’utilisateur avec son sub| DB
-        TokenValidation<-->|recherche le fournisseur de service avec le client_id| DB
-        DB[Base de donnée]
+        RS["GET /resource-server/group"]
+        RS --> TokenValidation[Vérification du token]
+        TokenValidation-->Client_IDInDB[Le client_id est associé a un service provider dans la base]
+        TokenValidation-->Client_IDNotInDB[Le client_id n'existe pas dans la base]-->|403 Unauthrorized| Callback
+        
+        Client_IDInDB --> SubInDB[Le sub est dans la base, associé à l'email de l'utilisateur]
+        Client_IDInDB --> SubNotInDB[Le sub n'est pas dans la base]
+        
+        SubNotInDB --> GetuserEmail[Récupération du mail utilisateur]
+        UserInDB--> SubEmailPairing[Le sub est associé à l'email de l'utilisateur dans la base]
+        GetuserEmail --> UserInDB[L'email de l'utilisateur a déjà été ajouté à un groupe]
+        GetuserEmail --> UserNotInDB[L'email n'est pas dans la base] -->|404 Not Found| Callback
+        
+        GetGroupBySub[Récupération des groupes de l’utilisateur avec le sub et le service_provider]
+        SubEmailPairing-->GetGroupBySub
+        SubInDB-->GetGroupBySub
+        
+        GetGroupBySub-->Callback
     end
     
     TokenValidation-->|access_token_pro_connect| II
     II-->|client_id, sub| TokenValidation
-    UserId-->|access_token_pro_connect| UI
-    UI-->|email| UserId
+    GetuserEmail-->|access_token_pro_connect| UI
+    UI-->|email| GetuserEmail
 
     subgraph ProConnect
         LPC[ProConnexion]
@@ -468,3 +475,14 @@ flowchart TD
         UI[Route /userinfo]
     end
 ```
+
+Avec ce pattern, on fait l'économie d'un irritant majeur des Saas modernes : la validation du mail. L'ajout d'un utilisateur ce fait ainsi : 
+- ajout d'un utilisateur à un groupe par son email
+- lors de la première connexion récupération du sub par l'access token et du mail par la route info
+- sauvegarde du couple mail <> sub
+- une fois le sub sauvegardé, utilisation du sub pour récuperer les groupes de l'utilisateur.
+
+Plusieurs avantages :
+- pas de mail d'activation
+- permet de'identifier l'utilisateur uniquement avec son sub, contenu dans l'access_token
+- cinématique très light, pas d'accès en base nécessaire pour décoder l'access_token dans la route /introspect.

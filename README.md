@@ -374,6 +374,7 @@ graph TB
 
 **Patterns d'authentification :**
 - **OAuth2 Client Credentials** : Service accounts avec JWT pour les API externes
+- **ResourceServer Credentials** : Utilisation de roles par API en mode resource server
 - **ProConnect OAuth2** : Authentication utilisateur via OpenID Connect pour l'interface web
 - **Datapass HMAC** : Vérification de signature pour les webhooks entrants
 
@@ -386,3 +387,102 @@ graph TB
 - **Routers** : Gestion des requêtes HTTP, validation des entrées, sérialisation des réponses
 - **Services** : Logique métier, orchestration entre repositories, gestion des emails
 - **Repositories** : Requêtes SQL directes, transactions, logging des actions via LogsService
+
+### Resource server
+
+Le resource server permet a un Fournisseur de service de récupérer des resources, par API avec le seul jeton ProConnect (passé en header authorization).
+
+Le resource server (dans notre cas, l'API de roles sur ses endpoints /resource-server) demande a ProConnect une vérification de l'access_token que pro connect a créé pour l'utilisateur, dans le cadre du fournisseur de service (eg. annuaire des entreprises). 
+
+```mermaid
+flowchart TD
+    U((Utilisateur))
+    U-->Login
+    Login -->|Redirect| LPC
+    LPC-->|Redirect| Callback
+
+        
+    subgraph Fournisseur de Service
+        Login[Page de connexion]
+        Callback[Création de la session utilisateur - stockage des token ProConnect]
+        Callback --> Connected[L’utilisateur est connecté et poursuis sa navigation]
+        Connected--> GetRS[L’utilisateur a besoin d'une resource]
+
+    end
+
+
+    GetRS-->|Transmet l’access_token| RS[Besoin d’une resource]
+    RS-->|Transmet l’access_token| II
+    II -->|Retourne le sub, client_id et autres claims| RS
+    RS -->|Resource demandée| GetRS
+    subgraph Resource Server
+        RS[API]
+    end
+
+    subgraph ProConnect
+        LPC[ProConnexion]
+        II[Vérification du token]
+    end
+```
+
+**Cas pratique :** resource serveur sur Annuaire des Entreprises + Roles + ProConnect. 
+
+```mermaid
+flowchart TD
+    U((Utilisateur))
+    U-->Login
+    Login -->|Redirect| LPC
+    LPC-->|Redirect| Callback
+
+        
+    subgraph "Fournisseur de Service : Annuaire des Entreprises"
+        Login[Connexion]
+        Callback[Callback de connexion et de création de session utilisateur]
+    end
+
+
+    Callback-->|"API REST - Authorization : Bearer {access_token_pro_connect}"| RS
+
+    subgraph "Resource Server : roles.data"
+        RS["GET /resource-server/group"]
+        RS --> TokenValidation[Vérification du token]
+        TokenValidation-->Client_IDInDB[Le client_id est associé a un service provider dans la base]
+        TokenValidation-->Client_IDNotInDB[Le client_id n'existe pas dans la base]-->|403 Unauthrorized| Callback
+        
+        Client_IDInDB --> SubInDB[Le sub est dans la base, associé à l'email de l'utilisateur]
+        Client_IDInDB --> SubNotInDB[Le sub n'est pas dans la base]
+        
+        SubNotInDB --> GetuserEmail[Récupération du mail utilisateur]
+        UserInDB--> SubEmailPairing[Le sub est associé à l'email de l'utilisateur dans la base]
+        GetuserEmail --> UserInDB[L'email de l'utilisateur a déjà été ajouté à un groupe]
+        GetuserEmail --> UserNotInDB[L'email n'est pas dans la base] -->|404 Not Found| Callback
+        
+        GetGroupBySub[Récupération des groupes de l’utilisateur avec le sub et le service_provider]
+        SubEmailPairing-->GetGroupBySub
+        SubInDB-->GetGroupBySub
+        
+        GetGroupBySub-->Callback
+    end
+    
+    TokenValidation-->|access_token_pro_connect| II
+    II-->|client_id, sub| TokenValidation
+    GetuserEmail-->|access_token_pro_connect| UI
+    UI-->|email| GetuserEmail
+
+    subgraph ProConnect
+        LPC[ProConnexion]
+        II[Route /introspect vérification du token]
+        UI[Route /userinfo]
+    end
+```
+
+Avec ce pattern, on fait l'économie d'un irritant majeur des Saas modernes : la validation du mail. L'ajout d'un utilisateur ce fait ainsi : 
+- ajout d'un utilisateur à un groupe par son email
+- lors de la première connexion récupération du sub par l'access token et du mail par la route info
+- sauvegarde du couple mail <> sub
+- une fois le sub sauvegardé, utilisation du sub pour récuperer les groupes de l'utilisateur.
+
+Plusieurs avantages :
+- pas de mail d'activation
+- permet de'identifier l'utilisateur uniquement avec son sub, contenu dans l'access_token
+- cinématique très light, pas d'accès en base nécessaire pour décoder l'access_token dans la route /introspect.

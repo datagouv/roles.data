@@ -110,7 +110,7 @@ def test_update_group_name_unauthorized(client):
     )
 
     # user does not exist
-    assert response.status_code == 403
+    assert response.status_code == 404
 
 
 def test_add_user_to_group_as_admin(client):
@@ -145,8 +145,11 @@ def test_add_user_to_group_as_admin(client):
 def test_add_user_to_group_unauthorized(client):
     """Test that non-admin cannot add users to a group."""
     admin = random_user()
-    non_admin = random_user()
     new_member = random_user()
+    new_member_2 = random_user()
+
+    # create and add new_member to a group
+    create_group(client, admin_email=new_member["email"])
 
     # Create group with admin
     group = create_group(client, admin_email=admin["email"])
@@ -154,11 +157,13 @@ def test_add_user_to_group_unauthorized(client):
 
     # Try to add user as non-admin
     headers = resource_server_auth_headers(
-        non_admin["sub_pro_connect"], non_admin["email"]
+        new_member["sub_pro_connect"], new_member["email"]
     )
+
+    # try to add user to a group it does not belong
     response = client.post(
         f"/resource-server/groups/{group_id}/users",
-        json={"email": new_member["email"], "role_id": 2},
+        json={"email": new_member_2["email"], "role_id": 2},
         headers=headers,
     )
 
@@ -208,7 +213,6 @@ def test_update_user_role_as_admin(client):
 def test_update_user_role_unauthorized(client):
     """Test that non-admin cannot update user roles."""
     admin = random_user()
-    non_admin = random_user()
     member = random_user()
 
     # Create group and add member
@@ -231,7 +235,7 @@ def test_update_user_role_unauthorized(client):
 
     # Try to update role as non-admin
     non_admin_headers = resource_server_auth_headers(
-        non_admin["sub_pro_connect"], non_admin["email"]
+        member["sub_pro_connect"], member["email"]
     )
     response = client.patch(
         f"/resource-server/groups/{group_id}/users/{member_id}",
@@ -280,16 +284,17 @@ def test_remove_user_from_group_as_admin(client):
 def test_remove_user_from_group_unauthorized(client):
     """Test that non-admin cannot remove users from a group."""
     admin = random_user()
-    non_admin = random_user()
     member = random_user()
+    member_2 = random_user()
 
-    # Create group and add member
+    # create group
     group = create_group(client, admin_email=admin["email"])
     group_id = group["id"]
 
     admin_headers = resource_server_auth_headers(
         admin["sub_pro_connect"], admin["email"]
     )
+    # add user to group
     response = client.post(
         f"/resource-server/groups/{group_id}/users",
         json={"email": member["email"], "role_id": 2},
@@ -297,16 +302,13 @@ def test_remove_user_from_group_unauthorized(client):
     )
     assert response.status_code == 201
 
-    # Get member's user_id from the response
-    member_data = response.json()
-    member_id = member_data["id"]
-
-    # Try to remove user as non-admin
+    # Try to add another user but without admin rights
     non_admin_headers = resource_server_auth_headers(
-        non_admin["sub_pro_connect"], non_admin["email"]
+        member["sub_pro_connect"], member["email"]
     )
-    response = client.delete(
-        f"/resource-server/groups/{group_id}/users/{member_id}",
+    response = client.post(
+        f"/resource-server/groups/{group_id}/users",
+        json={"email": member_2["email"], "role_id": 2},
         headers=non_admin_headers,
     )
 

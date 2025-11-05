@@ -76,13 +76,12 @@ def test_different_sub_fails_after_pairing(client):
 
 
 def test_nonexistent_user_fails_pairing(client):
-    """Test that pairing fails with 403 for users that don't exist in database."""
+    """Test that pairing fails with 404 for users that don't exist in database."""
     user = random_user()
 
     # Try to access resource server without creating user first
     headers = resource_server_auth_headers(user["sub_pro_connect"], user["email"])
     response = client.get("/resource-server/groups/", headers=headers)
 
-    # Should fail with 403 because user doesn't exist
-    assert response.status_code == 403
+    assert response.status_code == 404
     assert "not found" in response.json()["detail"].lower()

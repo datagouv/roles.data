@@ -9,6 +9,8 @@ from src.model import (
     GroupWithScopesResponse,
     GroupWithUsersAndScopesResponse,
     OrganisationCreate,
+    OrganisationGroupResponse,
+    Siret,
     UserCreate,
     UserInGroupResponse,
 )
@@ -126,6 +128,23 @@ class GroupsService:
         return await self.groups_repository.search_by_contract(
             contract_description, self.service_provider_id
         )
+
+    async def search_groups_by_organisation_siret(
+        self, siret: Siret | None
+    ) -> list[OrganisationGroupResponse]:
+        if not siret:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Organization SIRET is required",
+            )
+        """
+        Search for groups by organisation siret.
+        """
+        groups_by_siret = await self.groups_repository.search_by_organisation_siret(
+            siret, self.service_provider_id
+        )
+
+        return [OrganisationGroupResponse(**dict(group)) for group in groups_by_siret]
 
     async def search_groups(
         self, user_sub: UUID

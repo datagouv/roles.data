@@ -10,6 +10,7 @@ from src.dependencies.auth.pro_connect import pro_connect_provider
 from src.dependencies.auth.pro_connect_bearer_token import (
     decode_proconnect_bearer_token,
 )
+from src.model import Siret
 from src.repositories.service_providers import ServiceProvidersRepository
 from src.repositories.users_sub import UserSubsRepository
 from src.services.user_subs import UserSubsService
@@ -73,3 +74,12 @@ async def get_acting_user_sub_from_proconnect_token(
 ):
     acting_user_sub, _, _ = proconnect_claims
     return acting_user_sub
+
+async def get_acting_user_organization_siret_from_proconnect_token(
+    proconnect_access_token=Depends(decode_proconnect_bearer_token)
+):
+    user_info_data = await pro_connect_provider.userinfo(
+        {"access_token": proconnect_access_token}
+    )
+    acting_user_organization_siret: Siret = user_info_data.get("siret")
+    return acting_user_organization_siret

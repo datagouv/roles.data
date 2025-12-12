@@ -6,6 +6,7 @@ from src.model import (
     GroupResponse,
     GroupWithScopesResponse,
     GroupWithUsersAndScopesResponse,
+    Siret,
 )
 from src.services.logs import LogsService
 
@@ -84,6 +85,35 @@ class GroupsRepository:
                 query,
                 {
                     "contract_description": contract_description,
+                    "service_provider_id": service_provider_id,
+                },
+            )
+
+    async def search_by_organisation_siret(
+        self, siret: Siret, service_provider_id: int
+    ):
+        async with self.db_session.transaction():
+            query = """
+            SELECT
+                G.id,
+                G.name,
+                O.siret as organisation_siret,
+                GSPR.scopes,
+                ARRAY_AGG(DISTINCT U.email) FILTER (WHERE R.is_admin = true) as admin_emails
+            FROM groups as G
+            INNER JOIN organisations AS O ON G.orga_id = O.id
+            INNER JOIN group_service_provider_relations AS GSPR ON GSPR.group_id = G.id AND GSPR.service_provider_id = :service_provider_id
+            LEFT JOIN group_user_relations AS GUR ON GUR.group_id = G.id
+            LEFT JOIN users AS U ON U.id = GUR.user_id
+            LEFT JOIN roles AS R ON R.id = GUR.role_id
+            WHERE O.siret = :siret
+            GROUP BY G.id, G.name, O.siret, GSPR.scopes
+            ORDER BY G.id
+            """
+            return await self.db_session.fetch_all(
+                query,
+                {
+                    "siret": siret,
                     "service_provider_id": service_provider_id,
                 },
             )

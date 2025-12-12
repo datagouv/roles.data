@@ -127,6 +127,12 @@ class GroupWithUsersAndScopesResponse(GroupWithScopesResponse):
     users: list[UserWithRoleResponse]
 
 
+class OrganisationGroupResponse(GroupResponse):
+    organisation_siret: Siret
+    scopes: str
+    admin_emails: list[EmailStr]
+
+
 class ParentChildCreate(BaseModel):
     parent_group_id: int
     child_group_id: int

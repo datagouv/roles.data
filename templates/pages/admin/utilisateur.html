@@ -15,6 +15,20 @@
 
 {% block content %}
 <div class="fr-container">
+  {% if user %}
+  <div class="fr-grid-row fr-grid-row--right">
+    <div class="fr-col-auto">
+      <button type="button"
+      class="fr-btn fr-btn--sm fr-btn--secondary"
+                  hx-delete="/admin/users/{{ user.id }}"
+                  hx-confirm="Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action est irréversible et supprimera toutes les données associées (liens avec les groupes, etc.)."
+                  hx-target="body"
+                  hx-push-url="/admin/users">
+          ⚠️ Supprimer l'utilisateur
+      </button>
+    </div>
+  </div>
+  {% endif %}
   <h2>Groupes</h2>
   {{ data_table(headers, groups, formatter) }}
 

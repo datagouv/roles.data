@@ -104,3 +104,10 @@ class AdminWriteService:
         Only super admin can delete groups.
         """
         return await self.admin_write_repository.delete_group(group_id)
+
+    async def delete_user(self, user_id: int) -> None:
+        """
+        Delete a user and all their relationships.
+        Only super admin can delete users.
+        """
+        return await self.admin_write_repository.delete_user(user_id)

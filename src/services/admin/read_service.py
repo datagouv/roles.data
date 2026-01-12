@@ -72,10 +72,12 @@ class AdminReadService:
         return await self.admin_read_repository.read_users()
 
     async def get_user_details(self, user_id: int):
+        user = await self.admin_read_repository.read_user_by_id(user_id)
         groups = await self.admin_read_repository.read_user_groups(user_id)
         logs = await self.get_logs(user_id=user_id)
 
         return {
+            "user": user,
             "groups": groups,
             "logs": logs,
         }

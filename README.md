@@ -31,6 +31,9 @@ API de gestion des droits utilisateurs pour les outils du pôle DATA. Pour en sa
 git clone https://github.com/datagouv/roles.data.git
 cd roles.data
 
+# Copier l'environnement
+cp .env.dev .env
+
 # Installer les dépendances
 uv sync
 

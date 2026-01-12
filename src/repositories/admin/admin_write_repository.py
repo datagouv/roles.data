@@ -153,3 +153,20 @@ class AdminWriteRepository:
             await self.db_session.execute(
                 "DELETE FROM groups WHERE id = :group_id", {"group_id": group_id}
             )
+
+    async def delete_user(self, user_id: int) -> None:
+        """
+        Delete a user and all their relationships.
+        This will remove the user from all groups and delete the user record.
+        """
+        async with self.db_session.transaction():
+            # Delete group_user_relations first (foreign key constraint)
+            await self.db_session.execute(
+                "DELETE FROM group_user_relations WHERE user_id = :user_id",
+                {"user_id": user_id},
+            )
+
+            # Delete the user itself
+            await self.db_session.execute(
+                "DELETE FROM users WHERE id = :user_id", {"user_id": user_id}
+            )

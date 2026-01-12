@@ -205,6 +205,7 @@ class LOG_ACTIONS(Enum):
 
     CREATE_USER = "User created"
     VERIFY_USER = "User verified"
+    DELETE_USER = "User deleted"
 
     # Group actions
     CREATE_GROUP = "Group created"

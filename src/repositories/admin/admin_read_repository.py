@@ -144,6 +144,15 @@ class AdminReadRepository:
             """
             return await self.db_session.fetch_all(query, {})
 
+    async def read_user_by_id(self, user_id: int) -> dict | None:
+        async with self.db_session.transaction():
+            query = """
+                SELECT *
+                FROM users AS U
+                WHERE U.id = :user_id
+            """
+            return await self.db_session.fetch_one(query, values={"user_id": user_id})
+
     async def read_user_groups(self, user_id: int) -> list[dict]:
         async with self.db_session.transaction():
             query = """

@@ -322,3 +322,85 @@ def test_resource_server_without_bearer_token(client):
 
     # Should fail with 403 Forbidden (missing bearer token)
     assert response.status_code == 403
+
+
+def test_list_organization_groups(client):
+    """Test listing groups by organization SIRET."""
+    from unittest.mock import AsyncMock, patch
+
+    from src.tests.helpers import DINUM_SIRET
+
+    # Create users with different groups
+    admin1 = random_user()
+    admin2 = random_user()
+
+    # Create groups with DINUM_SIRET (default SIRET used by create_group)
+    group1 = create_group(client, admin_email=admin1["email"])
+    group2 = create_group(client, admin_email=admin2["email"])
+
+    # Mock pro_connect_provider.userinfo to return DINUM_SIRET
+    mock_userinfo = AsyncMock(return_value={"siret": DINUM_SIRET})
+
+    with patch(
+        "src.dependencies.auth.pro_connect_resource_server.pro_connect_provider.userinfo",
+        mock_userinfo,
+    ):
+        # Call organization groups endpoint
+        headers = resource_server_auth_headers(admin1["sub_pro_connect"], admin1["email"])
+        response = client.get("/resource-server/organizations/groups", headers=headers)
+
+        assert response.status_code == 200
+        groups = response.json()
+
+        # Should return all groups for the organization
+        assert len(groups) >= 2
+
+        # Verify our groups are in the response
+        group_ids = [g["id"] for g in groups]
+        assert group1["id"] in group_ids
+        assert group2["id"] in group_ids
+
+        # Verify response structure includes admin_emails
+        for group in groups:
+            assert "id" in group
+            assert "name" in group
+            assert "organisation_siret" in group
+            assert "scopes" in group
+            assert "admin_emails" in group
+            assert isinstance(group["admin_emails"], list)
+
+        # Verify admin emails are present in the groups
+        group1_data = next(g for g in groups if g["id"] == group1["id"])
+        assert admin1["email"] in group1_data["admin_emails"]
+
+        group2_data = next(g for g in groups if g["id"] == group2["id"])
+        assert admin2["email"] in group2_data["admin_emails"]
+
+
+def test_list_organization_groups_different_siret(client):
+    """Test that different SIRETs return different groups."""
+    from unittest.mock import AsyncMock, patch
+
+    from src.tests.helpers import DINUM_SIRET
+
+    # Create a group with DINUM_SIRET
+    admin1 = random_user()
+    group1 = create_group(client, admin_email=admin1["email"])
+
+    # Mock userinfo to return a different SIRET
+    different_siret = "55208779803527"  # Valid but different SIRET
+    mock_userinfo = AsyncMock(return_value={"siret": different_siret})
+
+    with patch(
+        "src.dependencies.auth.pro_connect_resource_server.pro_connect_provider.userinfo",
+        mock_userinfo,
+    ):
+        headers = resource_server_auth_headers(admin1["sub_pro_connect"], admin1["email"])
+        response = client.get("/resource-server/organizations/groups", headers=headers)
+
+        assert response.status_code == 200
+        groups = response.json()
+
+        # Should not return groups from DINUM_SIRET
+        group_ids = [g["id"] for g in groups]
+        assert group1["id"] not in group_ids

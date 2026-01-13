@@ -33,7 +33,7 @@ class UserSubsRepository:
             query = """
             SELECT coalesce(U.sub_pro_connect, '') as sub FROM users as U WHERE U.email = :email
             """
-            record = await self.db_session.fetch_one(query, {"email": email})
+            record = await self.db_session.fetch_one(query, {"email": email.lower()})
             return record["sub"] if record else None
 
     async def set(self, email: str, sub: UUID) -> None:

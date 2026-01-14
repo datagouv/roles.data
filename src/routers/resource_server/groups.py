@@ -4,7 +4,6 @@ from pydantic import UUID4
 from src.dependencies import get_groups_service
 from src.dependencies.auth.pro_connect_resource_server import (
     get_acting_user_sub_from_proconnect_token,
-    get_claims_from_proconnect_token,
 )
 from src.model import (
     GroupResponse,
@@ -15,9 +14,8 @@ from src.model import (
 from src.services.groups import GroupsService
 
 router = APIRouter(
-    prefix="/resource-server/groups",
+    prefix="/groups",
     tags=["Gestion des groupes par l'utilisateur"],
-    dependencies=[Depends(get_claims_from_proconnect_token)],
     responses={404: {"description": "Not found"}, 400: {"description": "Bad request"}},
 )
 

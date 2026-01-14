@@ -16,11 +16,11 @@ from src.middleware.force_web_auth import ForceWebAuthenticationMiddleware
 from src.routers import (
     groups,
     health,
-    resource_server,
     roles,
     users,
 )
 from src.routers.auth import auth
+from src.routers.resource_server import resource_server
 from src.routers.web.admin import view as admin_home
 from src.routers.webhooks import datapass
 
@@ -102,7 +102,6 @@ app.include_router(users.router)
 app.include_router(roles.router)
 app.include_router(groups.router)
 app.include_router(resource_server.router)
-app.include_router(groups.router)
 
 # webhooks (Datapass)
 app.include_router(datapass.router)

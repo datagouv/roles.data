@@ -78,8 +78,28 @@ async def get_acting_user_sub_from_proconnect_token(
 async def get_acting_user_organization_siret_from_proconnect_token(
     proconnect_access_token=Depends(decode_proconnect_bearer_token)
 ):
+    """
+    Retrieve the acting user's organization SIRET from the ProConnect access token.
+
+    This function extracts the access token from the request using dependency injection,
+    calls the ProConnect userinfo endpoint, and returns the 'siret' (organization SIRET)
+    associated with the user. Raises an HTTP 400 error if the SIRET is missing.
+
+    Returns:
+        Siret: The SIRET number of the user's organization.
+
+    Raises:
+        HTTPException: If the SIRET is not found in the user info.
+    """
     user_info_data = await pro_connect_provider.userinfo(
         {"access_token": proconnect_access_token}
     )
     acting_user_organization_siret: Siret = user_info_data.get("siret")
+
+    if not acting_user_organization_siret:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Organization SIRET is required",
+        )
+
     return acting_user_organization_siret

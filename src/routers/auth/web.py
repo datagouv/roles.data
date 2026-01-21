@@ -1,3 +1,4 @@
+import json
 import secrets
 from urllib.parse import urlencode
 
@@ -31,8 +32,25 @@ async def pro_connect_authorize_url(request: Request):
         )
 
     redirect_uri = request.url_for("callback")
+
+    # ACR values for 2FA requirement
+    acr_values = " ".join([
+        "eidas2",
+        "eidas3",
+        "https://proconnect.gouv.fr/assurance/self-asserted-2fa",
+        "https://proconnect.gouv.fr/assurance/consistency-checked-2fa",
+    ])
+
+    # Claims parameter to request acr as essential in id_token
+    claims = json.dumps({
+        "id_token": {
+            "acr": {"essential": True},
+            "amr": {"essential": True},
+        }
+    })
+
     authorize_url = await pro_connect_provider.proconnect.authorize_redirect(
-        request, redirect_uri, acr_values="eidas1"
+        request, redirect_uri, acr_values=acr_values, claims=claims
     )
     return authorize_url
 
@@ -51,6 +69,13 @@ async def callback(request: Request):
 
         # Store the user info in the session, it'll be used when logging out from ProConnect.
         userinfo = await pro_connect_provider.userinfo(token=token)
+
+        amr = token['userinfo'].get('amr', [])
+        if 'mfa' not in amr:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Multi-factor authentication (MFA) is required.",
+            )
 
         if userinfo["email"] not in settings.SUPER_ADMIN_EMAILS:
             raise HTTPException(

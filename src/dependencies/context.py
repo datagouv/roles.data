@@ -84,7 +84,7 @@ async def get_context(
                 acting_user_sub,
                 _,
                 service_provider_id,
-            ) = await get_claims_from_proconnect_token(token_string, db)
+            ) = await get_claims_from_proconnect_token(request, token_string, db)
 
             return RequestContext(
                 service_provider_id=service_provider_id,

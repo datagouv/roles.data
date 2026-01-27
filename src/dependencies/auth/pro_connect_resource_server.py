@@ -2,7 +2,7 @@
 from uuid import UUID
 
 from databases import Database
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from pydantic import UUID4, EmailStr
 
 from src.database import get_db
@@ -15,8 +15,12 @@ from src.repositories.service_providers import ServiceProvidersRepository
 from src.repositories.users_sub import UserSubsRepository
 from src.services.user_subs import UserSubsService
 
+ALLOWED_PATHS_FOR_NO_EMAIL_PAIRING = [
+    "/resource-server/organizations/groups",
+]
 
 async def get_claims_from_proconnect_token(
+    request: Request,
     proconnect_access_token=Depends(decode_proconnect_bearer_token),
     db: Database = Depends(get_db),
 ) -> tuple[UUID4, EmailStr, int]:
@@ -55,7 +59,8 @@ async def get_claims_from_proconnect_token(
             {"access_token": proconnect_access_token}
         )
         proconnect_email = user_info_data.get("email")
-        await user_sub_service.pair(proconnect_email, proconnect_sub)
+        if request.url.path not in ALLOWED_PATHS_FOR_NO_EMAIL_PAIRING:
+            await user_sub_service.pair(proconnect_email, proconnect_sub)
 
     # Verify service provider pairing
     service_providers_repository = ServiceProvidersRepository(db)

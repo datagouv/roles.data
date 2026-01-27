@@ -11,6 +11,7 @@ from src.config import settings
 from src.database import DatabaseWithSchema, get_db
 from src.dependencies.auth.o_auth import decode_access_token
 from src.dependencies.auth.pro_connect_resource_server import (
+    ALLOWED_PATHS_FOR_NO_EMAIL_PAIRING,
     get_claims_from_proconnect_token,
 )
 from src.dependencies.context import RequestContext, get_context
@@ -58,6 +59,7 @@ def override_decode_access_token():
 
 
 async def override_get_claims_from_proconnect_token(
+    request: Request,
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
     db: DatabaseWithSchema = Depends(get_db),
 ) -> tuple[UUID4, EmailStr, int]:
@@ -83,7 +85,8 @@ async def override_get_claims_from_proconnect_token(
 
             if not email:
                 email = parts[2]
-                await user_sub_service.pair(email, sub)
+                if request.url.path not in ALLOWED_PATHS_FOR_NO_EMAIL_PAIRING:
+                    await user_sub_service.pair(email, sub)
 
             return (sub, email, 1)
         except (ValueError, IndexError) as error:

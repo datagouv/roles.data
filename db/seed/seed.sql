@@ -40,7 +40,7 @@ VALUES
 
 -- Add the "read" scope for the group on the service provider "test"
 INSERT INTO :schema_name.group_service_provider_relations (service_provider_id, group_id, scopes, contract_description, contract_url)
-VALUES (1, 1, 'administrateur rne nonDiffusible conformite beneficiaires agent pseudo_opendata effectifs_annuels chiffre_affaires travaux_publics liens_capitalistiques liasses_fiscales bilans_bdf', 'Habilitation de test', 'https://datapass_48') ON CONFLICT (service_provider_id, group_id) DO NOTHING;
+VALUES (1, 1, 'administrateur rne nonDiffusible conformite_fiscale conformite_sociale beneficiaires agent pseudo_opendata effectifs_annuels chiffre_affaires travaux_publics liens_capitalistiques liasses_fiscales bilans_bdf', 'Habilitation de test', 'https://datapass_48') ON CONFLICT (service_provider_id, group_id) DO NOTHING;
 
 -- Insert a service account for a service provider
 INSERT INTO :schema_name.service_accounts (

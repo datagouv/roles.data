@@ -168,17 +168,22 @@ class GroupsRepository:
         Update group name
         """
         async with self.db_session.transaction():
-            query = (
-                "UPDATE groups SET name = :group_name WHERE id = :group_id RETURNING *"
-            )
+            query = """
+                UPDATE groups
+                SET name = :group_name, updated_at = CURRENT_TIMESTAMP
+                WHERE id = :group_id
+                RETURNING *
+            """
             values = {"group_name": group_name, "group_id": group_id}
+            updated_group = await self.db_session.fetch_one(query, values)
 
-            await self.logs_service.save(
-                action_type=LOG_ACTIONS.UPDATE_GROUP,
-                resource_type=LOG_RESOURCE_TYPES.GROUP,
-                db_session=self.db_session,
-                resource_id=group_id,
-                new_values={"name": group_name},
-            )
+            if updated_group:
+                await self.logs_service.save(
+                    action_type=LOG_ACTIONS.UPDATE_GROUP,
+                    resource_type=LOG_RESOURCE_TYPES.GROUP,
+                    db_session=self.db_session,
+                    resource_id=group_id,
+                    new_values={"name": group_name},
+                )
 
-            return await self.db_session.fetch_one(query, values)
+            return updated_group

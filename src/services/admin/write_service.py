@@ -1,5 +1,7 @@
 from fastapi import HTTPException, status
 
+from src.model import GroupResponse
+from src.repositories.groups import GroupsRepository
 from src.model import ServiceProviderResponse
 from src.repositories.admin.admin_write_repository import AdminWriteRepository
 from src.utils.security import generate_random_password, hash_password
@@ -18,8 +20,13 @@ class AdminWriteService:
     - Security is more important than clean architecture here
     """
 
-    def __init__(self, admin_write_repository: AdminWriteRepository):
+    def __init__(
+        self,
+        admin_write_repository: AdminWriteRepository,
+        groups_repository: GroupsRepository,
+    ):
         self.admin_write_repository = admin_write_repository
+        self.groups_repository = groups_repository
 
     async def update_service_account(
         self,
@@ -73,6 +80,30 @@ class AdminWriteService:
         Set a user as admin of a specific group.
         """
         return await self.admin_write_repository.set_admin(group_id, user_id)
+
+    async def update_group_name(
+        self,
+        group_id: int,
+        group_name: str,
+    ) -> GroupResponse:
+        """
+        Update a group's name from the admin interface.
+        """
+        normalized_name = group_name.strip()
+        if not normalized_name:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Group name cannot be empty.",
+            )
+
+        updated_group = await self.groups_repository.update(group_id, normalized_name)
+        if not updated_group:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Group {group_id} not found",
+            )
+
+        return updated_group
 
     async def create_service_provider(
         self, name: str, url: str, proconnect_client_id: str | None = None

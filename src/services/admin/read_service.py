@@ -69,7 +69,16 @@ class AdminReadService:
         }
 
     async def get_users(self):
-        return await self.admin_read_repository.read_users()
+        users = [dict(user) for user in await self.admin_read_repository.read_users()]
+        user_ids = [user["id"] for user in users]
+        groups_by_user_id = await self.admin_read_repository.read_user_groups_by_ids(
+            user_ids
+        )
+
+        for user in users:
+            user["groups"] = groups_by_user_id.get(user["id"], [])
+
+        return users
 
     async def get_user_details(self, user_id: int):
         user = await self.admin_read_repository.read_user_by_id(user_id)

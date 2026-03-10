@@ -9,9 +9,20 @@
         <td>{{ user.updated_at.strftime('%d/%m/%Y') }} {{ user.updated_at.strftime('%H:%M:%S') }}</td>
         <td>{{user.id}}</td>
         <td><a href='/admin/users/{{user.id}}'>{{ user.email }}</a></td>
+        <td>
+            {% if user.groups %}
+                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                    {% for group in user.groups %}
+                        <a class="fr-tag fr-tag--sm" href="/admin/groups/{{ group.id }}">{{ group.name }}</a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <i>Aucun groupe</i>
+            {% endif %}
+        </td>
     </tr>
 {% endmacro %}
-{% set headers = ['Creation', 'MAJ', 'ID', 'Email'] %}
+{% set headers = ['Creation', 'MAJ', 'ID', 'Email', 'Groupes'] %}
 
 <div class="fr-container">
     {{ data_table(headers, users, formatter) }}

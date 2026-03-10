@@ -141,6 +141,7 @@ class AdminReadRepository:
             query = """
                 SELECT *
                 FROM users AS U
+                ORDER BY U.id
             """
             return await self.db_session.fetch_all(query, {})
 
@@ -152,6 +153,30 @@ class AdminReadRepository:
                 WHERE U.id = :user_id
             """
             return await self.db_session.fetch_one(query, values={"user_id": user_id})
+
+    async def read_user_groups_by_ids(self, user_ids: list[int]) -> dict[int, list[dict]]:
+        if len(user_ids) == 0:
+            return {}
+
+        async with self.db_session.transaction():
+            placeholders = ", ".join([f":user_id_{i}" for i in range(len(user_ids))])
+            query = f"""
+                SELECT GUR.user_id, G.id, G.name
+                FROM group_user_relations AS GUR
+                INNER JOIN groups AS G ON G.id = GUR.group_id
+                WHERE GUR.user_id IN ({placeholders})
+                ORDER BY GUR.user_id, G.name, G.id
+            """
+            values = {f"user_id_{i}": user_id for i, user_id in enumerate(user_ids)}
+            rows = await self.db_session.fetch_all(query, values=values)
+
+            groups_by_user_id = {user_id: [] for user_id in user_ids}
+            for row in rows:
+                row_dict = dict(row)
+                user_id = row_dict.pop("user_id")
+                groups_by_user_id[user_id].append(row_dict)
+
+            return groups_by_user_id
 
     async def read_user_groups(self, user_id: int) -> list[dict]:
         async with self.db_session.transaction():

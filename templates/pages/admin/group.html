@@ -75,6 +75,34 @@
     <li>Orga : {{details.organisation_name}} ({{ details.organisation_siret }})</li>
   </ul>
 
+  <div class="fr-grid-row">
+    <div class="fr-col-12 fr-col-md-8 fr-col-lg-6">
+      <form
+        method="POST"
+        action="/admin/groups/{{ details.id }}/name"
+        class="fr-form fr-mb-2w"
+        onsubmit="return confirm('Êtes-vous sûr de vouloir modifier le nom de ce groupe ?');"
+      >
+        <div class="fr-input-group">
+          <label class="fr-label" for="group-name">
+            Modifier le nom du groupe
+          </label>
+          <input
+            class="fr-input"
+            id="group-name"
+            name="group_name"
+            type="text"
+            value="{{ details.name }}"
+            required
+          >
+        </div>
+        <button type="submit" class="fr-btn fr-btn--secondary">
+          Mettre à jour le nom
+        </button>
+      </form>
+    </div>
+  </div>
+
   <h2>Droits (scopes)</h2>
   {{ data_table(scopes_headers, scopes, scope_formatter) }}
 

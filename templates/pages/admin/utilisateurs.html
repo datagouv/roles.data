@@ -11,7 +11,7 @@
         <td><a href='/admin/users/{{user.id}}'>{{ user.email }}</a></td>
         <td>
             {% if user.groups %}
-                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; max-height: 8rem; overflow-y: auto; align-content: flex-start; padding-right: 0.25rem;">
                     {% for group in user.groups %}
                         <a class="fr-tag fr-tag--sm" href="/admin/groups/{{ group.id }}">{{ group.name }}</a>
                     {% endfor %}

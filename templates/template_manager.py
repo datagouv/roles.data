@@ -47,11 +47,6 @@ class TemplateManager:
                     request.session.get("is_super_admin", False)
                     or permissions.is_admin,
                 ),
-                "can_view_admin_logs": request.session.get(
-                    "can_view_admin_logs",
-                    request.session.get("is_admin", False)
-                    or permissions.can_view_admin_logs,
-                ),
                 "can_write_admin": request.session.get(
                     "can_write_admin",
                     request.session.get("is_super_admin", False)

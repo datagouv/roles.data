@@ -35,10 +35,7 @@ async def group_explorer(
     """
     group = await admin_service.get_group_details(
         group_id,
-        include_logs=request.session.get(
-            "can_view_admin_logs",
-            request.session.get("is_admin", False),
-        ),
+        include_logs=request.session.get("is_admin", False),
     )
     return admin_template_manager.render(
         request,

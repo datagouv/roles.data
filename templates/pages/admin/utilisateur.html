@@ -32,10 +32,8 @@
   <h2>Groupes</h2>
   {{ data_table(headers, groups, formatter) }}
 
-  {% if can_view_admin_logs %}
-    <h2>Logs</h2>
-    {{ logs_table(logs) }}
-  {% endif %}
+  <h2>Logs</h2>
+  {{ logs_table(logs) }}
 
   <br/>
 </div>

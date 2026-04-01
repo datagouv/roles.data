@@ -4,7 +4,6 @@
     is_authenticated,
     user_email,
     is_super_admin=False,
-    can_view_admin_logs=False,
     can_view_admin_service_providers=False,
     is_admin=False
 ) %}
@@ -69,11 +68,9 @@
                       <li class="fr-nav__item">
                           <a type="link" href="/admin/users" class="fr-nav__link">Utilisateurs</a>
                       </li>
-                      {% if can_view_admin_logs %}
-                          <li class="fr-nav__item">
-                              <a type="link" href="/admin/logs" class="fr-nav__link">Logs</a>
-                          </li>
-                      {% endif %}
+                        <li class="fr-nav__item">
+                            <a type="link" href="/admin/logs" class="fr-nav__link">Logs</a>
+                        </li>
                       {% if can_view_admin_service_providers %}
                           <li class="fr-nav__item">
                               <a type="link" href="/admin/service-providers" class="fr-nav__link">Fournisseurs de service</a>

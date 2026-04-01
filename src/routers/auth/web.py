@@ -93,7 +93,6 @@ async def callback(request: Request):
         request.session["is_admin"] = permissions.is_admin
         request.session["is_super_admin"] = permissions.is_super_admin
         request.session["is_viewer_admin"] = permissions.is_viewer_admin
-        request.session["can_view_admin_logs"] = permissions.can_view_admin_logs
         request.session["can_write_admin"] = permissions.can_write_admin
         request.session["can_view_admin_service_providers"] = (
             permissions.can_view_admin_service_providers

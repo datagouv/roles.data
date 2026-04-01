@@ -18,10 +18,6 @@ class WebAdminPermissions:
     is_viewer_admin: bool
 
     @property
-    def can_view_admin_logs(self) -> bool:
-        return self.is_admin
-
-    @property
     def can_write_admin(self) -> bool:
         return self.is_super_admin
 

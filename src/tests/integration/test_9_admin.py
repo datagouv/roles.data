@@ -57,7 +57,6 @@ def test_viewer_admin_can_see_groups_and_users_but_not_write_actions(client):
         "user_email": viewer_email,
         "is_admin": True,
         "is_viewer_admin": True,
-        "can_view_admin_logs": True,
         "can_write_admin": False,
         "can_view_admin_service_providers": False,
     }
@@ -93,7 +92,6 @@ def test_viewer_admin_cannot_access_restricted_pages_or_write_actions(client):
         "user_email": viewer_email,
         "is_admin": True,
         "is_viewer_admin": True,
-        "can_view_admin_logs": True,
         "can_write_admin": False,
         "can_view_admin_service_providers": False,
         "user_sub": "00000000-0000-4000-8000-000000000002",

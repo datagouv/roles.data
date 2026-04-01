@@ -53,6 +53,7 @@ class AppSettings(BaseSettings):
     # ProConnect and /admin settings
     PROCONNECT_ENABLED: bool = False
     SUPER_ADMIN_EMAILS: str = ""
+    VIEWER_ADMIN_EMAILS: str = ""
 
     @property
     def DATAPASS_SERVICE_PROVIDER_ID(self):

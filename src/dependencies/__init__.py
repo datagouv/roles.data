@@ -31,7 +31,10 @@ from src.dependencies.services import (
 from src.dependencies.web import (
     get_admin_read_service,
     get_admin_write_service,
+    get_proconnected_admin_email,
     get_proconnected_user_email,
+    get_proconnected_super_admin_email,
+    require_super_admin_access,
 )
 
 # Make all imports available at package level
@@ -55,7 +58,10 @@ __all__ = [
     # Admin
     "get_admin_read_service",
     "get_admin_write_service",
+    "get_proconnected_admin_email",
     "get_proconnected_user_email",
+    "get_proconnected_super_admin_email",
+    "require_super_admin_access",
     # Webhooks
     "get_verified_datapass_payload",
 ]

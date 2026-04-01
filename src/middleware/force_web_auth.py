@@ -12,10 +12,12 @@ class ForceWebAuthenticationMiddleware(BaseHTTPMiddleware):
         # Only check admin routes
         path = request.url.path
 
-        if path.startswith("/admin/") and not path.startswith("/admin/login"):
-            is_super_admin = request.session.get("is_super_admin", False)
+        if path.startswith("/admin") and not path.startswith("/admin/login"):
+            is_admin = request.session.get(
+                "is_admin", request.session.get("is_super_admin", False)
+            )
 
-            if not is_super_admin:
+            if not is_admin:
                 return RedirectResponse(url="/admin/login", status_code=302)
 
             response = await call_next(request)

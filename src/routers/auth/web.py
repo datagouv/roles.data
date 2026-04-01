@@ -8,6 +8,7 @@ from fastapi.responses import RedirectResponse
 
 from src.config import settings
 from src.dependencies.auth.pro_connect import pro_connect_provider
+from src.utils.admin_permissions import get_web_admin_permissions
 
 # This is a router for ProConnect authentication
 # It handles login, callback, and logout functionality
@@ -77,7 +78,9 @@ async def callback(request: Request):
                 detail="Multi-factor authentication (MFA) is required.",
             )
 
-        if userinfo["email"] not in settings.SUPER_ADMIN_EMAILS:
+        permissions = get_web_admin_permissions(userinfo["email"])
+
+        if not permissions.is_admin:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You are not authorized to access this resource.",
@@ -85,9 +88,15 @@ async def callback(request: Request):
 
         request.session["id_token"] = token["id_token"]
         request.session["access_token"] = token["access_token"]
-        request.session["is_super_admin"] = True
         request.session["user_email"] = userinfo["email"]
         request.session["user_sub"] = userinfo["sub"]
+        request.session["is_admin"] = permissions.is_admin
+        request.session["is_super_admin"] = permissions.is_super_admin
+        request.session["is_viewer_admin"] = permissions.is_viewer_admin
+        request.session["can_write_admin"] = permissions.can_write_admin
+        request.session["can_view_admin_service_providers"] = (
+            permissions.can_view_admin_service_providers
+        )
 
         return RedirectResponse(url="/admin", status_code=status.HTTP_302_FOUND)
 

@@ -11,7 +11,7 @@
     {% else %}
         <p>
             Vous êtes connecté en tant que <strong>{{ user_email }}</strong>.
-            {% if not is_super_admin %}
+            {% if not is_admin %}
                 Vous n'avez pas les droits d'administrateur.
             {% endif %}
         </p>

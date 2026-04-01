@@ -121,8 +121,11 @@ def test_override_setup():
     connecting to the production database during tests.
     """
     original_super_admin_emails = settings.SUPER_ADMIN_EMAILS
+    original_viewer_admin_emails = settings.VIEWER_ADMIN_EMAILS
     if not settings.SUPER_ADMIN_EMAILS.strip():
         settings.SUPER_ADMIN_EMAILS = "admin_ci@beta.gouv.fr"
+    if not settings.VIEWER_ADMIN_EMAILS.strip():
+        settings.VIEWER_ADMIN_EMAILS = "viewer_ci@beta.gouv.fr"
 
     # Save original handlers
     original_startup_handlers = app.router.on_startup.copy()
@@ -163,6 +166,7 @@ def test_override_setup():
 
     # Restore original handlers after tests
     settings.SUPER_ADMIN_EMAILS = original_super_admin_emails
+    settings.VIEWER_ADMIN_EMAILS = original_viewer_admin_emails
     app.dependency_overrides.clear()
     app.router.on_startup = original_startup_handlers
     app.router.on_shutdown = original_shutdown_handlers

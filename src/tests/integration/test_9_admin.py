@@ -7,7 +7,9 @@ def test_admin_users_list_shows_group_tags(client):
     first_group = create_group(client, admin_email=admin_email)
     second_group = create_group(client, admin_email=admin_email)
 
-    with mock_session({"user_email": admin_email, "is_super_admin": True}):
+    with mock_session(
+        {"user_email": admin_email, "is_admin": True, "is_super_admin": True}
+    ):
         response = client.get("/admin/users/")
 
     assert response.status_code == 200
@@ -23,6 +25,7 @@ def test_admin_group_page_can_update_group_name(client):
     renamed_group = "Renamed Group"
     session = {
         "user_email": admin_email,
+        "is_admin": True,
         "is_super_admin": True,
         "user_sub": "00000000-0000-4000-8000-000000000001",
     }
@@ -45,3 +48,77 @@ def test_admin_group_page_can_update_group_name(client):
 
     updated_group = get_group(client, group["id"])
     assert updated_group["name"] == renamed_group
+
+
+def test_viewer_admin_can_see_groups_and_users_but_not_write_actions(client):
+    viewer_email = settings.VIEWER_ADMIN_EMAILS.split(",")[0]
+    group = create_group(client, admin_email=viewer_email)
+    session = {
+        "user_email": viewer_email,
+        "is_admin": True,
+        "is_viewer_admin": True,
+        "can_view_admin_logs": True,
+        "can_write_admin": False,
+        "can_view_admin_service_providers": False,
+    }
+
+    with mock_session(session):
+        groups_response = client.get("/admin/groups/")
+
+    assert groups_response.status_code == 200
+    assert group["name"] in groups_response.text
+    assert "Fournisseurs de service" not in groups_response.text
+    assert "Logs" in groups_response.text
+
+    with mock_session(session):
+        group_response = client.get(f"/admin/groups/{group['id']}")
+
+    assert group_response.status_code == 200
+    assert "Modifier le nom du groupe" not in group_response.text
+    assert "Supprimer le groupe" not in group_response.text
+    assert "Set admin" not in group_response.text
+    assert "<h2>Logs</h2>" in group_response.text
+
+    with mock_session(session):
+        users_response = client.get("/admin/users/")
+
+    assert users_response.status_code == 200
+    assert viewer_email in users_response.text
+
+
+def test_viewer_admin_cannot_access_restricted_pages_or_write_actions(client):
+    viewer_email = settings.VIEWER_ADMIN_EMAILS.split(",")[0]
+    group = create_group(client, admin_email=viewer_email)
+    session = {
+        "user_email": viewer_email,
+        "is_admin": True,
+        "is_viewer_admin": True,
+        "can_view_admin_logs": True,
+        "can_write_admin": False,
+        "can_view_admin_service_providers": False,
+        "user_sub": "00000000-0000-4000-8000-000000000002",
+    }
+
+    with mock_session(session):
+        logs_response = client.get("/admin/logs/")
+
+    assert logs_response.status_code == 200
+
+    with mock_session(session):
+        service_providers_response = client.get("/admin/service-providers/")
+
+    assert service_providers_response.status_code == 403
+
+    with mock_session(session):
+        rename_response = client.post(
+            f"/admin/groups/{group['id']}/name",
+            data={"group_name": "Should not work"},
+            follow_redirects=False,
+        )
+
+    assert rename_response.status_code == 403
+
+    with mock_session(session):
+        delete_user_response = client.delete("/admin/users/1", follow_redirects=False)
+
+    assert delete_user_response.status_code == 403

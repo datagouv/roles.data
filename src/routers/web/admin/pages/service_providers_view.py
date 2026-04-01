@@ -2,12 +2,17 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import HttpUrl, ValidationError
 
-from src.dependencies import get_admin_read_service, get_admin_write_service
+from src.dependencies import (
+    get_admin_read_service,
+    get_admin_write_service,
+    require_super_admin_access,
+)
 from src.services.admin.write_service import AdminWriteService
 from templates.template_manager import Breadcrumb, admin_template_manager
 
 router = APIRouter(
     prefix="/service-providers",
+    dependencies=[Depends(require_super_admin_access)],
     responses={404: {"description": "Not found"}},
 )
 

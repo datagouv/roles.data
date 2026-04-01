@@ -47,7 +47,7 @@ class AdminReadService:
     async def get_groups(self):
         return await self.admin_read_repository.read_groups()
 
-    async def get_group_details(self, group_id: int):
+    async def get_group_details(self, group_id: int, include_logs: bool = True):
         matching_groups = await self.admin_read_repository.read_groups([group_id])
 
         if len(matching_groups) == 0:
@@ -59,7 +59,7 @@ class AdminReadService:
         group_details = matching_groups[0]
         users = await self.admin_read_repository.read_group_users(group_id)
         scopes = await self.admin_read_repository.read_group_scopes(group_id)
-        logs = await self.get_logs(group_id=group_id)
+        logs = await self.get_logs(group_id=group_id) if include_logs else []
 
         return {
             "details": group_details,
@@ -80,10 +80,10 @@ class AdminReadService:
 
         return users
 
-    async def get_user_details(self, user_id: int):
+    async def get_user_details(self, user_id: int, include_logs: bool = True):
         user = await self.admin_read_repository.read_user_by_id(user_id)
         groups = await self.admin_read_repository.read_user_groups(user_id)
-        logs = await self.get_logs(user_id=user_id)
+        logs = await self.get_logs(user_id=user_id) if include_logs else []
 
         return {
             "user": user,

@@ -4,6 +4,8 @@ from fastapi import Request
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, ConfigDict
 
+from src.utils.admin_permissions import get_web_admin_permissions
+
 
 class Breadcrumb(BaseModel):
     path: str
@@ -30,12 +32,36 @@ class TemplateManager:
             context = {}
 
         # Add common context
+        permissions = get_web_admin_permissions(request.session.get("user_email", None))
         context.update(
             {
                 "title": title,
                 "request": request,
                 "user_email": request.session.get("user_email", None),
                 "is_super_admin": request.session.get("is_super_admin", False),
+                "is_viewer_admin": request.session.get(
+                    "is_viewer_admin", permissions.is_viewer_admin
+                ),
+                "is_admin": request.session.get(
+                    "is_admin",
+                    request.session.get("is_super_admin", False)
+                    or permissions.is_admin,
+                ),
+                "can_view_admin_logs": request.session.get(
+                    "can_view_admin_logs",
+                    request.session.get("is_admin", False)
+                    or permissions.can_view_admin_logs,
+                ),
+                "can_write_admin": request.session.get(
+                    "can_write_admin",
+                    request.session.get("is_super_admin", False)
+                    or permissions.can_write_admin,
+                ),
+                "can_view_admin_service_providers": request.session.get(
+                    "can_view_admin_service_providers",
+                    request.session.get("is_super_admin", False)
+                    or permissions.can_view_admin_service_providers,
+                ),
                 "is_authenticated": bool(request.session.get("user_email", None)),
                 "breadcrumb_items": [Breadcrumb(path="/admin", label="Accueil")]
                 + breadcrumbs,

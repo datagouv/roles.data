@@ -2,8 +2,8 @@
 from fastapi import HTTPException, status
 from pydantic import EmailStr
 
-from src.config import settings
 from src.model import ServiceProviderResponse
+from src.utils.admin_permissions import get_web_admin_permissions
 
 
 class AdminWriteRepository:
@@ -19,7 +19,9 @@ class AdminWriteRepository:
         self.admin_email = admin_email
 
         # extra safety check. All Admin Repositories should never be instantiated without an admin email
-        if not self.admin_email or self.admin_email not in settings.SUPER_ADMIN_EMAILS:
+        if not self.admin_email or not get_web_admin_permissions(
+            str(self.admin_email)
+        ).is_super_admin:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="User is not authorized to perform admin operations.",

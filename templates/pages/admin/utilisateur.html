@@ -15,7 +15,7 @@
 
 {% block content %}
 <div class="fr-container">
-  {% if user %}
+  {% if user and can_write_admin %}
   <div class="fr-grid-row fr-grid-row--right">
     <div class="fr-col-auto">
       <button type="button"
@@ -32,8 +32,11 @@
   <h2>Groupes</h2>
   {{ data_table(headers, groups, formatter) }}
 
-  <h2>Logs</h2>
-  {{ logs_table(logs) }}
+  {% if can_view_admin_logs %}
+    <h2>Logs</h2>
+    {{ logs_table(logs) }}
+  {% endif %}
 
   <br/>
+</div>
 {% endblock %}

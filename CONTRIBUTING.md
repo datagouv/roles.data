@@ -74,4 +74,5 @@ NB: l’application principale est bien l'API. L'interface d’admin est isolée
 1. Instructions pour (lancer l'app en local)[README.md]
 2. Documentation API disponible sur `/docs` (Swagger UI)
 3. Interface admin sur `/admin` (nécessite authentification ProConnect)
-4. Toutes les opérations admin nécessitent un email super admin dans les paramètres
+4. Les emails de `SUPER_ADMIN_EMAILS` ont accès complet à l'interface d'admin
+5. Les emails de `VIEWER_ADMIN_EMAILS` ont un accès en lecture seule aux pages groupes et utilisateurs

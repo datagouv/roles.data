@@ -12,6 +12,7 @@ from src.repositories.admin.admin_write_repository import AdminWriteRepository
 from src.services.logs import LogsService
 from src.services.admin.read_service import AdminReadService
 from src.services.admin.write_service import AdminWriteService
+from src.utils.admin_permissions import get_web_admin_permissions
 
 # =====================
 # Web dependencies
@@ -31,8 +32,51 @@ async def get_proconnected_user_email(request: Request):
     return user_email
 
 
+async def get_proconnected_admin_email(request: Request):
+    """
+    Dependency function that extracts an authenticated admin email from the request.
+    """
+    user_email = await get_proconnected_user_email(request)
+    is_admin = request.session.get(
+        "is_admin", get_web_admin_permissions(user_email).is_admin
+    )
+
+    if not is_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="User is not authorized to access admin pages.",
+        )
+
+    return user_email
+
+
+async def get_proconnected_super_admin_email(request: Request):
+    """
+    Dependency function that extracts an authenticated super admin email from the request.
+    """
+    user_email = await get_proconnected_user_email(request)
+    is_super_admin = request.session.get(
+        "is_super_admin", get_web_admin_permissions(user_email).is_super_admin
+    )
+
+    if not is_super_admin:
+        raise HTTPException(
+            status_code=403,
+            detail="User is not authorized to perform admin write operations.",
+        )
+
+    return user_email
+
+
+async def require_super_admin_access(request: Request) -> None:
+    """
+    Dependency used to restrict specific admin routes to super admins only.
+    """
+    await get_proconnected_super_admin_email(request)
+
+
 async def get_admin_read_service(
-    user_email: EmailStr = Depends(get_proconnected_user_email),
+    user_email: EmailStr = Depends(get_proconnected_admin_email),
     db: Database = Depends(get_db),
 ):
     """
@@ -44,7 +88,7 @@ async def get_admin_read_service(
 
 async def get_admin_write_service(
     request: Request,
-    user_email: EmailStr = Depends(get_proconnected_user_email),
+    user_email: EmailStr = Depends(get_proconnected_super_admin_email),
     db: Database = Depends(get_db),
 ):
     """

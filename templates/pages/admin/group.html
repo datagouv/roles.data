@@ -16,7 +16,7 @@
     </td>
       <td><a href="/admin/users/{{user.id}}">{{user.email}}</a></td>
       <td>
-        {% if user.role != 'administrateur' %}
+        {% if can_write_admin and user.role != 'administrateur' %}
           <form method="GET" action="/admin/groups/{{ details.id }}/set-admin/{{ user.id }}" style="display: inline;">
               <button type="submit" class="fr-btn fr-btn--sm fr-btn--secondary" onclick="return confirm('Êtes-vous sûr de vouloir nommer cet utilisateur administrateur ? Attention, cette action n’est pas logguée et ne peut pas être annulée.')">
                   Set admin
@@ -54,6 +54,7 @@
 
 {% block content %}
 <div class="fr-container">
+  {% if can_write_admin %}
   <div class="fr-grid-row fr-grid-row--right">
     <div class="fr-col-auto">
       <button type="button"
@@ -66,6 +67,7 @@
       </button>
     </div>
   </div>
+  {% endif %}
   <h2>Informations générales</h2>
 
   <ul>
@@ -75,33 +77,35 @@
     <li>Orga : {{details.organisation_name}} ({{ details.organisation_siret }})</li>
   </ul>
 
-  <div class="fr-grid-row">
-    <div class="fr-col-12 fr-col-md-8 fr-col-lg-6">
-      <form
-        method="POST"
-        action="/admin/groups/{{ details.id }}/name"
-        class="fr-form fr-mb-2w"
-        onsubmit="return confirm('Êtes-vous sûr de vouloir modifier le nom de ce groupe ?');"
-      >
-        <div class="fr-input-group">
-          <label class="fr-label" for="group-name">
-            Modifier le nom du groupe
-          </label>
-          <input
-            class="fr-input"
-            id="group-name"
-            name="group_name"
-            type="text"
-            value="{{ details.name }}"
-            required
-          >
-        </div>
-        <button type="submit" class="fr-btn fr-btn--secondary">
-          Mettre à jour le nom
-        </button>
-      </form>
+  {% if can_write_admin %}
+    <div class="fr-grid-row">
+      <div class="fr-col-12 fr-col-md-8 fr-col-lg-6">
+        <form
+          method="POST"
+          action="/admin/groups/{{ details.id }}/name"
+          class="fr-form fr-mb-2w"
+          onsubmit="return confirm('Êtes-vous sûr de vouloir modifier le nom de ce groupe ?');"
+        >
+          <div class="fr-input-group">
+            <label class="fr-label" for="group-name">
+              Modifier le nom du groupe
+            </label>
+            <input
+              class="fr-input"
+              id="group-name"
+              name="group_name"
+              type="text"
+              value="{{ details.name }}"
+              required
+            >
+          </div>
+          <button type="submit" class="fr-btn fr-btn--secondary">
+            Mettre à jour le nom
+          </button>
+        </form>
+      </div>
     </div>
-  </div>
+  {% endif %}
 
   <h2>Droits (scopes)</h2>
   {{ data_table(scopes_headers, scopes, scope_formatter) }}
@@ -109,8 +113,10 @@
   <h2>Utilisateurs</h2>
   {{ data_table(users_headers, users, user_formatter) }}
 
-  <h2>Logs</h2>
-  {{ logs_table(logs) }}
+  {% if can_view_admin_logs %}
+    <h2>Logs</h2>
+    {{ logs_table(logs) }}
+  {% endif %}
 
   <br/>
 </div>

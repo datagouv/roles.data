@@ -6,7 +6,7 @@ from src.config import settings
 def _parse_emails(raw_emails: str) -> set[str]:
     return {
         email.strip().lower()
-        for email in raw_emails.split(",")
+        for email in raw_emails.split(" ")
         if email and email.strip()
     }
 

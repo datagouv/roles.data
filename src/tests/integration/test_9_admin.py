@@ -3,7 +3,7 @@ from src.tests.helpers import create_group, get_group, mock_session
 
 
 def test_admin_users_list_shows_group_tags(client):
-    admin_email = settings.SUPER_ADMIN_EMAILS.split(",")[0]
+    admin_email = settings.SUPER_ADMIN_EMAILS.split(" ")[0]
     first_group = create_group(client, admin_email=admin_email)
     second_group = create_group(client, admin_email=admin_email)
 
@@ -20,7 +20,7 @@ def test_admin_users_list_shows_group_tags(client):
 
 
 def test_admin_group_page_can_update_group_name(client):
-    admin_email = settings.SUPER_ADMIN_EMAILS.split(",")[0]
+    admin_email = settings.SUPER_ADMIN_EMAILS.split(" ")[0]
     group = create_group(client, admin_email=admin_email)
     renamed_group = "Renamed Group"
     session = {
@@ -51,7 +51,7 @@ def test_admin_group_page_can_update_group_name(client):
 
 
 def test_viewer_admin_can_see_groups_and_users_but_not_write_actions(client):
-    viewer_email = settings.VIEWER_ADMIN_EMAILS.split(",")[0]
+    viewer_email = settings.VIEWER_ADMIN_EMAILS.split(" ")[0]
     group = create_group(client, admin_email=viewer_email)
     session = {
         "user_email": viewer_email,
@@ -86,7 +86,7 @@ def test_viewer_admin_can_see_groups_and_users_but_not_write_actions(client):
 
 
 def test_viewer_admin_cannot_access_restricted_pages_or_write_actions(client):
-    viewer_email = settings.VIEWER_ADMIN_EMAILS.split(",")[0]
+    viewer_email = settings.VIEWER_ADMIN_EMAILS.split(" ")[0]
     group = create_group(client, admin_email=viewer_email)
     session = {
         "user_email": viewer_email,

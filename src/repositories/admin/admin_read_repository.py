@@ -71,7 +71,11 @@ class AdminReadRepository:
     async def read_groups(self, group_ids: list[int] = []) -> list[dict]:
         async with self.db_session.transaction():
             query = """
-                SELECT G.*, O.siret AS organisation_siret, O.name AS organisation_name, COUNT(GUR.user_id) AS user_count
+                SELECT
+                    G.*,
+                    O.siret AS organisation_siret,
+                    O.name AS organisation_name,
+                    COUNT(GUR.user_id) AS user_count
                 FROM groups as G
                 INNER JOIN organisations AS O ON O.id = G.orga_id
                 INNER JOIN group_user_relations AS GUR ON GUR.group_id = G.id
@@ -95,6 +99,31 @@ class AdminReadRepository:
 
             query += " GROUP BY G.id, O.siret, O.name ORDER BY id"
             return await self.db_session.fetch_all(query, values)
+
+    async def read_group_admins_by_ids(self, group_ids: list[int]) -> dict[int, list[dict]]:
+        if len(group_ids) == 0:
+            return {}
+
+        async with self.db_session.transaction():
+            placeholders = ", ".join([f":group_id_{i}" for i in range(len(group_ids))])
+            query = f"""
+                SELECT GUR.group_id, U.id, U.email
+                FROM group_user_relations AS GUR
+                INNER JOIN roles AS R ON R.id = GUR.role_id
+                INNER JOIN users AS U ON U.id = GUR.user_id
+                WHERE GUR.group_id IN ({placeholders}) AND R.is_admin = TRUE
+                ORDER BY GUR.group_id, GUR.created_at, GUR.user_id
+            """
+            values = {f"group_id_{i}": group_id for i, group_id in enumerate(group_ids)}
+            rows = await self.db_session.fetch_all(query, values=values)
+
+            admins_by_group_id = {group_id: [] for group_id in group_ids}
+            for row in rows:
+                row_dict = dict(row)
+                group_id = row_dict.pop("group_id")
+                admins_by_group_id[group_id].append(row_dict)
+
+            return admins_by_group_id
 
     async def read_group_users(self, group_id: int) -> list[dict]:
         async with self.db_session.transaction():

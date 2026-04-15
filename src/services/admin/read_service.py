@@ -45,7 +45,16 @@ class AdminReadService:
         return logs
 
     async def get_groups(self):
-        return await self.admin_read_repository.read_groups()
+        groups = [dict(group) for group in await self.admin_read_repository.read_groups()]
+        group_ids = [group["id"] for group in groups]
+        admins_by_group_id = await self.admin_read_repository.read_group_admins_by_ids(
+            group_ids
+        )
+
+        for group in groups:
+            group["admins"] = admins_by_group_id.get(group["id"], [])
+
+        return groups
 
     async def get_group_details(self, group_id: int, include_logs: bool = True):
         matching_groups = await self.admin_read_repository.read_groups([group_id])

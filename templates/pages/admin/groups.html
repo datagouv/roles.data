@@ -6,14 +6,32 @@
 {% macro formatter(group) %}
     <tr>
         <td>{{ group.id }}</td>
+        <td><a href='/admin/groups/{{group.id}}'>{{ group.name }}</a></td>
+        <td>
+            {% if group.organisation_name %}
+            <strong>{{ group.organisation_name }}</strong>
+            <br/>
+            {% endif %}
+            <a title="{{group.organisation_name}}" target="_blank" rel="noreferrer noopener" href="https://annuaire-entreprises.data.gouv.fr/etablissement/{{group.organisation_siret}}">{{ group.organisation_siret }}</a>
+        </td>
+        <td>
+            {% if group.admins %}
+                {% for admin in group.admins %}
+                <a target="_blank" rel="noreferrer noopener" href='/admin/users/{{admin.id}}'>{{ admin.email }}</a>
+                {% if not loop.last %}
+                <br/>
+                {% endif %}
+                {% endfor %}
+            {% else %}
+                Aucun admin
+            {% endif %}
+        </td>
+        <td>{{ group.user_count }}</td>
         <td>{{ group.created_at.strftime('%d/%m/%Y') }}</td>
         <td>{{ group.updated_at.strftime('%d/%m/%Y') }} {{ group.updated_at.strftime('%H:%M:%S') }}</td>
-        <td><a title="{{group.organisation_name}}" target="_blank" rel="noreferrer noopener" href="https://annuaire-entreprises.data.gouv.fr/etablissement/{{group.organisation_siret}}">{{ group.organisation_siret }}</a></td>
-        <td>{{ group.user_count }}</td>
-        <td><a href='/admin/groups/{{group.id}}'>{{ group.name }}</a></td>
     </tr>
 {% endmacro %}
-{% set headers = ['ID', 'Creation', 'MAJ', 'Organisation', 'Utilisateurs', 'Nom'] %}
+{% set headers = ['ID', 'Nom', 'Organisation', 'Admin', 'Utilisateurs', 'Creation', 'MAJ'] %}
 
 <div class="fr-container">
     {{ data_table(headers, groups, formatter) }}

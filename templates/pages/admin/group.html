@@ -2,28 +2,62 @@
 {% from "components/logs_table.html" import logs_table %}
 {% from "components/table.html" import data_table %}
 
-{% set users_headers = ['Date d’ajout', 'id', 'Role', 'Email', 'Action'] %}
+{% set users_headers = ['Date d’ajout', 'id', 'Role', 'Email'] %}
+{% if can_write_admin %}
+  {% set users_headers = users_headers + ['Action'] %}
+{% endif %}
 {% macro user_formatter(user) %}
 <tr>
     <td>{{ user.created_at.strftime('%d/%m/%Y') }}</td>
     <td>{{ user.id }}</td>
     <td>
-      {% if user.role == 'administrateur' %}
-      <span class="fr-badge fr-badge--new">{{user.role}}</span>
+      {% if can_write_admin %}
+        <form
+          method="POST"
+          action="/admin/groups/{{ details.id }}/users/{{ user.id }}/role"
+          class="fr-grid-row fr-grid-row--gutters fr-grid-row--middle"
+          style="min-width: 18rem;"
+        >
+          <div class="fr-col-8">
+            <div class="fr-select-group fr-mb-1w">
+              <label class="fr-sr-only" for="role-{{ user.id }}">Rôle</label>
+              <select class="fr-select fr-select--sm" id="role-{{ user.id }}" name="role_id">
+                {% for role in roles %}
+                  <option value="{{ role.id }}" {% if role.role_name == user.role %}selected{% endif %}>{{ role.role_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="fr-col-4">
+            <button type="submit" class="fr-btn fr-btn--sm fr-btn--secondary">
+              Mettre à jour
+            </button>
+          </div>
+        </form>
+      {% elif user.role == 'administrateur' %}
+        <span class="fr-badge fr-badge--new">{{user.role}}</span>
       {% else %}
-      <strong>{{ user.role | upper }}</strong>
+        <strong>{{ user.role | upper }}</strong>
       {% endif %}
     </td>
-      <td><a href="/admin/users/{{user.id}}">{{user.email}}</a></td>
+    <td><a href="/admin/users/{{user.id}}">{{user.email}}</a></td>
+    {% if can_write_admin %}
       <td>
-        {% if can_write_admin and user.role != 'administrateur' %}
-          <form method="GET" action="/admin/groups/{{ details.id }}/set-admin/{{ user.id }}" style="display: inline;">
-              <button type="submit" class="fr-btn fr-btn--sm fr-btn--secondary" onclick="return confirm('Êtes-vous sûr de vouloir nommer cet utilisateur administrateur ? Attention, cette action n’est pas logguée et ne peut pas être annulée.')">
-                  Set admin
-              </button>
-          </form>
-        {% endif %}
-    </td>
+        <form
+          method="POST"
+          action="/admin/groups/{{ details.id }}/users/{{ user.id }}/remove"
+          style="display: inline;"
+        >
+          <button
+            type="submit"
+            class="fr-btn fr-btn--sm fr-btn--tertiary-no-outline"
+            onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur du groupe ?');"
+          >
+            Supprimer
+          </button>
+        </form>
+      </td>
+    {% endif %}
 </tr>
 {% endmacro %}
 
@@ -111,6 +145,49 @@
   {{ data_table(scopes_headers, scopes, scope_formatter) }}
 
   <h2>Utilisateurs</h2>
+  {% if can_write_admin %}
+    <div class="fr-grid-row fr-grid-row--gutters fr-mb-2w">
+      <div class="fr-col-12 fr-col-lg-8">
+        <form
+          method="POST"
+          action="/admin/groups/{{ details.id }}/users"
+          class="fr-grid-row fr-grid-row--gutters fr-grid-row--bottom"
+        >
+          <div class="fr-col-12 fr-col-md-7">
+            <div class="fr-input-group fr-mb-0">
+              <label class="fr-label" for="new-user-email">
+                Ajouter un utilisateur
+                <span class="fr-hint-text">Adresse email de l'utilisateur à ajouter au groupe</span>
+              </label>
+              <input
+                class="fr-input"
+                id="new-user-email"
+                name="user_email"
+                type="email"
+                placeholder="prenom.nom@example.fr"
+                required
+              >
+            </div>
+          </div>
+          <div class="fr-col-12 fr-col-md-3">
+            <div class="fr-select-group fr-mb-0">
+              <label class="fr-label" for="new-user-role">Rôle</label>
+              <select class="fr-select" id="new-user-role" name="role_id">
+                {% for role in roles %}
+                  <option value="{{ role.id }}">{{ role.role_name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="fr-col-12 fr-col-md-2">
+            <button type="submit" class="fr-btn">
+              Ajouter
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  {% endif %}
   {{ data_table(users_headers, users, user_formatter) }}
 
   <h2>Logs</h2>

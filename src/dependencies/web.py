@@ -9,9 +9,14 @@ from src.repositories.groups import GroupsRepository
 from src.repositories.logs import LogsRepository
 from src.repositories.admin.admin_read_repository import AdminReadRepository
 from src.repositories.admin.admin_write_repository import AdminWriteRepository
+from src.repositories.roles import RolesRepository
+from src.repositories.users import UsersRepository
+from src.repositories.users_in_group import UsersInGroupRepository
 from src.services.logs import LogsService
 from src.services.admin.read_service import AdminReadService
 from src.services.admin.write_service import AdminWriteService
+from src.services.roles import RolesService
+from src.services.users import UsersService
 from src.utils.admin_permissions import get_web_admin_permissions
 
 # =====================
@@ -99,6 +104,7 @@ async def get_admin_write_service(
     if user_sub:
         acting_user_sub = UUID(user_sub, version=4)
 
+    admin_read_repository = AdminReadRepository(db, admin_email=user_email)
     admin_write_repository = AdminWriteRepository(db, admin_email=user_email)
     logs_service = LogsService(
         LogsRepository(
@@ -108,4 +114,14 @@ async def get_admin_write_service(
         )
     )
     groups_repository = GroupsRepository(db, logs_service)
-    return AdminWriteService(admin_write_repository, groups_repository)
+    users_in_group_repository = UsersInGroupRepository(db, logs_service)
+    users_service = UsersService(UsersRepository(db, logs_service))
+    roles_service = RolesService(RolesRepository(db))
+    return AdminWriteService(
+        admin_read_repository,
+        admin_write_repository,
+        groups_repository,
+        users_in_group_repository,
+        users_service,
+        roles_service,
+    )

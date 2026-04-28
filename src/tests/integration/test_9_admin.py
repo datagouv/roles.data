@@ -50,14 +50,58 @@ def test_admin_group_page_can_update_group_name(client):
     assert updated_group["name"] == renamed_group
 
 
-def test_admin_groups_list_shows_admin_email_and_organisation_name(client):
+def test_admin_group_page_can_add_update_and_remove_group_users(client):
     admin_email = settings.SUPER_ADMIN_EMAILS.split(" ")[0]
     group = create_group(client, admin_email=admin_email)
-    member_email = group["members"][0]["email"]
-    group_details = get_group(client, group["id"])
-    member_id = next(
-        user["id"] for user in group_details["users"] if user["email"] == member_email
-    )
+    new_user_email = "new.group.member@beta.gouv.fr"
+    session = {
+        "user_email": admin_email,
+        "is_admin": True,
+        "is_super_admin": True,
+        "user_sub": "00000000-0000-4000-8000-000000000003",
+    }
+
+    with mock_session(session):
+        add_response = client.post(
+            f"/admin/groups/{group['id']}/users",
+            data={"user_email": new_user_email, "role_id": 2},
+            follow_redirects=False,
+        )
+
+    assert add_response.status_code == 303
+
+    group_after_add = get_group(client, group["id"])
+    added_user = next(user for user in group_after_add["users"] if user["email"] == new_user_email)
+    assert added_user["role_name"] == "utilisateur"
+
+    with mock_session(session):
+        update_response = client.post(
+            f"/admin/groups/{group['id']}/users/{added_user['id']}/role",
+            data={"role_id": 1},
+            follow_redirects=False,
+        )
+
+    assert update_response.status_code == 303
+
+    group_after_update = get_group(client, group["id"])
+    updated_user = next(user for user in group_after_update["users"] if user["id"] == added_user["id"])
+    assert updated_user["role_name"] == "administrateur"
+
+    with mock_session(session):
+        remove_response = client.post(
+            f"/admin/groups/{group['id']}/users/{added_user['id']}/remove",
+            follow_redirects=False,
+        )
+
+    assert remove_response.status_code == 303
+
+    group_after_remove = get_group(client, group["id"])
+    assert all(user["id"] != added_user["id"] for user in group_after_remove["users"])
+
+
+def test_admin_groups_list_shows_organisation_name(client):
+    admin_email = settings.SUPER_ADMIN_EMAILS.split(" ")[0]
+    group = create_group(client, admin_email=admin_email)
     session = {
         "user_email": admin_email,
         "is_admin": True,
@@ -65,20 +109,9 @@ def test_admin_groups_list_shows_admin_email_and_organisation_name(client):
     }
 
     with mock_session(session):
-        promote_response = client.get(
-            f"/admin/groups/{group['id']}/set-admin/{member_id}",
-            follow_redirects=False,
-        )
-
-    assert promote_response.status_code == 303
-
-    with mock_session(session):
         response = client.get("/admin/groups/")
 
     assert response.status_code == 200
-    assert f"/admin/users/" in response.text
-    assert group["admin"]["email"] in response.text
-    assert member_email in response.text
     assert "DINUM" in response.text
     assert group["organisation_siret"] in response.text
     assert group["name"] in response.text

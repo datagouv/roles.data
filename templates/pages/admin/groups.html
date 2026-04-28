@@ -14,24 +14,12 @@
             {% endif %}
             <a title="{{group.organisation_name}}" target="_blank" rel="noreferrer noopener" href="https://annuaire-entreprises.data.gouv.fr/etablissement/{{group.organisation_siret}}">{{ group.organisation_siret }}</a>
         </td>
-        <td>
-            {% if group.admins %}
-                {% for admin in group.admins %}
-                <a target="_blank" rel="noreferrer noopener" href='/admin/users/{{admin.id}}'>{{ admin.email }}</a>
-                {% if not loop.last %}
-                <br/>
-                {% endif %}
-                {% endfor %}
-            {% else %}
-                Aucun admin
-            {% endif %}
-        </td>
         <td>{{ group.user_count }}</td>
         <td>{{ group.created_at.strftime('%d/%m/%Y') }}</td>
         <td>{{ group.updated_at.strftime('%d/%m/%Y') }} {{ group.updated_at.strftime('%H:%M:%S') }}</td>
     </tr>
 {% endmacro %}
-{% set headers = ['ID', 'Nom', 'Organisation', 'Admin', 'Utilisateurs', 'Creation', 'MAJ'] %}
+{% set headers = ['ID', 'Nom', 'Organisation', 'Utilisateurs', 'Creation', 'MAJ'] %}
 
 <div class="fr-container">
     {{ data_table(headers, groups, formatter) }}

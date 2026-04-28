@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
-from src.dependencies import get_admin_read_service, get_admin_write_service
+from src.dependencies import get_admin_read_service, get_admin_write_service, get_roles_service
 from templates.template_manager import Breadcrumb, admin_template_manager
 
 router = APIRouter(
@@ -28,7 +28,10 @@ async def groups_explorer(
 
 @router.get("/{group_id}", response_class=HTMLResponse)
 async def group_explorer(
-    request: Request, group_id: int, admin_service=Depends(get_admin_read_service)
+    request: Request,
+    group_id: int,
+    admin_service=Depends(get_admin_read_service),
+    roles_service=Depends(get_roles_service),
 ):
     """
     Allow admin to explore the detail of one specific group
@@ -37,6 +40,8 @@ async def group_explorer(
         group_id,
         include_logs=request.session.get("is_admin", False),
     )
+    roles = await roles_service.get_all_roles()
+    group["roles"] = roles
     return admin_template_manager.render(
         request,
         "group.html",
@@ -60,6 +65,68 @@ async def set_admin(
         )
 
     await admin_service.set_admin(group_id, user_id)
+
+    return RedirectResponse(url=f"/admin/groups/{group_id}", status_code=303)
+
+
+@router.post("/{group_id}/users", response_class=RedirectResponse)
+async def add_user_to_group(
+    group_id: int,
+    user_email: str = Form(...),
+    role_id: int = Form(...),
+    admin_service=Depends(get_admin_write_service),
+):
+    """
+    Allow super admin to add a user to a group.
+    """
+    if not isinstance(group_id, int) or group_id <= 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid group ID. It must be a positive integer.",
+        )
+
+    await admin_service.add_user_to_group(group_id, user_email, role_id)
+
+    return RedirectResponse(url=f"/admin/groups/{group_id}", status_code=303)
+
+
+@router.post("/{group_id}/users/{user_id}/role", response_class=RedirectResponse)
+async def update_group_user_role(
+    group_id: int,
+    user_id: int,
+    role_id: int = Form(...),
+    admin_service=Depends(get_admin_write_service),
+):
+    """
+    Allow super admin to update a user's role in a group.
+    """
+    if not isinstance(group_id, int) or group_id <= 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid group ID. It must be a positive integer.",
+        )
+
+    await admin_service.update_group_user_role(group_id, user_id, role_id)
+
+    return RedirectResponse(url=f"/admin/groups/{group_id}", status_code=303)
+
+
+@router.post("/{group_id}/users/{user_id}/remove", response_class=RedirectResponse)
+async def remove_user_from_group(
+    group_id: int,
+    user_id: int,
+    admin_service=Depends(get_admin_write_service),
+):
+    """
+    Allow super admin to remove a user from a group.
+    """
+    if not isinstance(group_id, int) or group_id <= 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid group ID. It must be a positive integer.",
+        )
+
+    await admin_service.remove_user_from_group(group_id, user_id)
 
     return RedirectResponse(url=f"/admin/groups/{group_id}", status_code=303)
 

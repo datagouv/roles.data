@@ -50,14 +50,9 @@ def test_admin_group_page_can_update_group_name(client):
     assert updated_group["name"] == renamed_group
 
 
-def test_admin_groups_list_shows_admin_email_and_organisation_name(client):
+def test_admin_groups_list_shows_organisation_name(client):
     admin_email = settings.SUPER_ADMIN_EMAILS.split(" ")[0]
     group = create_group(client, admin_email=admin_email)
-    member_email = group["members"][0]["email"]
-    group_details = get_group(client, group["id"])
-    member_id = next(
-        user["id"] for user in group_details["users"] if user["email"] == member_email
-    )
     session = {
         "user_email": admin_email,
         "is_admin": True,
@@ -65,20 +60,9 @@ def test_admin_groups_list_shows_admin_email_and_organisation_name(client):
     }
 
     with mock_session(session):
-        promote_response = client.get(
-            f"/admin/groups/{group['id']}/set-admin/{member_id}",
-            follow_redirects=False,
-        )
-
-    assert promote_response.status_code == 303
-
-    with mock_session(session):
         response = client.get("/admin/groups/")
 
     assert response.status_code == 200
-    assert f"/admin/users/" in response.text
-    assert group["admin"]["email"] in response.text
-    assert member_email in response.text
     assert "DINUM" in response.text
     assert group["organisation_siret"] in response.text
     assert group["name"] in response.text

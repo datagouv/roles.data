@@ -34,6 +34,13 @@
             background: #f9f8f6;
             border-bottom: 1px solid #e5e5e5;
         }
+        .logo {
+            display: block;
+            width: 190px;
+            max-width: 100%;
+            height: auto;
+            margin: 0 0 18px;
+        }
         .service-name {
             margin: 0 0 8px;
             color: #666;
@@ -79,7 +86,11 @@
 <body>
   <div class="content">
     <div class="header">
+      {% if logo_ade_data_uri %}
+      <img class="logo" src="{{ logo_ade_data_uri }}" alt="Annuaire des Entreprises">
+      {% else %}
       <p class="service-name">Annuaire des Entreprises</p>
+      {% endif %}
       <h1>Vous avez été retiré(e) d'un groupe</h1>
     </div>
 
@@ -89,7 +100,7 @@
       <p>Vous recevez ce message dans le cadre de la gestion des groupes de l'<a href="https://annuaire-entreprises.data.gouv.fr/">Annuaire des Entreprises</a>.</p>
 
       <div class="notice">
-        Vous avez été retiré(e) du groupe <span class="group-name">{{ group_name }}</span>..
+        Vous avez été retiré(e) du groupe <span class="group-name">{{ group_name }}</span>.
       </div>
 
       <p>Votre accès aux données associées à ce groupe sur l'espace Agent public de l'Annuaire des Entreprises a donc été mis à jour.</p>

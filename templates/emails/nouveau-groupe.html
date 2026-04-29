@@ -64,7 +64,7 @@
         .button {
             display: inline-block;
             background: #000091;
-            color: white;
+            color: #fff;
             padding: 12px 24px;
             text-decoration: none;
             border-radius: 3px;
@@ -86,8 +86,8 @@
 <body>
   <div class="content">
     <div class="header">
-      {% if logo_ade_data_uri %}
-      <img class="logo" src="{{ logo_ade_data_uri }}" alt="Annuaire des Entreprises">
+      {% if logo_ade_src %}
+      <img class="logo" src="{{ logo_ade_src }}" width="190" alt="Annuaire des Entreprises">
       {% else %}
       <p class="service-name">Annuaire des Entreprises</p>
       {% endif %}
@@ -105,7 +105,7 @@
 
       <p>Vous pouvez dès maintenant accéder aux données associées à ce groupe depuis l'espace agent public de l'Annuaire des Entreprises.</p>
 
-      <p><a class="button" href="https://annuaire-entreprises.data.gouv.fr/compte/mes-groupes">Accéder à l'Annuaire des Entreprises</a></p>
+      <p><a class="button" href="https://annuaire-entreprises.data.gouv.fr/compte/mes-groupes" style="display: inline-block; background: #000091; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 3px; margin: 20px 0; font-weight: bold;"><span style="color: #fff;">Accéder à l'Annuaire des Entreprises</span></a></p>
 
       <p>Si vous pensez qu'il s'agit d'une erreur, rapprochez-vous de la personne qui administre votre groupe{% if group_admin_email %} : <a href="mailto:{{ group_admin_email }}">{{ group_admin_email }}</a>{% endif %}.</p>
     </div>

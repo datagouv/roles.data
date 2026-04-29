@@ -31,7 +31,9 @@ class EmailService:
         service_provider_name: str,
         service_provider_url: HttpUrl | None,
     ):
-        subject = f"Nouveau groupe {service_provider_name}"
+        subject = (
+            "[Annuaire des Entreprises] Espace Agent public : Vous avez été ajouté(e) à un groupe"
+        )
         template = "nouveau-groupe.html"
 
         context = {
@@ -58,7 +60,9 @@ class EmailService:
         service_provider_name: str,
         service_provider_url: HttpUrl | None,
     ):
-        subject = f"Vous avez été retiré(e) du groupe {group_name}"
+        subject = (
+            "[Annuaire des Entreprises] Espace Agent public : Vous avez été retiré(e) d'un groupe"
+        )
         template = "suppression.html"
 
         context = {

@@ -2,23 +2,57 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Vous avez été ajouté(e) à un nouveau groupe</title>
+    <title>Vous avez été ajouté(e) à un groupe - Annuaire des Entreprises</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             line-height: 1.6;
-            color: #333;
+            color: #161616;
+            background: #f6f6f6;
             max-width: 600px;
             margin: 0 auto;
             padding: 20px;
           }
           h1 {
-            text-align: center;
+            margin: 0;
+            color: #000091;
+            font-size: 24px;
+            line-height: 1.3;
+          }
+          p {
+            margin: 16px 0;
           }
           .content {
-            padding: 20px;
-            border: 2px solid #eee;
-            border-radius: 8px 8px 0 0;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-top: 6px solid #000091;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .header {
+            padding: 28px 32px 20px;
+            background: #f9f8f6;
+            border-bottom: 1px solid #e5e5e5;
+        }
+        .service-name {
+            margin: 0 0 8px;
+            color: #666;
+            font-size: 13px;
+            font-weight: bold;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+        .body {
+            padding: 24px 32px 28px;
+        }
+        .notice {
+            padding: 14px 16px;
+            background: #f6f6f6;
+            border-left: 4px solid #000091;
+        }
+        .group-name {
+            font-weight: bold;
+            color: #000091;
         }
         .button {
             display: inline-block;
@@ -26,32 +60,49 @@
             color: white;
             padding: 12px 24px;
             text-decoration: none;
-            border-radius: 4px;
+            border-radius: 3px;
             margin: 20px 0;
             font-weight: bold;
         }
         .footer {
-            padding: 20px;
-            text-align: center;
-            font-size: 12px;
+            padding: 18px 32px 24px;
+            font-size: 13px;
             color: #666;
-            background: #eee;
-            border-radius: 0 0 8px 8px;
+            background: #f9f8f6;
+            border-top: 1px solid #e5e5e5;
+        }
+        a {
+            color: #000091;
         }
     </style>
 </head>
 <body>
   <div class="content">
+    <div class="header">
+      <p class="service-name">Annuaire des Entreprises</p>
+      <h1>Vous avez été ajouté(e) à un groupe</h1>
+    </div>
 
-    <h1>Nouveau groupe {{ service_provider_name }}</h1>
+    <div class="body">
+      <p>Bonjour,</p>
 
-    <p>Bonjour,</p>
+      <p>Vous recevez ce message dans le cadre de la gestion des groupes de l'<a href="https://annuaire-entreprises.data.gouv.fr/">Annuaire des Entreprises</a>.</p>
 
-    <p>Vous avez été ajouté(e) au groupe "<i>{{ group_name }}</i>", qui vous donne accès à {% if service_provider_url %}<a href="{{ service_provider_url }}">{{ service_provider_name }}</a>{% else %}{{ service_provider_name }}{% endif %}.</p>
+      <div class="notice">
+        Vous avez été ajouté(e) au groupe <span class="group-name">{{ group_name }}</span>.
+      </div>
 
-    <p>Vous pouvez dès maintenant vous rendre sur <a href="{{ service_provider_url }}">{{ service_provider_name }}</a> et profiter de vos nouveaux droits.</p>
+      <p>Vous pouvez dès maintenant accéder aux données associées à ce groupe depuis l'espace Agent public de l'Annuaire des Entreprises.</p>
 
-    <p>Cordialement,<br>L'équipe {{ service_provider_name }}</p>
+      <p><a class="button" href="https://annuaire-entreprises.data.gouv.fr/compte/mes-groupes">Accéder à l'Annuaire des Entreprises</a></p>
+
+      <p>Si vous pensez qu'il s'agit d'une erreur, rapprochez-vous de la personne qui administre votre groupe.</p>
+    </div>
+
+    <div class="footer">
+      Cordialement,<br>
+      L'équipe Annuaire des Entreprises
+    </div>
   </div>
 </body>
 </html>

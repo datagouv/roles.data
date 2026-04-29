@@ -103,11 +103,11 @@
         Vous avez été retiré(e) du groupe <span class="group-name">{{ group_name }}</span>.
       </div>
 
-      <p>Votre accès aux données associées à ce groupe sur l'espace Agent public de l'Annuaire des Entreprises a donc été mis à jour.</p>
+      <p>Votre accès aux données associées à ce groupe sur l'espace agent public de l'Annuaire des Entreprises a donc été mis à jour.</p>
 
       <p><a class="button" href="https://annuaire-entreprises.data.gouv.fr/compte/mes-groupes">Accéder à l'Annuaire des Entreprises</a></p>
 
-      <p>Si vous pensez qu'il s'agit d'une erreur, rapprochez-vous de la personne qui administre votre groupe.</p>
+      <p>Si vous pensez qu'il s'agit d'une erreur, rapprochez-vous de la personne qui administre votre groupe{% if group_admin_email %} : <a href="mailto:{{ group_admin_email }}">{{ group_admin_email }}</a>{% endif %}.</p>
     </div>
 
     <div class="footer">

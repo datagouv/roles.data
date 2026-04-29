@@ -30,9 +30,10 @@ class EmailService:
         group_name: str,
         service_provider_name: str,
         service_provider_url: HttpUrl | None,
+        group_admin_email: str | None,
     ):
         subject = (
-            "[Annuaire des Entreprises] Espace Agent public : Vous avez été ajouté(e) à un groupe"
+            "[Annuaire des Entreprises] Espace agent public : Vous avez été ajouté(e) à un groupe"
         )
         template = "nouveau-groupe.html"
 
@@ -40,6 +41,7 @@ class EmailService:
             "group_name": group_name,
             "service_provider_name": service_provider_name,
             "service_provider_url": service_provider_url,
+            "group_admin_email": group_admin_email,
         }
 
         asyncio.create_task(
@@ -59,9 +61,10 @@ class EmailService:
         group_name: str,
         service_provider_name: str,
         service_provider_url: HttpUrl | None,
+        group_admin_email: str | None,
     ):
         subject = (
-            "[Annuaire des Entreprises] Espace Agent public : Vous avez été retiré(e) d'un groupe"
+            "[Annuaire des Entreprises] Espace agent public : Vous avez été retiré(e) d'un groupe"
         )
         template = "suppression.html"
 
@@ -69,6 +72,7 @@ class EmailService:
             "group_name": group_name,
             "service_provider_name": service_provider_name,
             "service_provider_url": service_provider_url,
+            "group_admin_email": group_admin_email,
         }
 
         asyncio.create_task(

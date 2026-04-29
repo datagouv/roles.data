@@ -242,6 +242,7 @@ class GroupsService:
                 group_name=group.name,
                 service_provider_name=service_provider.name,
                 service_provider_url=service_provider.url,
+                group_admin_email=self.get_first_admin_email(group),
             )
 
         role = await self.roles_service.get_roles_by_id(role.id)
@@ -274,6 +275,9 @@ class GroupsService:
             group_name=group.name,
             service_provider_name=service_provider.name,
             service_provider_url=service_provider.url,
+            group_admin_email=self.get_first_admin_email(
+                group, excluded_user_id=user.id
+            ),
         )
 
         return await self.users_in_group_repository.remove_user(group.id, user.id)
@@ -351,3 +355,20 @@ class GroupsService:
         Check if a group has only one admin.
         """
         return len([u.id for u in group.users if u.is_admin]) == 1
+
+    def get_first_admin_email(
+        self,
+        group: GroupWithUsersAndScopesResponse,
+        excluded_user_id: int | None = None,
+    ) -> str | None:
+        """
+        Return the first admin email found for a group.
+        """
+        return next(
+            (
+                str(user.email)
+                for user in group.users
+                if user.is_admin and user.id != excluded_user_id
+            ),
+            None,
+        )

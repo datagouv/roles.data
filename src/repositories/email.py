@@ -1,4 +1,5 @@
 import asyncio
+import base64
 from pathlib import Path
 
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
@@ -27,6 +28,15 @@ class EmailRepository:
         self.jinja_env = Environment(
             loader=FileSystemLoader(template_dir), autoescape=True
         )
+        self.logo_ade_data_uri = self._load_logo_ade_data_uri()
+
+    def _load_logo_ade_data_uri(self) -> str | None:
+        logo_path = Path("static/images/logo_ade.png")
+        if not logo_path.exists():
+            return None
+
+        encoded_logo = base64.b64encode(logo_path.read_bytes()).decode("ascii")
+        return f"data:image/png;base64,{encoded_logo}"
 
     async def send(
         self,
@@ -39,7 +49,10 @@ class EmailRepository:
     ):
         # Render template with Jinja2
         template_obj = self.jinja_env.get_template(template)
-        html_content = template_obj.render(**context)
+        html_content = template_obj.render(
+            **context,
+            logo_ade_data_uri=self.logo_ade_data_uri,
+        )
 
         message = MessageSchema(
             subject=subject,

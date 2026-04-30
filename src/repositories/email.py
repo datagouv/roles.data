@@ -1,8 +1,13 @@
 import asyncio
-import base64
 from pathlib import Path
 
-from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
+from fastapi_mail import (
+    ConnectionConfig,
+    FastMail,
+    MessageSchema,
+    MessageType,
+    MultipartSubtypeEnum,
+)
 from jinja2 import Environment, FileSystemLoader
 
 from src.config import settings
@@ -28,15 +33,24 @@ class EmailRepository:
         self.jinja_env = Environment(
             loader=FileSystemLoader(template_dir), autoescape=True
         )
-        self.logo_ade_data_uri = self._load_logo_ade_data_uri()
+        self.logo_ade_path = Path("static/images/logo_ade.png")
+        self.logo_ade_content_id = "logo_ade"
 
-    def _load_logo_ade_data_uri(self) -> str | None:
-        logo_path = Path("static/images/logo_ade.png")
-        if not logo_path.exists():
-            return None
+    def _get_logo_ade_attachments(self) -> list[dict]:
+        if not self.logo_ade_path.exists():
+            return []
 
-        encoded_logo = base64.b64encode(logo_path.read_bytes()).decode("ascii")
-        return f"data:image/png;base64,{encoded_logo}"
+        return [
+            {
+                "file": str(self.logo_ade_path),
+                "mime_type": "image",
+                "mime_subtype": "png",
+                "headers": {
+                    "Content-ID": f"<{self.logo_ade_content_id}>",
+                    "Content-Disposition": "inline; filename=logo_ade.png",
+                },
+            }
+        ]
 
     async def send(
         self,
@@ -51,7 +65,9 @@ class EmailRepository:
         template_obj = self.jinja_env.get_template(template)
         html_content = template_obj.render(
             **context,
-            logo_ade_data_uri=self.logo_ade_data_uri,
+            logo_ade_src=f"cid:{self.logo_ade_content_id}"
+            if self.logo_ade_path.exists()
+            else None,
         )
 
         message = MessageSchema(
@@ -59,6 +75,8 @@ class EmailRepository:
             recipients=recipients,
             body=html_content,
             subtype=MessageType.html,
+            multipart_subtype=MultipartSubtypeEnum.related,
+            attachments=self._get_logo_ade_attachments(),
         )
 
         for attempt in range(retry):

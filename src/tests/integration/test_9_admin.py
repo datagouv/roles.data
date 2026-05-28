@@ -53,7 +53,8 @@ def test_admin_group_page_can_update_group_name(client):
 def test_admin_group_page_can_add_update_and_remove_group_users(client):
     admin_email = settings.SUPER_ADMIN_EMAILS.split(" ")[0]
     group = create_group(client, admin_email=admin_email)
-    new_user_email = "new.group.member@beta.gouv.fr"
+    new_user_email = "  New.Group.Member@Beta.Gouv.Fr  "
+    normalized_new_user_email = "new.group.member@beta.gouv.fr"
     session = {
         "user_email": admin_email,
         "is_admin": True,
@@ -71,7 +72,11 @@ def test_admin_group_page_can_add_update_and_remove_group_users(client):
     assert add_response.status_code == 303
 
     group_after_add = get_group(client, group["id"])
-    added_user = next(user for user in group_after_add["users"] if user["email"] == new_user_email)
+    added_user = next(
+        user
+        for user in group_after_add["users"]
+        if user["email"] == normalized_new_user_email
+    )
     assert added_user["role_name"] == "utilisateur"
 
     with mock_session(session):

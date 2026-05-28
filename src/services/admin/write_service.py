@@ -101,7 +101,7 @@ class AdminWriteService:
         """
         Add a user to a group from the admin interface.
         """
-        normalized_email = user_email.strip()
+        normalized_email = user_email.strip().lower()
         if not normalized_email:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

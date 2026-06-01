@@ -2,11 +2,13 @@ import logging
 
 import sentry_sdk
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.exception_handlers import http_exception_handler
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.sessions import SessionMiddleware
 
 from src.config import settings
@@ -62,18 +64,43 @@ if settings.SENTRY_DSN != "":
     )
 
 
+@app.exception_handler(StarletteHTTPException)
+async def log_http_exception(request: Request, exc: StarletteHTTPException):
+    sentry_sdk.capture_exception(exc)
+    app_logger.error(
+        "HTTPException %s on %s %s: %s",
+        exc.status_code,
+        request.method,
+        request.url.path,
+        exc.detail,
+        exc_info=(type(exc), exc, exc.__traceback__),
+    )
+    return await http_exception_handler(request, exc)
+
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     if isinstance(exc, HTTPException):
         sentry_sdk.capture_exception(exc)
         app_logger.error(
-            f"HTTPException {exc.status_code}: {exc.detail}", exc_info=True
+            "HTTPException %s on %s %s: %s",
+            exc.status_code,
+            request.method,
+            request.url.path,
+            exc.detail,
+            exc_info=(type(exc), exc, exc.__traceback__),
         )
         raise exc
     else:
         # Non-HTTPException errors
         sentry_sdk.capture_exception(exc)
-        app_logger.error(f"Unexpected exception caught: {exc}", exc_info=True)
+        app_logger.error(
+            "Unexpected exception on %s %s: %s",
+            request.method,
+            request.url.path,
+            exc,
+            exc_info=True,
+        )
         return JSONResponse(
             status_code=500, content={"detail": "Internal server error"}
         )

@@ -1,4 +1,7 @@
 import logging
+import re
+import traceback
+from typing import Any
 
 import sentry_sdk
 from fastapi import FastAPI, HTTPException, Request
@@ -36,6 +39,46 @@ app = FastAPI(redirect_slashes=True, redoc_url="/")
 app_logger = logging.getLogger("src")  # Your application namespace
 app_logger.setLevel(logging.INFO)
 
+EMAIL_ADDRESS_PATTERN = re.compile(
+    r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"
+)
+REDACTED_EMAIL = "[REDACTED_EMAIL]"
+
+
+def anonymize_user_emails(value: Any) -> Any:
+    if isinstance(value, str):
+        return EMAIL_ADDRESS_PATTERN.sub(REDACTED_EMAIL, value)
+    if isinstance(value, dict):
+        return {key: anonymize_user_emails(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [anonymize_user_emails(item) for item in value]
+    if isinstance(value, tuple):
+        return tuple(anonymize_user_emails(item) for item in value)
+    return value
+
+
+def sentry_before_send(event: dict[str, Any], _hint: dict[str, Any]):
+    return anonymize_user_emails(event)
+
+
+def format_anonymized_exception(exc: Exception) -> str:
+    traceback_lines = traceback.TracebackException.from_exception(
+        exc, capture_locals=False
+    ).format()
+    return anonymize_user_emails("".join(traceback_lines))
+
+
+def anonymized_http_exception(
+    exc: StarletteHTTPException,
+) -> StarletteHTTPException:
+    anonymized_exception = StarletteHTTPException(
+        status_code=exc.status_code,
+        detail=anonymize_user_emails(exc.detail),
+        headers=exc.headers,
+    )
+    return anonymized_exception.with_traceback(exc.__traceback__)
+
+
 if settings.SENTRY_DSN != "":
     sentry_sdk.init(
         dsn=settings.SENTRY_DSN,
@@ -60,20 +103,25 @@ if settings.SENTRY_DSN != "":
         # Enable profiling (optional)
         # profiles_sample_rate=0.1,
         # Before send hook to filter/modify events
-        # before_send=lambda event, hint: event if settings.DB_ENV != "test" else None,
+        before_send=sentry_before_send,
     )
 
 
 @app.exception_handler(StarletteHTTPException)
 async def log_http_exception(request: Request, exc: StarletteHTTPException):
-    sentry_sdk.capture_exception(exc)
+    anonymized_exception = anonymized_http_exception(exc)
+    sentry_sdk.capture_exception(anonymized_exception)
     app_logger.error(
         "HTTPException %s on %s %s: %s",
-        exc.status_code,
+        anonymized_exception.status_code,
         request.method,
         request.url.path,
-        exc.detail,
-        exc_info=(type(exc), exc, exc.__traceback__),
+        anonymized_exception.detail,
+        exc_info=(
+            type(anonymized_exception),
+            anonymized_exception,
+            anonymized_exception.__traceback__,
+        ),
     )
     return await http_exception_handler(request, exc)
 
@@ -81,25 +129,30 @@ async def log_http_exception(request: Request, exc: StarletteHTTPException):
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     if isinstance(exc, HTTPException):
-        sentry_sdk.capture_exception(exc)
+        anonymized_exception = anonymized_http_exception(exc)
+        sentry_sdk.capture_exception(anonymized_exception)
         app_logger.error(
             "HTTPException %s on %s %s: %s",
-            exc.status_code,
+            anonymized_exception.status_code,
             request.method,
             request.url.path,
-            exc.detail,
-            exc_info=(type(exc), exc, exc.__traceback__),
+            anonymized_exception.detail,
+            exc_info=(
+                type(anonymized_exception),
+                anonymized_exception,
+                anonymized_exception.__traceback__,
+            ),
         )
         raise exc
     else:
         # Non-HTTPException errors
         sentry_sdk.capture_exception(exc)
         app_logger.error(
-            "Unexpected exception on %s %s: %s",
+            "Unexpected exception on %s %s: %s\n%s",
             request.method,
             request.url.path,
-            exc,
-            exc_info=True,
+            anonymize_user_emails(str(exc)),
+            format_anonymized_exception(exc),
         )
         return JSONResponse(
             status_code=500, content={"detail": "Internal server error"}

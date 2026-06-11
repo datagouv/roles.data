@@ -40,6 +40,8 @@ async def pro_connect_authorize_url(request: Request):
         "eidas3",
         "https://proconnect.gouv.fr/assurance/self-asserted-2fa",
         "https://proconnect.gouv.fr/assurance/consistency-checked-2fa",
+        "eidas0-mfa",
+        "eidas1-mfa",
     ])
 
     # Claims parameter to request acr as essential in id_token

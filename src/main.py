@@ -7,7 +7,7 @@ import sentry_sdk
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exception_handlers import http_exception_handler
 from fastapi.openapi.utils import get_openapi
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
@@ -167,6 +167,10 @@ async def global_exception_handler(request: Request, exc: Exception):
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
+@app.get("/robots.txt", include_in_schema=False)
+async def robots_txt():
+    return FileResponse("static/robots.txt", media_type="text/plain")
+
 # Register startup and shutdown events (essentially DB connexion)
 app.add_event_handler("startup", startup)
 app.add_event_handler("shutdown", shutdown)
@@ -226,6 +230,15 @@ async def sentry_context_middleware(request: Request, call_next):
     response = await call_next(request)
     return response
 
+
+@app.middleware("http")
+async def prevent_docs_indexing_middleware(request: Request, call_next):
+    response = await call_next(request)
+
+    if request.url.path in {"/", "/docs", "/openapi.json"}:
+        response.headers["X-Robots-Tag"] = "noindex, nofollow, noarchive"
+
+    return response
 
 def custom_openapi():
     if app.openapi_schema:

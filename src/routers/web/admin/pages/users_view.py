@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from src.dependencies import get_admin_read_service, get_admin_write_service
-from src.services.admin.read_service import AdminReadService
+from src.services.admin.read_service import AdminReadService, SortDirection, UserSortBy
 from templates.template_manager import Breadcrumb, admin_template_manager
 
 router = APIRouter(
@@ -13,17 +13,26 @@ router = APIRouter(
 
 @router.get("/", response_class=HTMLResponse)
 async def users_explorer(
-    request: Request, admin_service: AdminReadService = Depends(get_admin_read_service)
+    request: Request,
+    search: str = "",
+    sort_by: UserSortBy = Query("id", alias="sortBy"),
+    sort_direction: SortDirection = Query("asc", alias="sortDirection"),
+    admin_service: AdminReadService = Depends(get_admin_read_service),
 ):
     """
-    Allow admin to explore all groups
+    Allow admin to explore all users
     """
-    users = await admin_service.get_users()
+    users = await admin_service.get_users(search, sort_by, sort_direction)
     return admin_template_manager.render(
         request,
         "utilisateurs.html",
         "Liste des utilisateurs",
-        context={"users": users},
+        context={
+            "users": users,
+            "search": search,
+            "sort_by": sort_by,
+            "sort_direction": sort_direction,
+        },
     )
 
 

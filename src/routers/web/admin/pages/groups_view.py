@@ -1,7 +1,12 @@
-from fastapi import APIRouter, Depends, Form, HTTPException, Request
+from fastapi import APIRouter, Depends, Form, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
-from src.dependencies import get_admin_read_service, get_admin_write_service, get_roles_service
+from src.dependencies import (
+    get_admin_read_service,
+    get_admin_write_service,
+    get_roles_service,
+)
+from src.services.admin.read_service import GroupSortBy, SortDirection
 from templates.template_manager import Breadcrumb, admin_template_manager
 
 router = APIRouter(
@@ -12,17 +17,26 @@ router = APIRouter(
 
 @router.get("/", response_class=HTMLResponse)
 async def groups_explorer(
-    request: Request, admin_service=Depends(get_admin_read_service)
+    request: Request,
+    search: str = "",
+    sort_by: GroupSortBy = Query("id", alias="sortBy"),
+    sort_direction: SortDirection = Query("asc", alias="sortDirection"),
+    admin_service=Depends(get_admin_read_service),
 ):
     """
     Allow admin to explore all groups
     """
-    groups = await admin_service.get_groups()
+    groups = await admin_service.get_groups(search, sort_by, sort_direction)
     return admin_template_manager.render(
         request,
         "groups.html",
         "Liste des groupes",
-        context={"groups": groups},
+        context={
+            "groups": groups,
+            "search": search,
+            "sort_by": sort_by,
+            "sort_direction": sort_direction,
+        },
     )
 
 

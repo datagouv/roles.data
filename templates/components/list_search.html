@@ -1,0 +1,11 @@
+{% macro list_search(action, label, search, sort_by, sort_direction) %}
+    <form method="get" action="{{ action }}" role="search" class="fr-mb-4w">
+        <label class="fr-label fr-mb-1w" for="list-search">{{ label }}</label>
+        <div class="fr-search-bar">
+            <input class="fr-input" type="search" id="list-search" name="search" value="{{ search }}">
+            <button class="fr-btn" type="submit">Rechercher</button>
+        </div>
+        <input type="hidden" name="sortBy" value="{{ sort_by }}">
+        <input type="hidden" name="sortDirection" value="{{ sort_direction }}">
+    </form>
+{% endmacro %}

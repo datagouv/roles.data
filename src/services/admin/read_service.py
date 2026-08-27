@@ -1,9 +1,41 @@
 import json
+import unicodedata
 from os import error
+from typing import Literal
 
 from fastapi import HTTPException, status
 
 from src.repositories.admin.admin_read_repository import AdminReadRepository
+
+
+GroupSortBy = Literal["id", "name", "user_count", "created_at", "updated_at"]
+UserSortBy = Literal["id", "email", "created_at", "updated_at"]
+SortDirection = Literal["asc", "desc"]
+
+
+def _normalize_text(value: str) -> str:
+    return "".join(
+        character
+        for character in unicodedata.normalize("NFKD", value.casefold())
+        if not unicodedata.combining(character)
+    )
+
+
+def _filter_and_sort(records, search, text_field, sort_by, sort_direction):
+    search = _normalize_text(search.strip())
+    matching_records = [
+        record
+        for record in records
+        if search in str(record["id"]) or search in _normalize_text(record[text_field])
+    ]
+
+    def sort_key(record):
+        value = record[sort_by]
+        if isinstance(value, str):
+            value = _normalize_text(value)
+        return value, record["id"]
+
+    return sorted(matching_records, key=sort_key, reverse=sort_direction == "desc")
 
 
 class AdminReadService:
@@ -44,8 +76,14 @@ class AdminReadService:
 
         return logs
 
-    async def get_groups(self):
-        return await self.admin_read_repository.read_groups()
+    async def get_groups(
+        self,
+        search: str = "",
+        sort_by: GroupSortBy = "id",
+        sort_direction: SortDirection = "asc",
+    ):
+        groups = await self.admin_read_repository.read_groups()
+        return _filter_and_sort(groups, search, "name", sort_by, sort_direction)
 
     async def get_group_details(self, group_id: int, include_logs: bool = True):
         matching_groups = await self.admin_read_repository.read_groups([group_id])
@@ -68,8 +106,19 @@ class AdminReadService:
             "logs": logs,
         }
 
-    async def get_users(self):
-        users = [dict(user) for user in await self.admin_read_repository.read_users()]
+    async def get_users(
+        self,
+        search: str = "",
+        sort_by: UserSortBy = "id",
+        sort_direction: SortDirection = "asc",
+    ):
+        records = await self.admin_read_repository.read_users()
+        users = [
+            dict(user)
+            for user in _filter_and_sort(
+                records, search, "email", sort_by, sort_direction
+            )
+        ]
         user_ids = [user["id"] for user in users]
         groups_by_user_id = await self.admin_read_repository.read_user_groups_by_ids(
             user_ids

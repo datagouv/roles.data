@@ -1,5 +1,6 @@
 {% extends "base_admin.html" %}
 {% from "components/table.html" import data_table %}
+{% from "components/list_search.html" import list_search %}
 
 {% block content %}
 
@@ -20,9 +21,11 @@
     </tr>
 {% endmacro %}
 {% set headers = ['ID', 'Nom', 'Organisation', 'Utilisateurs', 'Creation', 'MAJ'] %}
+{% set sort_keys = ['id', 'name', none, 'user_count', 'created_at', 'updated_at'] %}
 
 <div class="fr-container">
-    {{ data_table(headers, groups, formatter) }}
+    {{ list_search('/admin/groups/', 'Rechercher un groupe par ID ou nom', search, sort_by, sort_direction) }}
+    {{ data_table(headers, groups, formatter, sort_keys, sort_by, sort_direction, request) }}
 </div>
 
 {% endblock %}

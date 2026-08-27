@@ -1,7 +1,11 @@
 {% macro data_table(
     headers,
     data,
-    formatter
+    formatter,
+    sort_keys=none,
+    sort_by=none,
+    sort_direction='asc',
+    request=none
 ) %}
     <div class="table-component">
         {% if data %}
@@ -19,7 +23,20 @@
                                 <thead>
                                     <tr>
                                         {% for header in headers %}
-                                            <th>{{ header }}</th>
+                                            {% set sort_key = sort_keys[loop.index0] if sort_keys else none %}
+                                            {% if sort_key %}
+                                                {% set active = sort_by == sort_key %}
+                                                {% set next_direction = 'desc' if active and sort_direction == 'asc' else 'asc' %}
+                                                <th scope="col"{% if active %} aria-sort="{{ 'ascending' if sort_direction == 'asc' else 'descending' }}"{% endif %}>
+                                                    <a href="{{ request.url.include_query_params(sortBy=sort_key, sortDirection=next_direction) }}"
+                                                       aria-label="{{ header }} : trier par ordre {{ 'croissant' if next_direction == 'asc' else 'décroissant' }}">
+                                                        {{ header }}
+                                                        <span aria-hidden="true">{{ ('↑' if sort_direction == 'asc' else '↓') if active else '↕' }}</span>
+                                                    </a>
+                                                </th>
+                                            {% else %}
+                                                <th scope="col">{{ header }}</th>
+                                            {% endif %}
                                         {% endfor %}
                                     </tr>
                                 </thead>

@@ -3,7 +3,7 @@ run-name: Build and push ${{ github.ref_name }}
 on:
   push:
     branches:
-      - update-build-workflow
+      - "*"
 permissions:
   contents: read
 env:

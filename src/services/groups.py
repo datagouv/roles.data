@@ -209,7 +209,7 @@ class GroupsService:
     ):
         if user_email is not None:
             user = await self.users_service.create_user_if_doesnt_exist(
-                UserCreate(email=user_email)
+                UserCreate(email=user_email.lower())
             )
         elif user_id is not None:
             user = await self.users_service.get_user_by_id(user_id)
@@ -224,7 +224,7 @@ class GroupsService:
 
         if self.is_user_in_group(group, user.id):
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
+                status_code=status.HTTP_409_CONFLICT,
                 detail=f"User with ID {user.id} is already in group {group_id}",
             )
 

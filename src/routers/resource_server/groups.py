@@ -45,7 +45,11 @@ async def update_name(
     return await groups_service.update_group(group_id, group_name)
 
 
-@router.post("/{group_id}/users", status_code=201)
+@router.post(
+    "/{group_id}/users",
+    status_code=201,
+    responses={409: {"description": "User already in group"}},
+)
 async def add_user(
     user_in_group: UserInGroupCreate,
     group_id: int = Path(..., description="ID du groupe"),
@@ -58,6 +62,8 @@ async def add_user(
     Si l'utilisateur n'existe pas, il est automatiquement créé dans la base de données.
 
     Si le groupe ou le rôle n'existe pas, une erreur 404 sera levée.
+
+    Si l'utilisateur est déjà dans le groupe, une erreur 409 sera levée.
     """
     await groups_service.is_admin(acting_user_sub, group_id)
     return await groups_service.add_user_to_group(

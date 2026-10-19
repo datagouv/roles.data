@@ -5,6 +5,8 @@ These tests verify that ProConnect resource server authentication works correctl
 and that users can only access and modify their own groups.
 """
 
+import pytest
+
 from src.tests.helpers import (
     create_group,
     get_group,
@@ -140,6 +142,38 @@ def test_add_user_to_group_as_admin(client):
     # Verify user was added to group
     group_check = get_group(client, group_id)
     assert any(u["email"] == new_member["email"] for u in group_check["users"])
+
+
+@pytest.mark.parametrize("uppercase_email", [False, True])
+def test_add_existing_user_to_group_returns_conflict(client, uppercase_email):
+    admin = random_user()
+    member = random_user()
+    group = create_group(client, admin_email=admin["email"])
+    group_id = group["id"]
+    headers = resource_server_auth_headers(admin["sub_pro_connect"], admin["email"])
+    url = f"/resource-server/groups/{group_id}/users"
+
+    response = client.post(
+        url,
+        json={"email": member["email"], "role_id": 2},
+        headers=headers,
+    )
+    assert response.status_code == 201
+    member_id = response.json()["id"]
+    users_before = get_group(client, group_id)["users"]
+
+    duplicate_email = member["email"].upper() if uppercase_email else member["email"]
+    response = client.post(
+        url,
+        json={"email": duplicate_email, "role_id": 1},
+        headers=headers,
+    )
+
+    assert response.status_code == 409
+    assert response.json() == {
+        "detail": f"User with ID {member_id} is already in group {group_id}"
+    }
+    assert get_group(client, group_id)["users"] == users_before
 
 
 def test_add_user_to_group_unauthorized(client):

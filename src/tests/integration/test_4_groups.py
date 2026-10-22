@@ -3,6 +3,7 @@ from unittest.mock import patch
 import pytest
 
 from src.repositories.users_in_group import UsersInGroupRepository
+from src.services.email.main import EmailService
 from src.tests.helpers import (
     create_group,
     random_group,
@@ -90,6 +91,40 @@ def test_create_group_failure_rolls_back_everything(client, user_exists):
     assert not user_exists(new_group_data["admin"]["email"])
     groups = client.get("/groups/all").json()
     assert all(group["name"] != new_group_data["name"] for group in groups)
+
+
+def test_create_group_sends_admin_email_once_committed(client):
+    """Test that the admin is notified once the group is created."""
+    new_group_data = random_group()
+
+    with patch.object(EmailService, "nouveau_groupe_email") as mock_email:
+        response = client.post("/groups/?no_acting_user=True", json=new_group_data)
+
+    assert response.status_code == 201
+    mock_email.assert_called_once()
+    assert mock_email.call_args.kwargs["recipients"] == [
+        new_group_data["admin"]["email"]
+    ]
+    assert mock_email.call_args.kwargs["group_admin_email"] is None
+
+
+def test_create_group_failure_does_not_send_admin_email(client):
+    """Test that the admin is not notified when the group creation is rolled back."""
+    new_group_data = random_group()
+
+    with (
+        # Adding the admin succeeds, adding the members fails
+        patch.object(
+            UsersInGroupRepository,
+            "add_users",
+            side_effect=[None, RuntimeError("DB error")],
+        ),
+        patch.object(EmailService, "nouveau_groupe_email") as mock_email,
+        pytest.raises(RuntimeError),
+    ):
+        client.post("/groups/?no_acting_user=True", json=new_group_data)
+
+    mock_email.assert_not_called()
 
 
 def test_get_group_with_users(client):

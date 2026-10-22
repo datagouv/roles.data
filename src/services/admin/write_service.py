@@ -25,6 +25,7 @@ class AdminWriteService:
 
     def __init__(
         self,
+        db_session,
         admin_read_repository: AdminReadRepository,
         admin_write_repository: AdminWriteRepository,
         groups_repository: GroupsRepository,
@@ -32,6 +33,7 @@ class AdminWriteService:
         users_service: UsersService,
         roles_service: RolesService,
     ):
+        self.db_session = db_session
         self.admin_read_repository = admin_read_repository
         self.admin_write_repository = admin_write_repository
         self.groups_repository = groups_repository
@@ -110,17 +112,25 @@ class AdminWriteService:
 
         await self._get_group(group_id)
         group_users = await self.admin_read_repository.read_group_users(group_id)
-        if any(str(user["email"]).lower() == normalized_email.lower() for user in group_users):
+        if any(
+            str(user["email"]).lower() == normalized_email.lower()
+            for user in group_users
+        ):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"User {normalized_email} is already in group {group_id}.",
             )
 
         role = await self.roles_service.get_roles_by_id(role_id)
-        user = await self.users_service.create_user_if_doesnt_exist(
-            UserCreate(email=normalized_email)
-        )
-        await self.users_in_group_repository.add_users(group_id, [(user.id, role.id)])
+
+        # Single transaction so that a user is never created without being added to the group
+        async with self.db_session.transaction():
+            user = await self.users_service.create_user_if_doesnt_exist(
+                UserCreate(email=normalized_email)
+            )
+            await self.users_in_group_repository.add_users(
+                group_id, [(user.id, role.id)]
+            )
 
     async def update_group_user_role(
         self,
@@ -150,7 +160,9 @@ class AdminWriteService:
                 ),
             )
 
-        await self.users_in_group_repository.update_user_role(group_id, user_id, role.id)
+        await self.users_in_group_repository.update_user_role(
+            group_id, user_id, role.id
+        )
 
     async def remove_user_from_group(self, group_id: int, user_id: int) -> None:
         """
@@ -249,4 +261,6 @@ class AdminWriteService:
 
     def _is_only_admin(self, group_users: list[dict], user_id: int) -> bool:
         admin_users = [user for user in group_users if user["role"] == "administrateur"]
-        return len(admin_users) == 1 and any(user["id"] == user_id for user in admin_users)
+        return len(admin_users) == 1 and any(
+            user["id"] == user_id for user in admin_users
+        )

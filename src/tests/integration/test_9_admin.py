@@ -1,14 +1,15 @@
 from datetime import datetime, timezone
 from html import unescape
 import re
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 from urllib.parse import parse_qs, urlsplit
 
 import pytest
 
 from src.config import settings
 from src.repositories.admin.admin_read_repository import AdminReadRepository
-from src.tests.helpers import create_group, get_group, mock_session
+from src.repositories.users_in_group import UsersInGroupRepository
+from src.tests.helpers import create_group, get_group, mock_session, random_user
 
 
 def test_admin_users_list_shows_group_tags(client):
@@ -113,6 +114,33 @@ def test_admin_group_page_can_add_update_and_remove_group_users(client):
 
     group_after_remove = get_group(client, group["id"])
     assert all(user["id"] != added_user["id"] for user in group_after_remove["users"])
+
+
+def test_admin_add_user_to_group_failure_rolls_back_user_creation(client, user_exists):
+    admin_email = settings.SUPER_ADMIN_EMAILS.split(" ")[0]
+    group = create_group(client, admin_email=admin_email)
+    new_user_email = random_user()["email"]
+    session = {
+        "user_email": admin_email,
+        "is_admin": True,
+        "is_super_admin": True,
+        "user_sub": "00000000-0000-4000-8000-000000000003",
+    }
+
+    with (
+        mock_session(session),
+        patch.object(
+            UsersInGroupRepository, "add_users", side_effect=RuntimeError("DB error")
+        ),
+        pytest.raises(RuntimeError),
+    ):
+        client.post(
+            f"/admin/groups/{group['id']}/users",
+            data={"user_email": new_user_email, "role_id": 2},
+            follow_redirects=False,
+        )
+
+    assert not user_exists(new_user_email)
 
 
 def test_admin_groups_list_shows_organisation_name(client):

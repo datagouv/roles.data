@@ -118,6 +118,7 @@ async def get_admin_write_service(
     users_service = UsersService(UsersRepository(db, logs_service))
     roles_service = RolesService(RolesRepository(db))
     return AdminWriteService(
+        db,
         admin_read_repository,
         admin_write_repository,
         groups_repository,

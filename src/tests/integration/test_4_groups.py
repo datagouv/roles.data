@@ -1,6 +1,12 @@
+from unittest.mock import patch
+
+import pytest
+
+from src.repositories.users_in_group import UsersInGroupRepository
 from src.tests.helpers import (
     create_group,
     random_group,
+    random_user,
 )
 
 
@@ -66,6 +72,24 @@ def test_create_group(client):
     response = client.post("/groups/", json=new_group_empty_siret)
     # invalid siret should return 400
     assert response.status_code == 400
+
+
+def test_create_group_failure_rolls_back_everything(client, user_exists):
+    """Test that a failure while creating a group leaves neither the group nor its admin."""
+    new_group_data = random_group()
+    new_group_data["admin"]["email"] = random_user()["email"]
+
+    with (
+        patch.object(
+            UsersInGroupRepository, "add_users", side_effect=RuntimeError("DB error")
+        ),
+        pytest.raises(RuntimeError),
+    ):
+        client.post("/groups/?no_acting_user=True", json=new_group_data)
+
+    assert not user_exists(new_group_data["admin"]["email"])
+    groups = client.get("/groups/all").json()
+    assert all(group["name"] != new_group_data["name"] for group in groups)
 
 
 def test_get_group_with_users(client):

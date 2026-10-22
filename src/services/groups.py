@@ -92,28 +92,30 @@ class GroupsService:
     async def create_group(self, group_data: GroupCreate) -> GroupResponse:
         await self.validate_group_data(group_data)
 
-        orga_id = await self.organisations_service.get_or_create_organisation(
-            OrganisationCreate(siret=group_data.organisation_siret)
-        )
-
-        admin_user = await self.users_service.create_user_if_doesnt_exist(
-            group_data.admin
-        )
-
-        new_group = await self.groups_repository.create(
-            group_data, orga_id, self.service_provider_id
-        )
-
-        await self.add_user_to_group(new_group.id, user_id=admin_user.id, role_id=1)
-
-        if group_data.members:
-            members = await self.users_service.create_users_if_dont_exist(
-                group_data.members
+        # Single transaction so that a failure never leaves a partially created group
+        async with self.db_session.transaction():
+            orga_id = await self.organisations_service.get_or_create_organisation(
+                OrganisationCreate(siret=group_data.organisation_siret)
             )
-            user_role_pairs = [(user.id, 2) for user in members]
-            await self.users_in_group_repository.add_users(
-                new_group.id, user_role_pairs
+
+            admin_user = await self.users_service.create_user_if_doesnt_exist(
+                group_data.admin
             )
+
+            new_group = await self.groups_repository.create(
+                group_data, orga_id, self.service_provider_id
+            )
+
+            await self.add_user_to_group(new_group.id, user_id=admin_user.id, role_id=1)
+
+            if group_data.members:
+                members = await self.users_service.create_users_if_dont_exist(
+                    group_data.members
+                )
+                user_role_pairs = [(user.id, 2) for user in members]
+                await self.users_in_group_repository.add_users(
+                    new_group.id, user_role_pairs
+                )
 
         return new_group
 

@@ -5,8 +5,11 @@ These tests verify that ProConnect resource server authentication works correctl
 and that users can only access and modify their own groups.
 """
 
+from unittest.mock import patch
+
 import pytest
 
+from src.repositories.users_in_group import UsersInGroupRepository
 from src.tests.helpers import (
     create_group,
     get_group,
@@ -174,6 +177,49 @@ def test_add_existing_user_to_group_returns_conflict(client, uppercase_email):
         "detail": f"User with ID {member_id} is already in group {group_id}"
     }
     assert get_group(client, group_id)["users"] == users_before
+
+
+def test_add_user_to_group_unknown_role_does_not_create_user(client, user_exists):
+    """Test that an unknown role fails before the user is created."""
+    admin = random_user()
+    new_member = random_user()
+    group = create_group(client, admin_email=admin["email"])
+    headers = resource_server_auth_headers(admin["sub_pro_connect"], admin["email"])
+
+    response = client.post(
+        f"/resource-server/groups/{group['id']}/users",
+        json={"email": new_member["email"], "role_id": 999999},
+        headers=headers,
+    )
+
+    assert response.status_code == 404
+    assert not user_exists(new_member["email"])
+
+
+def test_add_user_to_group_failure_rolls_back_user_creation(client, user_exists):
+    """Test that a user is not left behind when adding it to the group fails."""
+    admin = random_user()
+    new_member = random_user()
+    group = create_group(client, admin_email=admin["email"])
+    headers = resource_server_auth_headers(admin["sub_pro_connect"], admin["email"])
+
+    with (
+        patch.object(
+            UsersInGroupRepository, "add_users", side_effect=RuntimeError("DB error")
+        ),
+        pytest.raises(RuntimeError),
+    ):
+        client.post(
+            f"/resource-server/groups/{group['id']}/users",
+            json={"email": new_member["email"], "role_id": 2},
+            headers=headers,
+        )
+
+    assert not user_exists(new_member["email"])
+    assert not any(
+        u["email"] == new_member["email"]
+        for u in get_group(client, group["id"])["users"]
+    )
 
 
 def test_add_user_to_group_unauthorized(client):
@@ -380,7 +426,9 @@ def test_list_organization_groups(client):
         mock_userinfo,
     ):
         # Call organization groups endpoint
-        headers = resource_server_auth_headers(admin1["sub_pro_connect"], admin1["email"])
+        headers = resource_server_auth_headers(
+            admin1["sub_pro_connect"], admin1["email"]
+        )
         response = client.get("/resource-server/organizations/groups", headers=headers)
 
         assert response.status_code == 200
@@ -429,7 +477,9 @@ def test_list_organization_groups_different_siret(client):
         "src.dependencies.auth.pro_connect_resource_server.pro_connect_provider.userinfo",
         mock_userinfo,
     ):
-        headers = resource_server_auth_headers(admin1["sub_pro_connect"], admin1["email"])
+        headers = resource_server_auth_headers(
+            admin1["sub_pro_connect"], admin1["email"]
+        )
         response = client.get("/resource-server/organizations/groups", headers=headers)
 
         assert response.status_code == 200

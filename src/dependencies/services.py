@@ -113,6 +113,7 @@ async def get_groups_service_factory(
         service_provider_id: int, should_send_emails=True
     ) -> GroupsService:
         return GroupsService(
+            db,
             groups_repository,
             users_in_group_repository,
             users_service,

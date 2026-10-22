@@ -34,6 +34,7 @@ class GroupsService:
 
     def __init__(
         self,
+        db_session,
         groups_repository: groups.GroupsRepository,
         users_in_group_repository: users_in_group.UsersInGroupRepository,
         users_service: users.UsersService,
@@ -45,6 +46,7 @@ class GroupsService:
         email_service: EmailService,
         should_send_emails: bool,
     ):
+        self.db_session = db_session
         self.groups_repository = groups_repository
         self.users_in_group_repository = users_in_group_repository
         self.users_service = users_service
@@ -207,28 +209,34 @@ class GroupsService:
         user_email: EmailStr | None = None,
         user_id: int | None = None,
     ):
-        if user_email is not None:
-            user = await self.users_service.create_user_if_doesnt_exist(
-                UserCreate(email=user_email.lower())
-            )
-        elif user_id is not None:
-            user = await self.users_service.get_user_by_id(user_id)
-        else:
+        if user_email is None and user_id is None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="You must provide either user_email or user_id.",
             )
 
+        # Validate role and group before creating anything
         role = await self.roles_service.get_roles_by_id(role_id)
         group = await self.get_group_with_users_and_scopes(group_id)
 
-        if self.is_user_in_group(group, user.id):
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=f"User with ID {user.id} is already in group {group_id}",
-            )
+        # Single transaction so that a user is never created without being added to the group
+        async with self.db_session.transaction():
+            if user_email is not None:
+                user = await self.users_service.create_user_if_doesnt_exist(
+                    UserCreate(email=user_email.lower())
+                )
+            else:
+                user = await self.users_service.get_user_by_id(user_id)
 
-        await self.users_in_group_repository.add_users(group.id, [(user.id, role.id)])
+            if self.is_user_in_group(group, user.id):
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=f"User with ID {user.id} is already in group {group_id}",
+                )
+
+            await self.users_in_group_repository.add_users(
+                group.id, [(user.id, role.id)]
+            )
 
         service_provider = (
             await self.service_provider_service.get_service_provider_by_id(

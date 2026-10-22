@@ -177,3 +177,18 @@ def client(test_override_setup):
     """Test client using the overridden database connection"""
     with TestClient(app) as client:
         yield client
+
+
+@pytest.fixture
+def user_exists(client):
+    """Check directly in the test database whether a user exists for an email"""
+
+    async def fetch_user(email: str):
+        db = DatabaseWithSchema(test_db, settings.DB_SCHEMA)
+        async with db.transaction():
+            return await db.fetch_one(
+                "SELECT id FROM users WHERE email = :email", {"email": email}
+            )
+
+    # Run on the app's event loop, where the test database connection lives
+    return lambda email: client.portal.call(fetch_user, email) is not None

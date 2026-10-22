@@ -70,20 +70,23 @@ class UsersService:
         if not users_data:
             return []
 
-        emails = [user.email for user in users_data]
+        # Emails are stored lowercased, so lookups must be lowercased too
+        emails = [user.email.lower() for user in users_data]
         existing_users = await self.user_repository.get_by_emails(emails)
         existing_emails = {user.email for user in existing_users}
 
-        # Create users that don't exist
-        users_to_create = [
-            user for user in users_data if user.email not in existing_emails
-        ]
+        # Create users that don't exist (deduplicated, as emails are unique)
+        emails_to_create = list(
+            dict.fromkeys(email for email in emails if email not in existing_emails)
+        )
         new_users = []
-        if users_to_create:
-            new_users = await self.user_repository.create_many(users_to_create)
+        if emails_to_create:
+            new_users = await self.user_repository.create_many(
+                [UserCreate(email=email) for email in emails_to_create]
+            )
 
         # Combine existing and new users, maintaining order
         all_users = existing_users + new_users
         email_to_user = {user.email: user for user in all_users}
 
-        return [email_to_user[user.email] for user in users_data]
+        return [email_to_user[email] for email in emails]

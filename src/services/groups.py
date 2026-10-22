@@ -34,6 +34,7 @@ class GroupsService:
 
     def __init__(
         self,
+        db_session,
         groups_repository: groups.GroupsRepository,
         users_in_group_repository: users_in_group.UsersInGroupRepository,
         users_service: users.UsersService,
@@ -45,6 +46,7 @@ class GroupsService:
         email_service: EmailService,
         should_send_emails: bool,
     ):
+        self.db_session = db_session
         self.groups_repository = groups_repository
         self.users_in_group_repository = users_in_group_repository
         self.users_service = users_service
@@ -90,28 +92,38 @@ class GroupsService:
     async def create_group(self, group_data: GroupCreate) -> GroupResponse:
         await self.validate_group_data(group_data)
 
-        orga_id = await self.organisations_service.get_or_create_organisation(
-            OrganisationCreate(siret=group_data.organisation_siret)
-        )
-
-        admin_user = await self.users_service.create_user_if_doesnt_exist(
-            group_data.admin
-        )
-
-        new_group = await self.groups_repository.create(
-            group_data, orga_id, self.service_provider_id
-        )
-
-        await self.add_user_to_group(new_group.id, user_id=admin_user.id, role_id=1)
-
-        if group_data.members:
-            members = await self.users_service.create_users_if_dont_exist(
-                group_data.members
+        # Single transaction so that a failure never leaves a partially created group
+        async with self.db_session.transaction():
+            orga_id = await self.organisations_service.get_or_create_organisation(
+                OrganisationCreate(siret=group_data.organisation_siret)
             )
-            user_role_pairs = [(user.id, 2) for user in members]
-            await self.users_in_group_repository.add_users(
-                new_group.id, user_role_pairs
+
+            admin_user = await self.users_service.create_user_if_doesnt_exist(
+                group_data.admin
             )
+
+            new_group = await self.groups_repository.create(
+                group_data, orga_id, self.service_provider_id
+            )
+
+            await self.add_user_to_group(
+                new_group.id, user_id=admin_user.id, role_id=1, send_email=False
+            )
+
+            if group_data.members:
+                members = await self.users_service.create_users_if_dont_exist(
+                    group_data.members
+                )
+                user_role_pairs = [(user.id, 2) for user in members]
+                await self.users_in_group_repository.add_users(
+                    new_group.id, user_role_pairs
+                )
+
+        # Only notify once the group is committed. The admin is the group's first
+        # user, so there is no other admin to mention.
+        await self.send_nouveau_groupe_email(
+            admin_user.email, new_group.name, group_admin_email=None
+        )
 
         return new_group
 
@@ -206,43 +218,44 @@ class GroupsService:
         role_id: int,
         user_email: EmailStr | None = None,
         user_id: int | None = None,
+        send_email: bool = True,
     ):
-        if user_email is not None:
-            user = await self.users_service.create_user_if_doesnt_exist(
-                UserCreate(email=user_email.lower())
-            )
-        elif user_id is not None:
-            user = await self.users_service.get_user_by_id(user_id)
-        else:
+        """
+        send_email=False lets a caller wrapping this in its own transaction
+        send the email once that transaction is committed.
+        """
+        if user_email is None and user_id is None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="You must provide either user_email or user_id.",
             )
 
+        # Validate role and group before creating anything
         role = await self.roles_service.get_roles_by_id(role_id)
         group = await self.get_group_with_users_and_scopes(group_id)
 
-        if self.is_user_in_group(group, user.id):
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail=f"User with ID {user.id} is already in group {group_id}",
+        # Single transaction so that a user is never created without being added to the group
+        async with self.db_session.transaction():
+            if user_email is not None:
+                user = await self.users_service.create_user_if_doesnt_exist(
+                    UserCreate(email=user_email.lower())
+                )
+            else:
+                user = await self.users_service.get_user_by_id(user_id)
+
+            if self.is_user_in_group(group, user.id):
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=f"User with ID {user.id} is already in group {group_id}",
+                )
+
+            await self.users_in_group_repository.add_users(
+                group.id, [(user.id, role.id)]
             )
 
-        await self.users_in_group_repository.add_users(group.id, [(user.id, role.id)])
-
-        service_provider = (
-            await self.service_provider_service.get_service_provider_by_id(
-                self.service_provider_id
-            )
-        )
-
-        if self.should_send_emails:
-            self.email_service.nouveau_groupe_email(
-                recipients=[user.email],
-                group_name=group.name,
-                service_provider_name=service_provider.name,
-                service_provider_url=service_provider.url,
-                group_admin_email=self.get_first_admin_email(group),
+        if send_email:
+            await self.send_nouveau_groupe_email(
+                user.email, group.name, self.get_first_admin_email(group)
             )
 
         role = await self.roles_service.get_roles_by_id(role.id)
@@ -251,6 +264,25 @@ class GroupsService:
             role_id=role.id,
             role_name=role.role_name,
             is_admin=role.is_admin,
+        )
+
+    async def send_nouveau_groupe_email(
+        self, user_email: str, group_name: str, group_admin_email: str | None
+    ):
+        if not self.should_send_emails:
+            return
+
+        service_provider = (
+            await self.service_provider_service.get_service_provider_by_id(
+                self.service_provider_id
+            )
+        )
+        self.email_service.nouveau_groupe_email(
+            recipients=[user_email],
+            group_name=group_name,
+            service_provider_name=service_provider.name,
+            service_provider_url=service_provider.url,
+            group_admin_email=group_admin_email,
         )
 
     async def remove_user_from_group(self, group_id: int, user_id: int):

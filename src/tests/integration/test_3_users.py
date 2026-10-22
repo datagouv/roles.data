@@ -14,6 +14,22 @@ def test_create_user(client):
     assert "id" in user
 
 
+def test_create_user_with_uppercase_email(client):
+    """Test creating a user with an uppercase email stores and matches it lowercased."""
+    email = random_user()["email"]
+    uppercase_email = email.split("@")[0].upper() + "@" + email.split("@")[1]
+
+    response = client.post("/users/", json={"email": uppercase_email})
+    assert response.status_code == 201
+    user = response.json()
+    assert user["email"] == email.lower()
+
+    # Creating it again returns the same user
+    response = client.post("/users/", json={"email": uppercase_email})
+    assert response.status_code == 201
+    assert response.json()["id"] == user["id"]
+
+
 def test_get_user_by_id(client):
     """Test retrieving a user by ID."""
     # First create a user to get

@@ -12,6 +12,7 @@ from src.model import (
     OrganisationGroupResponse,
     Siret,
     UserCreate,
+    UserInGroupCreate,
     UserInGroupResponse,
 )
 from src.repositories import groups, users_in_group
@@ -265,6 +266,70 @@ class GroupsService:
             role_name=role.role_name,
             is_admin=role.is_admin,
         )
+
+    async def add_users_to_group(
+        self, group_id: int, users_in_group: list[UserInGroupCreate]
+    ) -> list[UserInGroupResponse]:
+        """
+        Add several users to a group at once.
+
+        Either every user is added, or none is.
+        """
+        emails = [user.email.lower() for user in users_in_group]
+        duplicated_emails = sorted(
+            {email for email in emails if emails.count(email) > 1}
+        )
+        if duplicated_emails:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Duplicated emails in request: {', '.join(duplicated_emails)}",
+            )
+
+        # Validate roles and group before creating anything
+        roles_by_id = {}
+        for role_id in dict.fromkeys(user.role_id for user in users_in_group):
+            roles_by_id[role_id] = await self.roles_service.get_roles_by_id(role_id)
+        group = await self.get_group_with_users_and_scopes(group_id)
+
+        # Single transaction so that a user is never created without being added to the group
+        async with self.db_session.transaction():
+            users = await self.users_service.create_users_if_dont_exist(
+                [UserCreate(email=email) for email in emails]
+            )
+
+            users_already_in_group = [
+                user.id for user in users if self.is_user_in_group(group, user.id)
+            ]
+            if users_already_in_group:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail=f"Users with ID {', '.join(str(user_id) for user_id in users_already_in_group)} are already in group {group_id}",
+                )
+
+            await self.users_in_group_repository.add_users(
+                group.id,
+                [
+                    (user.id, user_in_group.role_id)
+                    for user, user_in_group in zip(users, users_in_group)
+                ],
+            )
+
+        # One email per user so that members are not disclosed to each other
+        group_admin_email = self.get_first_admin_email(group)
+        for user in users:
+            await self.send_nouveau_groupe_email(
+                user.email, group.name, group_admin_email
+            )
+
+        return [
+            UserInGroupResponse(
+                **dict(user),
+                role_id=roles_by_id[user_in_group.role_id].id,
+                role_name=roles_by_id[user_in_group.role_id].role_name,
+                is_admin=roles_by_id[user_in_group.role_id].is_admin,
+            )
+            for user, user_in_group in zip(users, users_in_group)
+        ]
 
     async def send_nouveau_groupe_email(
         self, user_email: str, group_name: str, group_admin_email: str | None

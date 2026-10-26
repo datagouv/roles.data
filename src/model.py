@@ -110,6 +110,10 @@ class UserInGroupCreate(BaseModel):
     role_id: int
 
 
+class UsersInGroupCreate(BaseModel):
+    users: list[UserInGroupCreate] = Field(..., min_length=1)
+
+
 class UserInGroupResponse(UserResponse):
     role_id: int
     role_name: str

@@ -5,13 +5,18 @@
     sort_keys=none,
     sort_by=none,
     sort_direction='asc',
-    request=none
+    request=none,
+    total=none
 ) %}
     <div class="table-component">
         {% if data %}
             <div class="fr-mb-2w">
                 <span class="fr-badge fr-badge--info">
-                    {{ data|length }} entrée(s)
+                    {% if total is not none and total > data|length %}
+                        {{ data|length }} entrée(s) sur {{ total }}
+                    {% else %}
+                        {{ data|length }} entrée(s)
+                    {% endif %}
                 </span>
             </div>
 
@@ -28,7 +33,7 @@
                                                 {% set active = sort_by == sort_key %}
                                                 {% set next_direction = 'desc' if active and sort_direction == 'asc' else 'asc' %}
                                                 <th scope="col"{% if active %} aria-sort="{{ 'ascending' if sort_direction == 'asc' else 'descending' }}"{% endif %}>
-                                                    <a href="{{ request.url.include_query_params(sortBy=sort_key, sortDirection=next_direction) }}"
+                                                    <a href="{{ request.url.include_query_params(sortBy=sort_key, sortDirection=next_direction, page=1) }}"
                                                        aria-label="{{ header }} : trier par ordre {{ 'croissant' if next_direction == 'asc' else 'décroissant' }}">
                                                         {{ header }}
                                                         <span aria-hidden="true">{{ ('↑' if sort_direction == 'asc' else '↓') if active else '↕' }}</span>

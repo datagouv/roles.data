@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
+from fastapi import APIRouter, Depends, Path, Query
 from pydantic import UUID4
 
+from src.constants import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from src.dependencies import get_groups_service
 from src.dependencies.auth.pro_connect_resource_server import (
     get_acting_user_sub_from_proconnect_token,
@@ -24,12 +25,27 @@ router = APIRouter(
 @router.get("/", response_model=list[GroupWithUsersAndScopesResponse])
 async def get_my_groups(
     acting_user_sub: UUID4 = Depends(get_acting_user_sub_from_proconnect_token),
+    users_page: int = Query(
+        1, ge=1, alias="usersPage", description="Page d'utilisateurs à récupérer"
+    ),
+    users_size: int = Query(
+        DEFAULT_PAGE_SIZE,
+        ge=1,
+        le=MAX_PAGE_SIZE,
+        alias="usersSize",
+        description="Nombre d'utilisateurs par page",
+    ),
     groups_service: GroupsService = Depends(get_groups_service),
 ):
     """
     Recherche les groupes d’un utilisateur, avec son adresse e-mail et son sub ProConnect.
+
+    Les utilisateurs de chaque groupe sont paginés : `users` contient la page demandée
+    du groupe et `users_pagination` décrit la pagination de ce groupe.
     """
-    return await groups_service.search_groups(user_sub=acting_user_sub)
+    return await groups_service.search_groups(
+        user_sub=acting_user_sub, users_page=users_page, users_size=users_size
+    )
 
 
 @router.put("/{group_id}", response_model=GroupResponse)

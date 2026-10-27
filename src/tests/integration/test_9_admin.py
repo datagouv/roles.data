@@ -1,6 +1,6 @@
+import re
 from datetime import datetime, timezone
 from html import unescape
-import re
 from unittest.mock import AsyncMock, patch
 from urllib.parse import parse_qs, urlsplit
 
@@ -429,3 +429,74 @@ def test_admin_lists_escape_search_input(client, admin_list):
     assert response.status_code == 200
     assert "<script>alert" not in response.text
     assert "&lt;script&gt;" in response.text
+
+
+def test_admin_users_list_is_paginated(client):
+    admin_email = settings.SUPER_ADMIN_EMAILS.split(" ")[0]
+    create_group(client, admin_email=admin_email, member_count=3)
+    session = {"user_email": admin_email, "is_admin": True, "is_super_admin": True}
+
+    with mock_session(session):
+        default_page = client.get("/admin/users/")
+
+    assert default_page.status_code == 200
+    assert default_page.context["pagination"].size == 50
+    assert len(default_page.context["users"]) <= 50
+
+    with mock_session(session):
+        first_page = client.get("/admin/users/", params={"size": 1})
+
+    assert first_page.status_code == 200
+    assert len(first_page.context["users"]) == 1
+    pagination = first_page.context["pagination"]
+    assert pagination.page == 1
+    assert pagination.size == 1
+    assert pagination.total_pages == pagination.total
+    assert 'class="fr-pagination' in first_page.text
+
+    with mock_session(session):
+        second_page = client.get("/admin/users/", params={"size": 1, "page": 2})
+
+    assert second_page.status_code == 200
+    assert second_page.context["users"][0]["id"] != first_page.context["users"][0]["id"]
+
+
+def test_admin_group_page_users_are_paginated(client):
+    admin_email = settings.SUPER_ADMIN_EMAILS.split(" ")[0]
+    # 3 members and the admin
+    group = create_group(client, admin_email=admin_email, member_count=3)
+    session = {"user_email": admin_email, "is_admin": True, "is_super_admin": True}
+
+    with mock_session(session):
+        first_page = client.get(f"/admin/groups/{group['id']}", params={"size": 2})
+
+    assert first_page.status_code == 200
+    assert len(first_page.context["users"]) == 2
+    assert first_page.context["users_pagination"].total == 4
+    assert first_page.context["users_pagination"].total_pages == 2
+    assert 'class="fr-pagination' in first_page.text
+
+    with mock_session(session):
+        second_page = client.get(
+            f"/admin/groups/{group['id']}", params={"size": 2, "page": 2}
+        )
+
+    assert second_page.status_code == 200
+    assert len(second_page.context["users"]) == 2
+    assert {user["id"] for user in second_page.context["users"]}.isdisjoint(
+        {user["id"] for user in first_page.context["users"]}
+    )
+
+
+@pytest.mark.parametrize("params", [{"page": 0}, {"size": 0}, {"size": 201}])
+def test_admin_lists_reject_invalid_pagination(client, params):
+    """Out of range pagination parameters are rejected before the group is read."""
+    admin_email = settings.SUPER_ADMIN_EMAILS.split(" ")[0]
+    session = {"user_email": admin_email, "is_admin": True, "is_super_admin": True}
+
+    with mock_session(session):
+        users_response = client.get("/admin/users/", params=params)
+        group_response = client.get("/admin/groups/999999", params=params)
+
+    assert users_response.status_code == 422
+    assert group_response.status_code == 422

@@ -53,6 +53,32 @@ class UsersService:
             return []
         return usersByGroupId[group_id]
 
+    async def get_users_page_by_group_ids(
+        self, group_ids: list[int], page: int, size: int
+    ) -> tuple[dict[int, list[UserWithRoleResponse]], dict[int, int]]:
+        """
+        Retrieve one page of users for each of the given group IDs
+        Returns a dictionary mapping group_id -> page of users, and one mapping
+        group_id -> total number of users in that group
+        """
+        users_by_group_id = await self.user_repository.get_all_by_group_ids(
+            group_ids, limit=size, offset=(page - 1) * size
+        )
+        totals_by_group_id = await self.user_repository.count_by_group_ids(group_ids)
+        return users_by_group_id, totals_by_group_id
+
+    async def get_users_page_by_group_id(
+        self, group_id: int, page: int, size: int
+    ) -> tuple[list[UserWithRoleResponse], int]:
+        """
+        Retrieve one page of users for a given group ID, and the group's total
+        number of users
+        """
+        users_by_group_id, totals_by_group_id = await self.get_users_page_by_group_ids(
+            [group_id], page, size
+        )
+        return users_by_group_id.get(group_id, []), totals_by_group_id.get(group_id, 0)
+
     async def create_user_if_doesnt_exist(self, user_data: UserCreate) -> UserResponse:
         """
         Create/fetch users if they don't exist

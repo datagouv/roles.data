@@ -56,27 +56,46 @@ class UsersRepository:
             )
 
     async def get_all_by_group_ids(
-        self, group_ids: list[int]
+        self, group_ids: list[int], limit: int | None = None, offset: int = 0
     ) -> dict[int, list[UserWithRoleResponse]]:
         """
-        Retrieve all users for multiple group IDs in a single query
+        Retrieve users for multiple group IDs in a single query
         Returns a dictionary mapping group_id -> list of users
+
+        Without a limit, every user of every group is returned. With one, the
+        window is applied to each group separately, so every group gets the same
+        slice of its own users.
         """
         if len(group_ids) == 0:
             return {}
 
         async with self.db_session.transaction():
             placeholders = ",".join([f":group_id_{i}" for i in range(len(group_ids))])
-            query = f"""
-                SELECT U.id, U.email, U.created_at, R.role_name, R.id as role_id, R.is_admin, TUR.group_id
+            values = {f"group_id_{i}": group_id for i, group_id in enumerate(group_ids)}
+
+            users_query = f"""
+                SELECT U.id, U.email, U.created_at, R.role_name, R.id as role_id, R.is_admin, TUR.group_id,
+                    ROW_NUMBER() OVER (PARTITION BY TUR.group_id ORDER BY R.id ASC, U.id ASC) AS row_number
                 FROM users as U
                 INNER JOIN group_user_relations as TUR ON TUR.user_id = U.id
                 INNER JOIN roles as R ON TUR.role_id = R.id
                 WHERE TUR.group_id IN ({placeholders})
-                ORDER BY TUR.group_id, R.id ASC, U.id ASC
                 """
 
-            values = {f"group_id_{i}": group_id for i, group_id in enumerate(group_ids)}
+            query = f"""
+                SELECT id, email, created_at, role_name, role_id, is_admin, group_id
+                FROM ({users_query}) AS numbered_users
+                """
+
+            if limit is not None:
+                query += (
+                    " WHERE row_number > :offset AND row_number <= :offset + :limit"
+                )
+                values["offset"] = offset
+                values["limit"] = limit
+
+            query += " ORDER BY group_id, role_id ASC, id ASC"
+
             rows = await self.db_session.fetch_all(query, values)
 
             # Group users by group_id
@@ -88,6 +107,32 @@ class UsersRepository:
                 result[group_id].append(UserWithRoleResponse(**user_data))
 
             return result
+
+    async def count_by_group_ids(self, group_ids: list[int]) -> dict[int, int]:
+        """
+        Count the users of multiple group IDs in a single query
+        Returns a dictionary mapping group_id -> user count
+        """
+        if len(group_ids) == 0:
+            return {}
+
+        async with self.db_session.transaction():
+            placeholders = ",".join([f":group_id_{i}" for i in range(len(group_ids))])
+            query = f"""
+                SELECT TUR.group_id, COUNT(*) AS user_count
+                FROM group_user_relations as TUR
+                WHERE TUR.group_id IN ({placeholders})
+                GROUP BY TUR.group_id
+                """
+
+            values = {f"group_id_{i}": group_id for i, group_id in enumerate(group_ids)}
+            rows = await self.db_session.fetch_all(query, values)
+
+            counts = {group_id: 0 for group_id in group_ids}
+            for row in rows:
+                counts[row["group_id"]] = row["user_count"]
+
+            return counts
 
     async def create_many(self, users: list[UserCreate]) -> list[UserResponse]:
         """

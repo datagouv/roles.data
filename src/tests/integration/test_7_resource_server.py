@@ -9,6 +9,7 @@ from unittest.mock import patch
 
 import pytest
 
+from src.constants import MAX_USERS_PER_BATCH
 from src.repositories.users_in_group import UsersInGroupRepository
 from src.tests.helpers import (
     create_group,
@@ -661,7 +662,6 @@ def test_list_organization_groups_different_siret(client):
     """Test that different SIRETs return different groups."""
     from unittest.mock import AsyncMock, patch
 
-    from src.tests.helpers import DINUM_SIRET
 
     # Create a group with DINUM_SIRET
     admin1 = random_user()
@@ -686,3 +686,81 @@ def test_list_organization_groups_different_siret(client):
         # Should not return groups from DINUM_SIRET
         group_ids = [g["id"] for g in groups]
         assert group1["id"] not in group_ids
+
+
+def test_add_users_to_group_above_batch_limit(client):
+    """Test that a batch holding more than the allowed number of users is rejected."""
+    admin = random_user()
+    group = create_group(client, admin_email=admin["email"])
+    headers = resource_server_auth_headers(admin["sub_pro_connect"], admin["email"])
+
+    response = client.post(
+        f"/resource-server/groups/{group['id']}/users/batch",
+        json={
+            "users": [
+                {"email": f"member_{i}@beta.gouv.fr", "role_id": 2}
+                for i in range(MAX_USERS_PER_BATCH + 1)
+            ]
+        },
+        headers=headers,
+    )
+
+    assert response.status_code == 422
+
+
+def test_list_groups_users_are_paginated(client):
+    """Test that each listed group carries one page of its own users."""
+    user = random_user()
+    # 60 members and the admin
+    group = create_group(client, admin_email=user["email"], member_count=60)
+    headers = resource_server_auth_headers(user["sub_pro_connect"], user["email"])
+
+    response = client.get("/resource-server/groups/", headers=headers)
+
+    assert response.status_code == 200
+    listed_group = next(g for g in response.json() if g["id"] == group["id"])
+    assert len(listed_group["users"]) == 50
+    assert listed_group["users_pagination"] == {
+        "page": 1,
+        "size": 50,
+        "total": 61,
+        "total_pages": 2,
+    }
+
+    response = client.get(
+        "/resource-server/groups/", params={"usersPage": 2}, headers=headers
+    )
+
+    assert response.status_code == 200
+    listed_group = next(g for g in response.json() if g["id"] == group["id"])
+    assert len(listed_group["users"]) == 11
+    assert listed_group["users_pagination"]["page"] == 2
+
+
+def test_group_membership_is_checked_beyond_the_first_page_of_users(client):
+    """Test that membership checks see the whole group, not just a page of users."""
+    admin = random_user()
+    # 60 members and the admin
+    group = create_group(client, admin_email=admin["email"], member_count=60)
+    headers = resource_server_auth_headers(admin["sub_pro_connect"], admin["email"])
+
+    second_page = client.get(f"/groups/{group['id']}", params={"usersPage": 2}).json()[
+        "users"
+    ]
+    user_beyond_first_page = second_page[-1]
+
+    # Adding them again is a conflict, although they are not on the first page
+    response = client.post(
+        f"/resource-server/groups/{group['id']}/users",
+        json={"email": user_beyond_first_page["email"], "role_id": 2},
+        headers=headers,
+    )
+    assert response.status_code == 409
+
+    # And their role can still be updated
+    response = client.patch(
+        f"/resource-server/groups/{group['id']}/users/{user_beyond_first_page['id']}",
+        params={"role_id": 1},
+        headers=headers,
+    )
+    assert response.status_code == 200

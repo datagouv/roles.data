@@ -3,6 +3,7 @@ from uuid import UUID
 from fastapi import HTTPException, status
 from pydantic import UUID4, EmailStr, HttpUrl
 
+from src.constants import DEFAULT_PAGE_SIZE
 from src.model import (
     GroupCreate,
     GroupResponse,
@@ -10,10 +11,13 @@ from src.model import (
     GroupWithUsersAndScopesResponse,
     OrganisationCreate,
     OrganisationGroupResponse,
+    Pagination,
     Siret,
     UserCreate,
     UserInGroupCreate,
     UserInGroupResponse,
+    UserWithRoleResponse,
+    build_pagination,
 )
 from src.repositories import groups, users_in_group
 from src.services import organisations, roles, scopes, users
@@ -160,12 +164,18 @@ class GroupsService:
         return [OrganisationGroupResponse(**dict(group)) for group in groups_by_siret]
 
     async def search_groups(
-        self, user_sub: UUID
+        self,
+        user_sub: UUID,
+        users_page: int = 1,
+        users_size: int = DEFAULT_PAGE_SIZE,
     ) -> list[GroupWithUsersAndScopesResponse]:
         """
         Search for groups by user email.
 
         This method will return all groups that the user is a member of, regardless of their role.
+
+        Each group carries one page of its own users, as a group can hold far
+        more users than a response should ever return.
         """
 
         user = await self.users_service.get_user_by_sub(user_sub)
@@ -175,7 +185,12 @@ class GroupsService:
 
         # Batch fetch users for all groups
         group_ids = [g.id for g in groups]
-        users_by_group = await self.users_service.get_users_by_group_ids(group_ids)
+        (
+            users_by_group,
+            totals_by_group,
+        ) = await self.users_service.get_users_page_by_group_ids(
+            group_ids, users_page, users_size
+        )
 
         groupsWithUsers = []
         for g in groups:
@@ -183,23 +198,59 @@ class GroupsService:
             # so we have to manually create a dict then a new object
             g_dict = dict(g)
             g_dict["users"] = users_by_group.get(g.id, [])
+            g_dict["users_pagination"] = build_pagination(
+                users_page, users_size, totals_by_group.get(g.id, 0)
+            )
             groupsWithUsers.append(GroupWithUsersAndScopesResponse(**g_dict))
         return groupsWithUsers
 
     async def get_group_with_users_and_scopes(
+        self,
+        group_id: int,
+        users_page: int = 1,
+        users_size: int = DEFAULT_PAGE_SIZE,
+    ) -> GroupWithUsersAndScopesResponse:
+        """
+        Fetch a group with one page of its users.
+        """
+        group = await self.get_group_by_id(group_id)
+        users, total = await self.users_service.get_users_page_by_group_id(
+            group_id, users_page, users_size
+        )
+        return await self._build_group_with_users_and_scopes(
+            group, users, build_pagination(users_page, users_size, total)
+        )
+
+    async def get_group_with_all_users_and_scopes(
         self, group_id: int
     ) -> GroupWithUsersAndScopesResponse:
-        group: GroupResponse = await self.get_group_by_id(group_id)
-        group_dict = dict(group)
+        """
+        Fetch a group with every one of its users.
 
+        Reserved for the membership checks, which are wrong when they only see
+        part of the group: use get_group_with_users_and_scopes to answer a request.
+        """
+        group = await self.get_group_by_id(group_id)
         users = await self.users_service.get_users_by_group_id(group_id)
+        return await self._build_group_with_users_and_scopes(
+            group, users, build_pagination(1, len(users), len(users))
+        )
+
+    async def _build_group_with_users_and_scopes(
+        self,
+        group: GroupResponse,
+        users: list[UserWithRoleResponse],
+        users_pagination: Pagination,
+    ) -> GroupWithUsersAndScopesResponse:
+        group_dict = dict(group)
 
         # Python's dict() function does not include dynamically added attributes
         # so we have to manually create a dict then a new object
         group_dict["users"] = users
+        group_dict["users_pagination"] = users_pagination
 
         scopes_and_contract = await self.scopes_service.get_scopes_and_contract(
-            self.service_provider_id, group_id
+            self.service_provider_id, group.id
         )
 
         group_dict["scopes"] = scopes_and_contract.scopes
@@ -233,7 +284,7 @@ class GroupsService:
 
         # Validate role and group before creating anything
         role = await self.roles_service.get_roles_by_id(role_id)
-        group = await self.get_group_with_users_and_scopes(group_id)
+        group = await self.get_group_with_all_users_and_scopes(group_id)
 
         # Single transaction so that a user is never created without being added to the group
         async with self.db_session.transaction():
@@ -289,7 +340,7 @@ class GroupsService:
         roles_by_id = {}
         for role_id in dict.fromkeys(user.role_id for user in users_in_group):
             roles_by_id[role_id] = await self.roles_service.get_roles_by_id(role_id)
-        group = await self.get_group_with_users_and_scopes(group_id)
+        group = await self.get_group_with_all_users_and_scopes(group_id)
 
         # Single transaction so that a user is never created without being added to the group
         async with self.db_session.transaction():
@@ -352,7 +403,7 @@ class GroupsService:
 
     async def remove_user_from_group(self, group_id: int, user_id: int):
         user = await self.users_service.get_user_by_id(user_id)
-        group = await self.get_group_with_users_and_scopes(group_id)
+        group = await self.get_group_with_all_users_and_scopes(group_id)
 
         if self.is_user_admin(group, user_id):
             if self.has_only_one_admin(group):
@@ -383,7 +434,7 @@ class GroupsService:
         # check if the user, is in the group
         role = await self.roles_service.get_roles_by_id(role_id)
         user = await self.users_service.get_user_by_id(user_id)
-        group = await self.get_group_with_users_and_scopes(group_id)
+        group = await self.get_group_with_all_users_and_scopes(group_id)
 
         if not self.is_user_in_group(group, user_id):
             raise HTTPException(

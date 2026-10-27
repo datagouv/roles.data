@@ -1,9 +1,12 @@
 from enum import Enum
+from math import ceil
 from typing import Annotated
 from xmlrpc.client import boolean
 
 from fastapi import HTTPException, status
 from pydantic import BaseModel, BeforeValidator, ConfigDict, EmailStr, Field, HttpUrl
+
+from src.constants import MAX_USERS_PER_BATCH
 
 
 def validate_siret(v: str) -> str:
@@ -41,6 +44,25 @@ Siret = Annotated[
     BeforeValidator(validate_siret),
     Field(description="A valid Siret"),
 ]
+
+
+# --- Pagination ---
+class Pagination(BaseModel):
+    """Describes which slice of a listing is returned, and how big the listing is."""
+
+    page: int
+    size: int
+    total: int
+    total_pages: int
+
+
+def build_pagination(page: int, size: int, total: int) -> Pagination:
+    return Pagination(
+        page=page,
+        size=size,
+        total=total,
+        total_pages=ceil(total / size) if size else 0,
+    )
 
 
 # --- Organisation ---
@@ -111,7 +133,9 @@ class UserInGroupCreate(BaseModel):
 
 
 class UsersInGroupCreate(BaseModel):
-    users: list[UserInGroupCreate] = Field(..., min_length=1)
+    users: list[UserInGroupCreate] = Field(
+        ..., min_length=1, max_length=MAX_USERS_PER_BATCH
+    )
 
 
 class UserInGroupResponse(UserResponse):
@@ -129,6 +153,7 @@ class GroupWithScopesResponse(GroupResponse):
 class GroupWithUsersAndScopesResponse(GroupWithScopesResponse):
     organisation_siret: Siret
     users: list[UserWithRoleResponse]
+    users_pagination: Pagination
 
 
 class OrganisationGroupResponse(GroupResponse):

@@ -5,8 +5,9 @@ from typing import Literal
 
 from fastapi import HTTPException, status
 
+from src.constants import DEFAULT_PAGE_SIZE
+from src.model import Pagination, build_pagination
 from src.repositories.admin.admin_read_repository import AdminReadRepository
-
 
 GroupSortBy = Literal["id", "name", "user_count", "created_at", "updated_at"]
 UserSortBy = Literal["id", "email", "created_at", "updated_at"]
@@ -85,7 +86,13 @@ class AdminReadService:
         groups = await self.admin_read_repository.read_groups()
         return _filter_and_sort(groups, search, "name", sort_by, sort_direction)
 
-    async def get_group_details(self, group_id: int, include_logs: bool = True):
+    async def get_group_details(
+        self,
+        group_id: int,
+        include_logs: bool = True,
+        users_page: int = 1,
+        users_size: int = DEFAULT_PAGE_SIZE,
+    ):
         matching_groups = await self.admin_read_repository.read_groups([group_id])
 
         if len(matching_groups) == 0:
@@ -95,13 +102,17 @@ class AdminReadService:
             )
 
         group_details = matching_groups[0]
-        users = await self.admin_read_repository.read_group_users(group_id)
+        users = await self.admin_read_repository.read_group_users(
+            group_id, limit=users_size, offset=(users_page - 1) * users_size
+        )
+        users_total = await self.admin_read_repository.count_group_users(group_id)
         scopes = await self.admin_read_repository.read_group_scopes(group_id)
         logs = await self.get_logs(group_id=group_id) if include_logs else []
 
         return {
             "details": group_details,
             "users": users,
+            "users_pagination": build_pagination(users_page, users_size, users_total),
             "scopes": scopes,
             "logs": logs,
         }
@@ -111,14 +122,23 @@ class AdminReadService:
         search: str = "",
         sort_by: UserSortBy = "id",
         sort_direction: SortDirection = "asc",
-    ):
+        page: int = 1,
+        size: int = DEFAULT_PAGE_SIZE,
+    ) -> tuple[list[dict], Pagination]:
+        """
+        Return one page of users, and the pagination describing the whole listing.
+
+        Search and sort run on every user, so the page is cut once the listing is
+        complete. Only the page's users get their groups fetched.
+        """
         records = await self.admin_read_repository.read_users()
-        users = [
-            dict(user)
-            for user in _filter_and_sort(
-                records, search, "email", sort_by, sort_direction
-            )
-        ]
+        matching_users = _filter_and_sort(
+            records, search, "email", sort_by, sort_direction
+        )
+        pagination = build_pagination(page, size, len(matching_users))
+
+        offset = (page - 1) * size
+        users = [dict(user) for user in matching_users[offset : offset + size]]
         user_ids = [user["id"] for user in users]
         groups_by_user_id = await self.admin_read_repository.read_user_groups_by_ids(
             user_ids
@@ -127,7 +147,7 @@ class AdminReadService:
         for user in users:
             user["groups"] = groups_by_user_id.get(user["id"], [])
 
-        return users
+        return users, pagination
 
     async def get_user_details(self, user_id: int, include_logs: bool = True):
         user = await self.admin_read_repository.read_user_by_id(user_id)

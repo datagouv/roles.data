@@ -18,9 +18,10 @@ class AdminReadRepository:
         self.admin_email = admin_email
 
         # extra safety check. All Admin Repositories should never be instantiated without an admin email
-        if not self.admin_email or not get_web_admin_permissions(
-            str(self.admin_email)
-        ).is_admin:
+        if (
+            not self.admin_email
+            or not get_web_admin_permissions(str(self.admin_email)).is_admin
+        ):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="User is not authorized to perform admin operations.",
@@ -100,7 +101,9 @@ class AdminReadRepository:
             query += " GROUP BY G.id, O.siret, O.name ORDER BY id"
             return await self.db_session.fetch_all(query, values)
 
-    async def read_group_users(self, group_id: int) -> list[dict]:
+    async def read_group_users(
+        self, group_id: int, limit: int | None = None, offset: int = 0
+    ) -> list[dict]:
         async with self.db_session.transaction():
             query = """
                 SELECT U.id, U.email, R.role_name as role, GUR.created_at
@@ -108,8 +111,26 @@ class AdminReadRepository:
                 INNER JOIN users as U ON U.id = GUR.user_id
                 INNER JOIN roles AS R ON R.id = GUR.role_id
                 WHERE GUR.group_id = :group_id
+                ORDER BY R.id ASC, U.id ASC
             """
-            return await self.db_session.fetch_all(query, values={"group_id": group_id})
+            values = {"group_id": group_id}
+
+            if limit is not None:
+                query += " LIMIT :limit OFFSET :offset"
+                values["limit"] = limit
+                values["offset"] = offset
+
+            return await self.db_session.fetch_all(query, values=values)
+
+    async def count_group_users(self, group_id: int) -> int:
+        async with self.db_session.transaction():
+            query = """
+                SELECT COUNT(*) AS user_count
+                FROM group_user_relations AS GUR
+                WHERE GUR.group_id = :group_id
+            """
+            row = await self.db_session.fetch_one(query, values={"group_id": group_id})
+            return row["user_count"] if row else 0
 
     async def read_group_scopes(self, group_id: int) -> list[dict]:
         async with self.db_session.transaction():
@@ -160,7 +181,9 @@ class AdminReadRepository:
             """
             return await self.db_session.fetch_one(query, values={"user_id": user_id})
 
-    async def read_user_groups_by_ids(self, user_ids: list[int]) -> dict[int, list[dict]]:
+    async def read_user_groups_by_ids(
+        self, user_ids: list[int]
+    ) -> dict[int, list[dict]]:
         if len(user_ids) == 0:
             return {}
 

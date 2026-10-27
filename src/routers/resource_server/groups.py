@@ -10,6 +10,7 @@ from src.model import (
     GroupWithUsersAndScopesResponse,
     UserInGroupCreate,
     UserInGroupResponse,
+    UsersInGroupCreate,
 )
 from src.services.groups import GroupsService
 
@@ -69,6 +70,34 @@ async def add_user(
     return await groups_service.add_user_to_group(
         group_id, user_email=user_in_group.email, role_id=user_in_group.role_id
     )
+
+
+@router.post(
+    "/{group_id}/users/batch",
+    status_code=201,
+    responses={409: {"description": "User already in group"}},
+)
+async def add_users(
+    users_in_group: UsersInGroupCreate,
+    group_id: int = Path(..., description="ID du groupe"),
+    acting_user_sub: UUID4 = Depends(get_acting_user_sub_from_proconnect_token),
+    groups_service: GroupsService = Depends(get_groups_service),
+) -> list[UserInGroupResponse]:
+    """
+    Ajout de plusieurs utilisateurs
+
+    Les utilisateurs qui n'existent pas sont automatiquement créés dans la base de données.
+
+    Si le groupe ou l'un des rôles n'existe pas, une erreur 404 sera levée.
+
+    Si une adresse e-mail est présente plusieurs fois dans la requête, une erreur 400 sera levée.
+
+    Si l'un des utilisateurs est déjà dans le groupe, une erreur 409 sera levée.
+
+    Soit tous les utilisateurs sont ajoutés, soit aucun ne l'est.
+    """
+    await groups_service.is_admin(acting_user_sub, group_id)
+    return await groups_service.add_users_to_group(group_id, users_in_group.users)
 
 
 @router.patch("/{group_id}/users/{user_id}", status_code=200)

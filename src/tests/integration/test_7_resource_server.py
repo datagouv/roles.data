@@ -250,6 +250,204 @@ def test_add_user_to_group_unauthorized(client):
     assert response.status_code == 403
 
 
+def test_add_users_to_group_as_admin(client):
+    """Test that admin can add several users to their group at once."""
+    admin = random_user()
+    new_admin = random_user()
+    new_member = random_user()
+
+    group = create_group(client, admin_email=admin["email"])
+    group_id = group["id"]
+
+    headers = resource_server_auth_headers(admin["sub_pro_connect"], admin["email"])
+    response = client.post(
+        f"/resource-server/groups/{group_id}/users/batch",
+        json={
+            "users": [
+                {"email": new_admin["email"], "role_id": 1},
+                {"email": new_member["email"], "role_id": 2},
+            ]
+        },
+        headers=headers,
+    )
+
+    assert response.status_code == 201
+    users_in_group = response.json()
+    assert [u["email"] for u in users_in_group] == [
+        new_admin["email"],
+        new_member["email"],
+    ]
+    assert [u["role_id"] for u in users_in_group] == [1, 2]
+    assert [u["is_admin"] for u in users_in_group] == [True, False]
+
+    # Verify users were added to group
+    group_users = get_group(client, group_id)["users"]
+    assert any(
+        u["email"] == new_admin["email"] and u["role_id"] == 1 for u in group_users
+    )
+    assert any(
+        u["email"] == new_member["email"] and u["role_id"] == 2 for u in group_users
+    )
+
+
+@pytest.mark.parametrize("uppercase_email", [False, True])
+def test_add_users_to_group_duplicated_emails(client, user_exists, uppercase_email):
+    """Test that the same email twice in a request adds nobody."""
+    admin = random_user()
+    new_member = random_user()
+    other_member = random_user()
+    group = create_group(client, admin_email=admin["email"])
+    headers = resource_server_auth_headers(admin["sub_pro_connect"], admin["email"])
+
+    duplicate_email = (
+        new_member["email"].upper() if uppercase_email else new_member["email"]
+    )
+    response = client.post(
+        f"/resource-server/groups/{group['id']}/users/batch",
+        json={
+            "users": [
+                {"email": new_member["email"], "role_id": 2},
+                {"email": other_member["email"], "role_id": 2},
+                {"email": duplicate_email, "role_id": 1},
+            ]
+        },
+        headers=headers,
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "detail": f"Duplicated emails in request: {new_member['email']}"
+    }
+    assert not user_exists(new_member["email"])
+    assert not user_exists(other_member["email"])
+
+
+def test_add_users_to_group_existing_member_returns_conflict(client, user_exists):
+    """Test that a user already in the group makes the whole request fail."""
+    admin = random_user()
+    member = random_user()
+    new_member = random_user()
+    group = create_group(client, admin_email=admin["email"])
+    group_id = group["id"]
+    headers = resource_server_auth_headers(admin["sub_pro_connect"], admin["email"])
+
+    response = client.post(
+        f"/resource-server/groups/{group_id}/users",
+        json={"email": member["email"], "role_id": 2},
+        headers=headers,
+    )
+    assert response.status_code == 201
+    member_id = response.json()["id"]
+    users_before = get_group(client, group_id)["users"]
+
+    response = client.post(
+        f"/resource-server/groups/{group_id}/users/batch",
+        json={
+            "users": [
+                {"email": new_member["email"], "role_id": 2},
+                {"email": member["email"], "role_id": 2},
+            ]
+        },
+        headers=headers,
+    )
+
+    assert response.status_code == 409
+    assert response.json() == {
+        "detail": f"Users with ID {member_id} are already in group {group_id}"
+    }
+    assert get_group(client, group_id)["users"] == users_before
+    assert not user_exists(new_member["email"])
+
+
+def test_add_users_to_group_unknown_role_does_not_create_users(client, user_exists):
+    """Test that an unknown role fails before any user is created."""
+    admin = random_user()
+    new_member = random_user()
+    other_member = random_user()
+    group = create_group(client, admin_email=admin["email"])
+    headers = resource_server_auth_headers(admin["sub_pro_connect"], admin["email"])
+
+    response = client.post(
+        f"/resource-server/groups/{group['id']}/users/batch",
+        json={
+            "users": [
+                {"email": new_member["email"], "role_id": 2},
+                {"email": other_member["email"], "role_id": 999999},
+            ]
+        },
+        headers=headers,
+    )
+
+    assert response.status_code == 404
+    assert not user_exists(new_member["email"])
+    assert not user_exists(other_member["email"])
+
+
+def test_add_users_to_group_failure_rolls_back_user_creation(client, user_exists):
+    """Test that no user is left behind when adding them to the group fails."""
+    admin = random_user()
+    new_member = random_user()
+    other_member = random_user()
+    group = create_group(client, admin_email=admin["email"])
+    headers = resource_server_auth_headers(admin["sub_pro_connect"], admin["email"])
+
+    with (
+        patch.object(
+            UsersInGroupRepository, "add_users", side_effect=RuntimeError("DB error")
+        ),
+        pytest.raises(RuntimeError),
+    ):
+        client.post(
+            f"/resource-server/groups/{group['id']}/users/batch",
+            json={
+                "users": [
+                    {"email": new_member["email"], "role_id": 2},
+                    {"email": other_member["email"], "role_id": 2},
+                ]
+            },
+            headers=headers,
+        )
+
+    assert not user_exists(new_member["email"])
+    assert not user_exists(other_member["email"])
+
+
+def test_add_users_to_group_empty_list(client):
+    """Test that an empty list of users is rejected."""
+    admin = random_user()
+    group = create_group(client, admin_email=admin["email"])
+    headers = resource_server_auth_headers(admin["sub_pro_connect"], admin["email"])
+
+    response = client.post(
+        f"/resource-server/groups/{group['id']}/users/batch",
+        json={"users": []},
+        headers=headers,
+    )
+
+    assert response.status_code == 422
+
+
+def test_add_users_to_group_unauthorized(client):
+    """Test that non-admin cannot add users to a group."""
+    admin = random_user()
+    member = random_user()
+    new_member = random_user()
+
+    # create and add member to a group so that the user exists
+    create_group(client, admin_email=member["email"])
+
+    group = create_group(client, admin_email=admin["email"])
+
+    headers = resource_server_auth_headers(member["sub_pro_connect"], member["email"])
+    response = client.post(
+        f"/resource-server/groups/{group['id']}/users/batch",
+        json={"users": [{"email": new_member["email"], "role_id": 2}]},
+        headers=headers,
+    )
+
+    assert response.status_code == 403
+
+
 def test_update_user_role_as_admin(client):
     """Test that admin can update user roles in their group."""
     admin = random_user()

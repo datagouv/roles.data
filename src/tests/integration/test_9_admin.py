@@ -475,6 +475,9 @@ def test_admin_group_page_users_are_paginated(client):
     assert first_page.context["users_pagination"].total == 4
     assert first_page.context["users_pagination"].total_pages == 2
     assert 'class="fr-pagination' in first_page.text
+    # Paging keeps the admin on the users list rather than at the top of the page
+    assert 'id="liste-utilisateurs"' in first_page.text
+    assert 'page=2#liste-utilisateurs"' in first_page.text
 
     with mock_session(session):
         second_page = client.get(

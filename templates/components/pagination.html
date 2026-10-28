@@ -1,5 +1,7 @@
-{% macro pagination_nav(pagination, request, label='Pagination') %}
+{% macro pagination_nav(pagination, request, label='Pagination', anchor=none) %}
     {% if pagination and pagination.total_pages > 1 %}
+        {# anchor keeps the reader on the list they are paging, instead of at the top of the page #}
+        {% set fragment = '#' ~ anchor if anchor else '' %}
         {% set page = pagination.page %}
         {% set total_pages = pagination.total_pages %}
         {% set first_shown = [1, page - 2] | max %}
@@ -8,14 +10,14 @@
             <ul class="fr-pagination__list">
                 <li>
                     {% if page > 1 %}
-                        <a class="fr-pagination__link fr-pagination__link--first" href="{{ request.url.include_query_params(page=1) }}">Première page</a>
+                        <a class="fr-pagination__link fr-pagination__link--first" href="{{ request.url.include_query_params(page=1) }}{{ fragment }}">Première page</a>
                     {% else %}
                         <a class="fr-pagination__link fr-pagination__link--first" aria-disabled="true" role="link">Première page</a>
                     {% endif %}
                 </li>
                 <li>
                     {% if page > 1 %}
-                        <a class="fr-pagination__link fr-pagination__link--prev fr-pagination__link--lg-label" href="{{ request.url.include_query_params(page=page - 1) }}">Page précédente</a>
+                        <a class="fr-pagination__link fr-pagination__link--prev fr-pagination__link--lg-label" href="{{ request.url.include_query_params(page=page - 1) }}{{ fragment }}">Page précédente</a>
                     {% else %}
                         <a class="fr-pagination__link fr-pagination__link--prev fr-pagination__link--lg-label" aria-disabled="true" role="link">Page précédente</a>
                     {% endif %}
@@ -25,20 +27,20 @@
                         {% if shown_page == page %}
                             <a class="fr-pagination__link" aria-current="page" title="Page {{ shown_page }}">{{ shown_page }}</a>
                         {% else %}
-                            <a class="fr-pagination__link" href="{{ request.url.include_query_params(page=shown_page) }}" title="Page {{ shown_page }}">{{ shown_page }}</a>
+                            <a class="fr-pagination__link" href="{{ request.url.include_query_params(page=shown_page) }}{{ fragment }}" title="Page {{ shown_page }}">{{ shown_page }}</a>
                         {% endif %}
                     </li>
                 {% endfor %}
                 <li>
                     {% if page < total_pages %}
-                        <a class="fr-pagination__link fr-pagination__link--next fr-pagination__link--lg-label" href="{{ request.url.include_query_params(page=page + 1) }}">Page suivante</a>
+                        <a class="fr-pagination__link fr-pagination__link--next fr-pagination__link--lg-label" href="{{ request.url.include_query_params(page=page + 1) }}{{ fragment }}">Page suivante</a>
                     {% else %}
                         <a class="fr-pagination__link fr-pagination__link--next fr-pagination__link--lg-label" aria-disabled="true" role="link">Page suivante</a>
                     {% endif %}
                 </li>
                 <li>
                     {% if page < total_pages %}
-                        <a class="fr-pagination__link fr-pagination__link--last" href="{{ request.url.include_query_params(page=total_pages) }}">Dernière page</a>
+                        <a class="fr-pagination__link fr-pagination__link--last" href="{{ request.url.include_query_params(page=total_pages) }}{{ fragment }}">Dernière page</a>
                     {% else %}
                         <a class="fr-pagination__link fr-pagination__link--last" aria-disabled="true" role="link">Dernière page</a>
                     {% endif %}

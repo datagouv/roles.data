@@ -1,9 +1,12 @@
 from enum import Enum
+from math import ceil
 from typing import Annotated
 from xmlrpc.client import boolean
 
 from fastapi import HTTPException, status
 from pydantic import BaseModel, BeforeValidator, ConfigDict, EmailStr, Field, HttpUrl
+
+from src.constants import MAX_USERS_PER_BATCH
 
 
 def validate_siret(v: str) -> str:
@@ -41,6 +44,25 @@ Siret = Annotated[
     BeforeValidator(validate_siret),
     Field(description="A valid Siret"),
 ]
+
+
+# --- Pagination ---
+class Pagination(BaseModel):
+    """Describes which slice of a listing is returned, and how big the listing is."""
+
+    page: int
+    size: int
+    total: int
+    total_pages: int
+
+
+def build_pagination(page: int, size: int, total: int) -> Pagination:
+    return Pagination(
+        page=page,
+        size=size,
+        total=total,
+        total_pages=ceil(total / size) if size else 0,
+    )
 
 
 # --- Organisation ---
@@ -85,6 +107,18 @@ class UserWithRoleResponse(UserBase):
     model_config = ConfigDict(from_attributes=True)
 
 
+# --- Role ---
+class RoleBase(BaseModel):
+    role_name: str
+    is_admin: bool
+
+
+class RoleResponse(RoleBase):
+    id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 # --- Group ---
 class GroupBase(BaseModel):
     name: str
@@ -111,7 +145,9 @@ class UserInGroupCreate(BaseModel):
 
 
 class UsersInGroupCreate(BaseModel):
-    users: list[UserInGroupCreate] = Field(..., min_length=1)
+    users: list[UserInGroupCreate] = Field(
+        ..., min_length=1, max_length=MAX_USERS_PER_BATCH
+    )
 
 
 class UserInGroupResponse(UserResponse):
@@ -129,6 +165,32 @@ class GroupWithScopesResponse(GroupResponse):
 class GroupWithUsersAndScopesResponse(GroupWithScopesResponse):
     organisation_siret: Siret
     users: list[UserWithRoleResponse]
+    users_pagination: Pagination
+
+
+class GroupWithUsersAndRoleResponse(GroupWithUsersAndScopesResponse):
+    """
+    A group as one of its own users sees it.
+
+    It carries `current_user_role`, the role the user asking holds in the group,
+    next to the page of its users.
+    """
+
+    current_user_role: RoleResponse
+
+
+class GroupWithAdminsAndScopesResponse(GroupWithScopesResponse):
+    """
+    A group as one of its own users sees it in a listing.
+
+    It carries the group's first admins and the role of the user asking, rather
+    than the group's users: a group can hold far more users than a listing
+    should ever return.
+    """
+
+    organisation_siret: Siret
+    admins: list[UserResponse]
+    current_user_role: RoleResponse
 
 
 class OrganisationGroupResponse(GroupResponse):
@@ -147,18 +209,6 @@ class ParentChildResponse(BaseModel):
     parent_group_id: int
     child_group_id: int
     inherit_scopes: bool
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-# --- Role ---
-class RoleBase(BaseModel):
-    role_name: str
-    is_admin: bool
-
-
-class RoleResponse(RoleBase):
-    id: int
 
     model_config = ConfigDict(from_attributes=True)
 

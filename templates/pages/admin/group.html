@@ -1,6 +1,7 @@
 {% extends "base_admin.html" %}
 {% from "components/logs_table.html" import logs_table %}
 {% from "components/table.html" import data_table %}
+{% from "components/pagination.html" import pagination_nav %}
 
 {% set users_headers = ['Date d’ajout', 'id', 'Role', 'Email'] %}
 {% if can_write_admin %}
@@ -188,7 +189,10 @@
       </div>
     </div>
   {% endif %}
-  {{ data_table(users_headers, users, user_formatter) }}
+  <div id="liste-utilisateurs">
+    {{ data_table(users_headers, users, user_formatter, total=users_pagination.total) }}
+    {{ pagination_nav(users_pagination, request, 'Pagination des utilisateurs du groupe', 'liste-utilisateurs') }}
+  </div>
 
   <h2>Logs</h2>
   {{ logs_table(logs) }}

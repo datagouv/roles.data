@@ -1,13 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
+from fastapi import APIRouter, Depends, Path, Query
 from pydantic import UUID4
 
+from src.constants import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from src.dependencies import get_groups_service
 from src.dependencies.auth.pro_connect_resource_server import (
     get_acting_user_sub_from_proconnect_token,
 )
 from src.model import (
     GroupResponse,
-    GroupWithUsersAndScopesResponse,
+    GroupWithAdminsAndScopesResponse,
+    GroupWithUsersAndRoleResponse,
     UserInGroupCreate,
     UserInGroupResponse,
     UsersInGroupCreate,
@@ -21,15 +23,53 @@ router = APIRouter(
 )
 
 
-@router.get("/", response_model=list[GroupWithUsersAndScopesResponse])
+@router.get("/", response_model=list[GroupWithAdminsAndScopesResponse])
 async def get_my_groups(
     acting_user_sub: UUID4 = Depends(get_acting_user_sub_from_proconnect_token),
     groups_service: GroupsService = Depends(get_groups_service),
 ):
     """
     Recherche les groupes d’un utilisateur, avec son adresse e-mail et son sub ProConnect.
+
+    Chaque groupe contient `admins`, au plus trois de ses administrateurs, et
+    `current_user_role`, le rôle qu’y tient l’utilisateur qui appelle. La liste
+    des utilisateurs d’un groupe est servie page par page par
+    `GET /resource-server/groups/{group_id}`.
     """
     return await groups_service.search_groups(user_sub=acting_user_sub)
+
+
+@router.get("/{group_id}", response_model=GroupWithUsersAndRoleResponse)
+async def get_group(
+    group_id: int = Path(..., description="ID du groupe"),
+    users_page: int = Query(
+        1, ge=1, alias="usersPage", description="Page d'utilisateurs à récupérer"
+    ),
+    users_size: int = Query(
+        DEFAULT_PAGE_SIZE,
+        ge=1,
+        le=MAX_PAGE_SIZE,
+        alias="usersSize",
+        description="Nombre d'utilisateurs par page",
+    ),
+    acting_user_sub: UUID4 = Depends(get_acting_user_sub_from_proconnect_token),
+    groups_service: GroupsService = Depends(get_groups_service),
+):
+    """
+    Récupère un groupe de l’utilisateur, avec ses droits sur le fournisseur de
+    service et ses utilisateurs.
+
+    L’utilisateur qui appelle doit faire partie du groupe, sinon une erreur 403
+    sera levée.
+
+    Les utilisateurs sont paginés : `users` contient la page demandée et
+    `users_pagination` décrit la pagination. `current_user_role` porte le rôle
+    qu’y tient l’utilisateur qui appelle.
+    """
+    current_user_role = await groups_service.is_member(acting_user_sub, group_id)
+    return await groups_service.get_group_with_users_and_role(
+        group_id, current_user_role, users_page, users_size
+    )
 
 
 @router.put("/{group_id}", response_model=GroupResponse)

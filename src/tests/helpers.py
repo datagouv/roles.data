@@ -40,12 +40,17 @@ def random_name():
     return f"Test Name {''.join(random.choices(string.ascii_lowercase, k=5))}"
 
 
-def create_group(client, admin_email=None):
+def create_group(client, admin_email=None, member_count=1):
     """Create a group for testing."""
     new_group_data = random_group()
 
     if admin_email:
         new_group_data["admin"]["email"] = admin_email
+
+    if member_count != 1:
+        new_group_data["members"] = [
+            {"email": f"member_{uuid4()}@beta.gouv.fr"} for _ in range(member_count)
+        ]
 
     response = client.post("/groups/?no_acting_user=True", json=new_group_data)
     assert response.status_code == 201
@@ -104,9 +109,9 @@ def assert_email_sent(
 
     if subject_contains:
         subject = email.get("Content", {}).get("Headers", {}).get("Subject", [""])[0]
-        assert (
-            subject_contains in subject
-        ), f"Subject '{subject}' doesn't contain '{subject_contains}'"
+        assert subject_contains in subject, (
+            f"Subject '{subject}' doesn't contain '{subject_contains}'"
+        )
 
     return email
 

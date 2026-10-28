@@ -4,6 +4,7 @@ from pydantic import UUID4
 from src.model import (
     LOG_ACTIONS,
     LOG_RESOURCE_TYPES,
+    RoleResponse,
     UserCreate,
     UserResponse,
     UserWithRoleResponse,
@@ -55,39 +56,165 @@ class UsersRepository:
                 query, {"sub_pro_connect": str(user_sub)}
             )
 
-    async def get_all_by_group_ids(
-        self, group_ids: list[int]
-    ) -> dict[int, list[UserWithRoleResponse]]:
+    async def get_page_by_group_id(
+        self, group_id: int, limit: int, offset: int
+    ) -> list[UserWithRoleResponse]:
         """
-        Retrieve all users for multiple group IDs in a single query
-        Returns a dictionary mapping group_id -> list of users
+        Retrieve one page of a group's users, admins first then by creation order
+        """
+        async with self.db_session.transaction():
+            query = """
+                SELECT U.id, U.email, R.role_name, R.id as role_id, R.is_admin
+                FROM users as U
+                INNER JOIN group_user_relations as TUR ON TUR.user_id = U.id
+                INNER JOIN roles as R ON TUR.role_id = R.id
+                WHERE TUR.group_id = :group_id
+                ORDER BY R.id ASC, U.id ASC
+                LIMIT :limit OFFSET :offset
+                """
+
+            rows = await self.db_session.fetch_all(
+                query, {"group_id": group_id, "limit": limit, "offset": offset}
+            )
+            return [UserWithRoleResponse(**dict(row)) for row in rows]
+
+    async def get_admins_by_group_ids(
+        self, group_ids: list[int], limit: int
+    ) -> dict[int, list[UserResponse]]:
+        """
+        Retrieve the first admins of multiple group IDs in a single query
+        Returns a dictionary mapping group_id -> list of admins
+
+        At most `limit` admins are returned per group, the oldest ones first.
         """
         if len(group_ids) == 0:
             return {}
 
         async with self.db_session.transaction():
             placeholders = ",".join([f":group_id_{i}" for i in range(len(group_ids))])
-            query = f"""
-                SELECT U.id, U.email, U.created_at, R.role_name, R.id as role_id, R.is_admin, TUR.group_id
+            values = {f"group_id_{i}": group_id for i, group_id in enumerate(group_ids)}
+            values["limit"] = limit
+
+            admins_query = f"""
+                SELECT U.id, U.email, TUR.group_id,
+                    ROW_NUMBER() OVER (PARTITION BY TUR.group_id ORDER BY U.id ASC) AS row_number
                 FROM users as U
                 INNER JOIN group_user_relations as TUR ON TUR.user_id = U.id
                 INNER JOIN roles as R ON TUR.role_id = R.id
-                WHERE TUR.group_id IN ({placeholders})
-                ORDER BY TUR.group_id, R.id ASC, U.id ASC
+                WHERE TUR.group_id IN ({placeholders}) AND R.is_admin = true
                 """
 
-            values = {f"group_id_{i}": group_id for i, group_id in enumerate(group_ids)}
+            query = f"""
+                SELECT id, email, group_id
+                FROM ({admins_query}) AS numbered_admins
+                WHERE row_number <= :limit
+                ORDER BY group_id, id ASC
+                """
+
             rows = await self.db_session.fetch_all(query, values)
 
-            # Group users by group_id
             result = {group_id: [] for group_id in group_ids}
             for row in rows:
-                row_dict = dict(row)
-                group_id = row_dict["group_id"]
-                user_data = {k: v for k, v in row_dict.items() if k != "group_id"}
-                result[group_id].append(UserWithRoleResponse(**user_data))
+                result[row["group_id"]].append(
+                    UserResponse(id=row["id"], email=row["email"])
+                )
 
             return result
+
+    async def get_role_in_group(
+        self, user_id: int, group_id: int
+    ) -> RoleResponse | None:
+        """
+        Retrieve the role a user holds in a group, or None when they are not in it
+        """
+        async with self.db_session.transaction():
+            query = """
+                SELECT R.id, R.role_name, R.is_admin
+                FROM group_user_relations as TUR
+                INNER JOIN roles as R ON TUR.role_id = R.id
+                WHERE TUR.group_id = :group_id AND TUR.user_id = :user_id
+                """
+            role = await self.db_session.fetch_one(
+                query, {"group_id": group_id, "user_id": user_id}
+            )
+            return RoleResponse(**dict(role)) if role else None
+
+    async def get_user_ids_in_group(
+        self, group_id: int, user_ids: list[int]
+    ) -> set[int]:
+        """
+        Retrieve which of the given users belong to a group, in a single query
+        """
+        if len(user_ids) == 0:
+            return set()
+
+        async with self.db_session.transaction():
+            placeholders = ",".join([f":user_id_{i}" for i in range(len(user_ids))])
+            values = {f"user_id_{i}": user_id for i, user_id in enumerate(user_ids)}
+            values["group_id"] = group_id
+
+            query = f"""
+                SELECT TUR.user_id
+                FROM group_user_relations as TUR
+                WHERE TUR.group_id = :group_id AND TUR.user_id IN ({placeholders})
+                """
+
+            rows = await self.db_session.fetch_all(query, values)
+            return {row["user_id"] for row in rows}
+
+    async def get_first_admin_by_group_id(
+        self, group_id: int, excluded_user_id: int | None = None
+    ) -> UserResponse | None:
+        """
+        Retrieve the oldest admin of a group, or None when it has none
+
+        `excluded_user_id` leaves one user out, to find an admin other than them.
+        """
+        async with self.db_session.transaction():
+            query = """
+                SELECT U.id, U.email
+                FROM users as U
+                INNER JOIN group_user_relations as TUR ON TUR.user_id = U.id
+                INNER JOIN roles as R ON TUR.role_id = R.id
+                WHERE TUR.group_id = :group_id AND R.is_admin = true
+                """
+            values = {"group_id": group_id}
+
+            if excluded_user_id is not None:
+                query += " AND U.id != :excluded_user_id"
+                values["excluded_user_id"] = excluded_user_id
+
+            query += " ORDER BY U.id ASC LIMIT 1"
+
+            admin = await self.db_session.fetch_one(query, values)
+            return UserResponse(**dict(admin)) if admin else None
+
+    async def count_admins_by_group_id(self, group_id: int) -> int:
+        """
+        Count the admins of a group
+        """
+        async with self.db_session.transaction():
+            query = """
+                SELECT COUNT(*) AS admin_count
+                FROM group_user_relations as TUR
+                INNER JOIN roles as R ON TUR.role_id = R.id
+                WHERE TUR.group_id = :group_id AND R.is_admin = true
+                """
+            row = await self.db_session.fetch_one(query, {"group_id": group_id})
+            return row["admin_count"]
+
+    async def count_by_group_id(self, group_id: int) -> int:
+        """
+        Count the users of a group
+        """
+        async with self.db_session.transaction():
+            query = """
+                SELECT COUNT(*) AS user_count
+                FROM group_user_relations as TUR
+                WHERE TUR.group_id = :group_id
+                """
+            row = await self.db_session.fetch_one(query, {"group_id": group_id})
+            return row["user_count"]
 
     async def create_many(self, users: list[UserCreate]) -> list[UserResponse]:
         """

@@ -2,7 +2,7 @@
 from fastapi import HTTPException, status
 from pydantic import UUID4
 
-from src.model import UserCreate, UserResponse, UserWithRoleResponse
+from src.model import RoleResponse, UserCreate, UserResponse, UserWithRoleResponse
 from src.repositories.users import UsersRepository
 
 
@@ -35,23 +35,59 @@ class UsersService:
             )
         return user
 
-    async def get_users_by_group_ids(
-        self, group_ids: list[int]
-    ) -> dict[int, list[UserWithRoleResponse]]:
+    async def get_admins_by_group_ids(
+        self, group_ids: list[int], limit: int
+    ) -> dict[int, list[UserResponse]]:
         """
-        Retrieve all users for multiple group IDs in a single query
-        Returns a dictionary mapping group_id -> list of users
+        Retrieve at most `limit` admins for each of the given group IDs
+        Returns a dictionary mapping group_id -> list of admins
         """
-        return await self.user_repository.get_all_by_group_ids(group_ids)
+        return await self.user_repository.get_admins_by_group_ids(group_ids, limit)
 
-    async def get_users_by_group_id(self, group_id: int) -> list[UserWithRoleResponse]:
+    async def get_role_in_group(
+        self, user_id: int, group_id: int
+    ) -> RoleResponse | None:
         """
-        Retrieve all user for a given group ID
+        Retrieve the role a user holds in a group, or None when they are not in it
         """
-        usersByGroupId = await self.get_users_by_group_ids([group_id])
-        if group_id not in usersByGroupId:
-            return []
-        return usersByGroupId[group_id]
+        return await self.user_repository.get_role_in_group(user_id, group_id)
+
+    async def get_user_ids_in_group(
+        self, group_id: int, user_ids: list[int]
+    ) -> set[int]:
+        """
+        Retrieve which of the given users belong to a group
+        """
+        return await self.user_repository.get_user_ids_in_group(group_id, user_ids)
+
+    async def get_first_admin_by_group_id(
+        self, group_id: int, excluded_user_id: int | None = None
+    ) -> UserResponse | None:
+        """
+        Retrieve the oldest admin of a group, or None when it has none
+        """
+        return await self.user_repository.get_first_admin_by_group_id(
+            group_id, excluded_user_id
+        )
+
+    async def count_admins_by_group_id(self, group_id: int) -> int:
+        """
+        Count the admins of a group
+        """
+        return await self.user_repository.count_admins_by_group_id(group_id)
+
+    async def get_users_page_by_group_id(
+        self, group_id: int, page: int, size: int
+    ) -> tuple[list[UserWithRoleResponse], int]:
+        """
+        Retrieve one page of users for a given group ID, and the group's total
+        number of users
+        """
+        users = await self.user_repository.get_page_by_group_id(
+            group_id, limit=size, offset=(page - 1) * size
+        )
+        total = await self.user_repository.count_by_group_id(group_id)
+        return users, total
 
     async def create_user_if_doesnt_exist(self, user_data: UserCreate) -> UserResponse:
         """

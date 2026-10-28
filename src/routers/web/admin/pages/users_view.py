@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
+from src.constants import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from src.dependencies import get_admin_read_service, get_admin_write_service
 from src.services.admin.read_service import AdminReadService, SortDirection, UserSortBy
 from templates.template_manager import Breadcrumb, admin_template_manager
@@ -17,18 +18,23 @@ async def users_explorer(
     search: str = "",
     sort_by: UserSortBy = Query("id", alias="sortBy"),
     sort_direction: SortDirection = Query("asc", alias="sortDirection"),
+    page: int = Query(1, ge=1),
+    size: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
     admin_service: AdminReadService = Depends(get_admin_read_service),
 ):
     """
     Allow admin to explore all users
     """
-    users = await admin_service.get_users(search, sort_by, sort_direction)
+    users, pagination = await admin_service.get_users(
+        search, sort_by, sort_direction, page, size
+    )
     return admin_template_manager.render(
         request,
         "utilisateurs.html",
         "Liste des utilisateurs",
         context={
             "users": users,
+            "pagination": pagination,
             "search": search,
             "sort_by": sort_by,
             "sort_direction": sort_direction,

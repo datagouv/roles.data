@@ -14,13 +14,15 @@ from src.tests.helpers import create_group, get_group, mock_session, random_user
 
 def test_admin_users_list_shows_group_tags(client):
     admin_email = settings.SUPER_ADMIN_EMAILS.split(" ")[0]
-    first_group = create_group(client, admin_email=admin_email)
-    second_group = create_group(client, admin_email=admin_email)
+    group_admin_email = random_user()["email"]
+    first_group = create_group(client, admin_email=group_admin_email)
+    second_group = create_group(client, admin_email=group_admin_email)
 
     with mock_session(
         {"user_email": admin_email, "is_admin": True, "is_super_admin": True}
     ):
-        response = client.get("/admin/users/")
+        # Searched by email, as the listing is paginated and this user is a recent one
+        response = client.get("/admin/users/", params={"search": group_admin_email})
 
     assert response.status_code == 200
     assert first_group["name"] in response.text

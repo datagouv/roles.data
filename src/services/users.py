@@ -76,20 +76,6 @@ class UsersService:
         """
         return await self.user_repository.count_admins_by_group_id(group_id)
 
-    async def get_users_page_by_group_ids(
-        self, group_ids: list[int], page: int, size: int
-    ) -> tuple[dict[int, list[UserWithRoleResponse]], dict[int, int]]:
-        """
-        Retrieve one page of users for each of the given group IDs
-        Returns a dictionary mapping group_id -> page of users, and one mapping
-        group_id -> total number of users in that group
-        """
-        users_by_group_id = await self.user_repository.get_all_by_group_ids(
-            group_ids, limit=size, offset=(page - 1) * size
-        )
-        totals_by_group_id = await self.user_repository.count_by_group_ids(group_ids)
-        return users_by_group_id, totals_by_group_id
-
     async def get_users_page_by_group_id(
         self, group_id: int, page: int, size: int
     ) -> tuple[list[UserWithRoleResponse], int]:
@@ -97,10 +83,11 @@ class UsersService:
         Retrieve one page of users for a given group ID, and the group's total
         number of users
         """
-        users_by_group_id, totals_by_group_id = await self.get_users_page_by_group_ids(
-            [group_id], page, size
+        users = await self.user_repository.get_page_by_group_id(
+            group_id, limit=size, offset=(page - 1) * size
         )
-        return users_by_group_id.get(group_id, []), totals_by_group_id.get(group_id, 0)
+        total = await self.user_repository.count_by_group_id(group_id)
+        return users, total
 
     async def create_user_if_doesnt_exist(self, user_data: UserCreate) -> UserResponse:
         """

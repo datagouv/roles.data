@@ -1,4 +1,5 @@
 from unittest.mock import patch
+from uuid import uuid4
 
 import pytest
 
@@ -149,3 +150,61 @@ def test_get_group_not_found(client):
     # Test non-existent group
     response = client.get("/groups/999999")
     assert response.status_code == 404
+
+
+@pytest.mark.parametrize("personal_email_domain", ["gmail.com", "Gmail.COM"])
+def test_create_group_personal_admin_email_is_refused(
+    client, user_exists, personal_email_domain
+):
+    """Test that an admin at a personal mail provider creates neither group nor user."""
+    new_group_data = random_group()
+    personal_email = f"admin_{uuid4()}@{personal_email_domain}"
+    new_group_data["admin"]["email"] = personal_email
+    # A random_group member email may already exist from an earlier test
+    new_group_data["members"] = [{"email": f"member_{uuid4()}@beta.gouv.fr"}]
+
+    response = client.post("/groups/?no_acting_user=True", json=new_group_data)
+
+    assert response.status_code == 400
+    assert response.json() == {"detail": "PERSONAL_EMAIL_REFUSED"}
+    assert not user_exists(personal_email.lower())
+    assert not user_exists(new_group_data["members"][0]["email"])
+    groups = client.get("/groups/all").json()
+    assert all(group["name"] != new_group_data["name"] for group in groups)
+
+
+def test_create_group_personal_member_email_is_refused(client, user_exists):
+    """Test that a member at a personal mail provider creates neither group nor user."""
+    new_group_data = random_group()
+    # A random_group admin email may already exist from an earlier test
+    new_group_data["admin"]["email"] = f"admin_{uuid4()}@beta.gouv.fr"
+    first_personal_email = f"member_{uuid4()}@free.fr"
+    second_personal_email = f"member_{uuid4()}@Bbox.FR"
+    new_group_data["members"] = [
+        {"email": second_personal_email},
+        {"email": first_personal_email},
+    ]
+
+    response = client.post("/groups/?no_acting_user=True", json=new_group_data)
+
+    assert response.status_code == 400
+    assert response.json() == {"detail": "PERSONAL_EMAIL_REFUSED"}
+    assert not user_exists(new_group_data["admin"]["email"])
+    assert not user_exists(first_personal_email.lower())
+    assert not user_exists(second_personal_email.lower())
+    groups = client.get("/groups/all").json()
+    assert all(group["name"] != new_group_data["name"] for group in groups)
+
+
+def test_create_group_accepts_a_sub_domain_of_a_personal_provider(client):
+    """Test that only the exact domains are refused, not their sub-domains."""
+    new_group_data = random_group()
+    new_group_data["admin"]["email"] = f"admin_{uuid4()}@mail.gmail.com"
+
+    response = client.post("/groups/?no_acting_user=True", json=new_group_data)
+
+    assert response.status_code == 201
+    group = client.get(f"/groups/{response.json()['id']}").json()
+    assert any(
+        user["email"] == new_group_data["admin"]["email"] for user in group["users"]
+    )

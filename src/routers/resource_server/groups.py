@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
+from fastapi import APIRouter, Depends, Path, Query
 from pydantic import UUID4
 
 from src.dependencies import get_groups_service
@@ -65,6 +65,11 @@ async def add_user(
     Si le groupe ou le rôle n'existe pas, une erreur 404 sera levée.
 
     Si l'utilisateur est déjà dans le groupe, une erreur 409 sera levée.
+
+    Si l'adresse e-mail est hébergée par un fournisseur de messagerie
+    personnelle (`gmail.com`, `orange.fr`, `outlook.com`…), une erreur 400 est
+    levée, son `detail` vaut `PERSONAL_EMAIL_REFUSED` et l'utilisateur n'est
+    pas créé.
     """
     await groups_service.is_admin(acting_user_sub, group_id)
     return await groups_service.add_user_to_group(
@@ -93,6 +98,11 @@ async def add_users(
     Si une adresse e-mail est présente plusieurs fois dans la requête, une erreur 400 sera levée.
 
     Si l'un des utilisateurs est déjà dans le groupe, une erreur 409 sera levée.
+
+    Si l'une des adresses e-mail est hébergée par un fournisseur de messagerie
+    personnelle (`gmail.com`, `orange.fr`, `outlook.com`…), une erreur 400 est
+    levée, son `detail` vaut `PERSONAL_EMAIL_REFUSED` et aucun utilisateur
+    n'est créé.
 
     Soit tous les utilisateurs sont ajoutés, soit aucun ne l'est.
     """

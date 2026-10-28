@@ -9,7 +9,7 @@ from src.dependencies.auth.pro_connect_resource_server import (
 from src.model import (
     GroupResponse,
     GroupWithAdminsAndScopesResponse,
-    GroupWithUsersAndScopesResponse,
+    GroupWithUsersAndRoleResponse,
     UserInGroupCreate,
     UserInGroupResponse,
     UsersInGroupCreate,
@@ -39,7 +39,7 @@ async def get_my_groups(
     return await groups_service.search_groups(user_sub=acting_user_sub)
 
 
-@router.get("/{group_id}", response_model=GroupWithUsersAndScopesResponse)
+@router.get("/{group_id}", response_model=GroupWithUsersAndRoleResponse)
 async def get_group(
     group_id: int = Path(..., description="ID du groupe"),
     users_page: int = Query(
@@ -63,11 +63,12 @@ async def get_group(
     sera levée.
 
     Les utilisateurs sont paginés : `users` contient la page demandée et
-    `users_pagination` décrit la pagination.
+    `users_pagination` décrit la pagination. `current_user_role` porte le rôle
+    qu’y tient l’utilisateur qui appelle.
     """
-    await groups_service.is_member(acting_user_sub, group_id)
-    return await groups_service.get_group_with_users_and_scopes(
-        group_id, users_page, users_size
+    current_user_role = await groups_service.is_member(acting_user_sub, group_id)
+    return await groups_service.get_group_with_users_and_role(
+        group_id, current_user_role, users_page, users_size
     )
 
 

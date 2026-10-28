@@ -824,6 +824,30 @@ def test_list_groups_carries_at_most_three_admins(client):
     assert listed_group["admins"][0]["email"] == admin["email"]
 
 
+def test_get_group_carries_the_asking_user_role(client):
+    """Test that a group carries the role of the user reading it."""
+    admin = random_user()
+    group = create_group(client, admin_email=admin["email"])
+    member_email = group["members"][0]["email"]
+    url = f"/resource-server/groups/{group['id']}"
+
+    admin_headers = resource_server_auth_headers(
+        admin["sub_pro_connect"], admin["email"]
+    )
+    response = client.get(url, headers=admin_headers)
+
+    assert response.status_code == 200
+    assert response.json()["current_user_role"]["role_name"] == "administrateur"
+    assert response.json()["current_user_role"]["is_admin"] is True
+
+    member_headers = resource_server_auth_headers(uuid4(), member_email)
+    response = client.get(url, headers=member_headers)
+
+    assert response.status_code == 200
+    assert response.json()["current_user_role"]["role_name"] == "utilisateur"
+    assert response.json()["current_user_role"]["is_admin"] is False
+
+
 def test_get_group_users_are_paginated(client):
     """Test that a group's users come back one page at a time, 50 by default."""
     admin = random_user()

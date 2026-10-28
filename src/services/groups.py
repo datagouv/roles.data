@@ -9,6 +9,7 @@ from src.model import (
     GroupResponse,
     GroupWithAdminsAndScopesResponse,
     GroupWithScopesResponse,
+    GroupWithUsersAndRoleResponse,
     GroupWithUsersAndScopesResponse,
     OrganisationCreate,
     OrganisationGroupResponse,
@@ -85,19 +86,25 @@ class GroupsService:
                 detail="User is not admin of the group.",
             )
 
-    async def is_member(self, acting_user_sub: UUID4, group_id: int) -> None:
+    async def is_member(self, acting_user_sub: UUID4, group_id: int) -> RoleResponse:
         """
         Verify if the user belongs to the group, whatever their role.
+
+        Returns the role they hold in it, which the caller often needs anyway.
         """
         # verify user exists and group exists
         acting_user = await self.users_service.get_user_by_sub(acting_user_sub)
         await self.get_group_by_id(group_id)
 
-        if not await self.users_service.get_role_in_group(acting_user.id, group_id):
+        role = await self.users_service.get_role_in_group(acting_user.id, group_id)
+
+        if not role:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="User is not member of the group.",
             )
+
+        return role
 
     async def get_group_by_id(self, group_id: int) -> GroupResponse:
         group = await self.groups_repository.get(group_id, self.service_provider_id)
@@ -244,6 +251,23 @@ class GroupsService:
         group_dict["contract_url"] = scopes_and_contract.contract_url
 
         return GroupWithUsersAndScopesResponse(**group_dict)
+
+    async def get_group_with_users_and_role(
+        self,
+        group_id: int,
+        current_user_role: RoleResponse,
+        users_page: int = 1,
+        users_size: int = DEFAULT_PAGE_SIZE,
+    ) -> GroupWithUsersAndRoleResponse:
+        """
+        Fetch a group with one page of its users and the role of the user asking.
+        """
+        group = await self.get_group_with_users_and_scopes(
+            group_id, users_page, users_size
+        )
+        return GroupWithUsersAndRoleResponse(
+            **dict(group), current_user_role=current_user_role
+        )
 
     async def update_group(self, group_id: int, group_name: str) -> GroupResponse:
         group = await self.get_group_by_id(group_id)

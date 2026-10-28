@@ -168,6 +168,17 @@ class GroupWithUsersAndScopesResponse(GroupWithScopesResponse):
     users_pagination: Pagination
 
 
+class GroupWithUsersAndRoleResponse(GroupWithUsersAndScopesResponse):
+    """
+    A group as one of its own users sees it.
+
+    It carries `current_user_role`, the role the user asking holds in the group,
+    next to the page of its users.
+    """
+
+    current_user_role: RoleResponse
+
+
 class GroupWithAdminsAndScopesResponse(GroupWithScopesResponse):
     """
     A group as one of its own users sees it in a listing.

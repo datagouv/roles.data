@@ -6,6 +6,7 @@ and that users can only access and modify their own groups.
 """
 
 from unittest.mock import patch
+from uuid import uuid4
 
 import pytest
 
@@ -661,8 +662,6 @@ def test_list_organization_groups_different_siret(client):
     """Test that different SIRETs return different groups."""
     from unittest.mock import AsyncMock, patch
 
-    from src.tests.helpers import DINUM_SIRET
-
     # Create a group with DINUM_SIRET
     admin1 = random_user()
     group1 = create_group(client, admin_email=admin1["email"])
@@ -686,3 +685,74 @@ def test_list_organization_groups_different_siret(client):
         # Should not return groups from DINUM_SIRET
         group_ids = [g["id"] for g in groups]
         assert group1["id"] not in group_ids
+
+
+@pytest.mark.parametrize(
+    "personal_email_domain", ["gmail.com", "Gmail.COM", "orange.fr", "proton.me"]
+)
+def test_add_user_to_group_personal_email_is_refused(
+    client, user_exists, personal_email_domain
+):
+    """Test that an address at a personal mail provider is refused, whatever its case."""
+    admin = random_user()
+    personal_email = f"agent_{uuid4()}@{personal_email_domain}"
+    group = create_group(client, admin_email=admin["email"])
+    headers = resource_server_auth_headers(admin["sub_pro_connect"], admin["email"])
+    users_before = get_group(client, group["id"])["users"]
+
+    response = client.post(
+        f"/resource-server/groups/{group['id']}/users",
+        json={"email": personal_email, "role_id": 2},
+        headers=headers,
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {"detail": "PERSONAL_EMAIL_REFUSED"}
+    assert not user_exists(personal_email)
+    assert not user_exists(personal_email.lower())
+    assert get_group(client, group["id"])["users"] == users_before
+
+
+def test_add_user_to_group_accepts_a_sub_domain_of_a_personal_provider(client):
+    """Test that only the exact domains are refused, not their sub-domains."""
+    admin = random_user()
+    sub_domain_email = f"agent_{uuid4()}@mail.gmail.com"
+    group = create_group(client, admin_email=admin["email"])
+    headers = resource_server_auth_headers(admin["sub_pro_connect"], admin["email"])
+
+    response = client.post(
+        f"/resource-server/groups/{group['id']}/users",
+        json={"email": sub_domain_email, "role_id": 2},
+        headers=headers,
+    )
+
+    assert response.status_code == 201
+    assert response.json()["email"] == sub_domain_email
+
+
+def test_add_users_to_group_personal_email_refuses_the_whole_batch(client, user_exists):
+    """Test that one address at a personal mail provider adds nobody."""
+    admin = random_user()
+    new_member = random_user()
+    first_personal_email = f"agent_{uuid4()}@laposte.net"
+    second_personal_email = f"agent_{uuid4()}@YAHOO.fr"
+    group = create_group(client, admin_email=admin["email"])
+    headers = resource_server_auth_headers(admin["sub_pro_connect"], admin["email"])
+
+    response = client.post(
+        f"/resource-server/groups/{group['id']}/users/batch",
+        json={
+            "users": [
+                {"email": second_personal_email, "role_id": 2},
+                {"email": new_member["email"], "role_id": 2},
+                {"email": first_personal_email, "role_id": 1},
+            ]
+        },
+        headers=headers,
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {"detail": "PERSONAL_EMAIL_REFUSED"}
+    assert not user_exists(first_personal_email.lower())
+    assert not user_exists(second_personal_email.lower())
+    assert not user_exists(new_member["email"])

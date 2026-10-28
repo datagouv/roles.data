@@ -50,6 +50,11 @@ async def create(
     Crée un nouveau groupe.
 
     Si l’organisation n’existe pas encore, elle est créée automatiquement.
+
+    Si l’adresse e-mail de l’administrateur ou de l’un des membres est hébergée
+    par un fournisseur de messagerie personnelle (`gmail.com`, `orange.fr`,
+    `outlook.com`…), une erreur 400 est levée, son `detail` vaut
+    `PERSONAL_EMAIL_REFUSED` : ni le groupe ni ses utilisateurs ne sont créés.
     """
     return await groups_service.create_group(group)
 

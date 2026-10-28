@@ -3,6 +3,7 @@ from uuid import UUID
 from fastapi import HTTPException, status
 from pydantic import UUID4, EmailStr, HttpUrl
 
+from src.constants import PERSONAL_EMAIL_DOMAINS, PERSONAL_EMAIL_REFUSED_CODE
 from src.model import (
     GroupCreate,
     GroupResponse,
@@ -59,10 +60,39 @@ class GroupsService:
         self.service_provider_id = service_provider_id
         self.should_send_emails = should_send_emails
 
-    async def validate_group_data(self, group_data: GroupCreate) -> None:
+    async def validate_group_data(
+        self, group_data: GroupCreate, refuse_personal_emails: bool = True
+    ) -> None:
         if not group_data.organisation_siret:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, detail="Siret is required."
+            )
+
+        if not refuse_personal_emails:
+            return
+
+        self.validate_email_domains(
+            [
+                group_data.admin.email,
+                *(member.email for member in group_data.members or []),
+            ]
+        )
+
+    def validate_email_domains(self, emails: list[str]) -> None:
+        """
+        Refuse the emails of users hosted by a personal mail provider.
+
+        The detail carries no address: it is an error code the consuming service
+        translates for its own users. Raised before anything is written, so no
+        user is created when an address is refused.
+        """
+        if any(
+            email.rpartition("@")[2].lower() in PERSONAL_EMAIL_DOMAINS
+            for email in emails
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=PERSONAL_EMAIL_REFUSED_CODE,
             )
 
     async def is_admin(self, acting_user_sub: UUID4, group_id: int) -> None:
@@ -90,8 +120,14 @@ class GroupsService:
             )
         return group
 
-    async def create_group(self, group_data: GroupCreate) -> GroupResponse:
-        await self.validate_group_data(group_data)
+    async def create_group(
+        self, group_data: GroupCreate, refuse_personal_emails: bool = True
+    ) -> GroupResponse:
+        """
+        refuse_personal_emails=False lets a caller which cannot report the
+        refusal to the user accept an address at a personal mail provider.
+        """
+        await self.validate_group_data(group_data, refuse_personal_emails)
 
         # Single transaction so that a failure never leaves a partially created group
         async with self.db_session.transaction():
@@ -231,6 +267,9 @@ class GroupsService:
                 detail="You must provide either user_email or user_id.",
             )
 
+        if user_email is not None:
+            self.validate_email_domains([user_email])
+
         # Validate role and group before creating anything
         role = await self.roles_service.get_roles_by_id(role_id)
         group = await self.get_group_with_users_and_scopes(group_id)
@@ -284,6 +323,8 @@ class GroupsService:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Duplicated emails in request: {', '.join(duplicated_emails)}",
             )
+
+        self.validate_email_domains(emails)
 
         # Validate roles and group before creating anything
         roles_by_id = {}

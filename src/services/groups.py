@@ -79,9 +79,9 @@ class GroupsService:
         acting_user = await self.users_service.get_user_by_sub(acting_user_sub)
         await self.get_group_by_id(group_id)
 
-        group_users = await self.users_service.get_users_by_group_id(group_id)
+        role = await self.users_service.get_role_in_group(acting_user.id, group_id)
 
-        if acting_user.id not in [u.id for u in group_users if u.is_admin]:
+        if not role or not role.is_admin:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="User is not admin of the group.",

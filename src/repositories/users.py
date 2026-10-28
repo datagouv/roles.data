@@ -165,9 +165,10 @@ class UsersRepository:
                 INNER JOIN roles as R ON TUR.role_id = R.id
                 WHERE TUR.group_id = :group_id AND TUR.user_id = :user_id
                 """
-            return await self.db_session.fetch_one(
+            role = await self.db_session.fetch_one(
                 query, {"group_id": group_id, "user_id": user_id}
             )
+            return RoleResponse(**dict(role)) if role else None
 
     async def count_by_group_ids(self, group_ids: list[int]) -> dict[int, int]:
         """

@@ -561,6 +561,69 @@ def test_remove_user_from_group_as_admin(client):
     assert not any(u["email"] == member["email"] for u in group_check["users"])
 
 
+def test_remove_or_demote_the_only_admin_is_forbidden(client):
+    """Test that a group is never left without an admin."""
+    admin = random_user()
+    group = create_group(client, admin_email=admin["email"])
+    group_id = group["id"]
+    headers = resource_server_auth_headers(admin["sub_pro_connect"], admin["email"])
+
+    admin_id = next(
+        user["id"]
+        for user in get_group(client, group_id)["users"]
+        if user["email"] == admin["email"]
+    )
+
+    response = client.delete(
+        f"/resource-server/groups/{group_id}/users/{admin_id}", headers=headers
+    )
+
+    assert response.status_code == 403
+    assert response.json() == {
+        "detail": f"Impossible to remove user {admin_id} from group {group_id} "
+        "as it is the only admin of the group."
+    }
+
+    response = client.patch(
+        f"/resource-server/groups/{group_id}/users/{admin_id}",
+        params={"role_id": 2},
+        headers=headers,
+    )
+
+    assert response.status_code == 403
+    assert response.json() == {
+        "detail": f"Impossible to update user {admin_id} role in group {group_id} "
+        "as it is the only admin of the group."
+    }
+
+
+def test_remove_an_admin_the_group_can_spare(client):
+    """Test that an admin can be removed as long as another one remains."""
+    admin = random_user()
+    second_admin = random_user()
+    group = create_group(client, admin_email=admin["email"])
+    group_id = group["id"]
+    headers = resource_server_auth_headers(admin["sub_pro_connect"], admin["email"])
+
+    response = client.post(
+        f"/resource-server/groups/{group_id}/users",
+        json={"email": second_admin["email"], "role_id": 1},
+        headers=headers,
+    )
+    assert response.status_code == 201
+    second_admin_id = response.json()["id"]
+
+    response = client.delete(
+        f"/resource-server/groups/{group_id}/users/{second_admin_id}",
+        headers=headers,
+    )
+
+    assert response.status_code == 204
+    assert not any(
+        user["id"] == second_admin_id for user in get_group(client, group_id)["users"]
+    )
+
+
 def test_remove_user_from_group_unauthorized(client):
     """Test that non-admin cannot remove users from a group."""
     admin = random_user()

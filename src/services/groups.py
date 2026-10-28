@@ -12,13 +12,11 @@ from src.model import (
     GroupWithUsersAndScopesResponse,
     OrganisationCreate,
     OrganisationGroupResponse,
-    Pagination,
     RoleResponse,
     Siret,
     UserCreate,
     UserInGroupCreate,
     UserInGroupResponse,
-    UserWithRoleResponse,
     build_pagination,
 )
 from src.repositories import groups, users_in_group
@@ -230,37 +228,12 @@ class GroupsService:
         users, total = await self.users_service.get_users_page_by_group_id(
             group_id, users_page, users_size
         )
-        return await self._build_group_with_users_and_scopes(
-            group, users, build_pagination(users_page, users_size, total)
-        )
-
-    async def get_group_with_all_users_and_scopes(
-        self, group_id: int
-    ) -> GroupWithUsersAndScopesResponse:
-        """
-        Fetch a group with every one of its users.
-
-        Reserved for the membership checks, which are wrong when they only see
-        part of the group: use get_group_with_users_and_scopes to answer a request.
-        """
-        group = await self.get_group_by_id(group_id)
-        users = await self.users_service.get_users_by_group_id(group_id)
-        return await self._build_group_with_users_and_scopes(
-            group, users, build_pagination(1, len(users), len(users))
-        )
-
-    async def _build_group_with_users_and_scopes(
-        self,
-        group: GroupResponse,
-        users: list[UserWithRoleResponse],
-        users_pagination: Pagination,
-    ) -> GroupWithUsersAndScopesResponse:
-        group_dict = dict(group)
 
         # Python's dict() function does not include dynamically added attributes
         # so we have to manually create a dict then a new object
+        group_dict = dict(group)
         group_dict["users"] = users
-        group_dict["users_pagination"] = users_pagination
+        group_dict["users_pagination"] = build_pagination(users_page, users_size, total)
 
         scopes_and_contract = await self.scopes_service.get_scopes_and_contract(
             self.service_provider_id, group.id
@@ -297,7 +270,7 @@ class GroupsService:
 
         # Validate role and group before creating anything
         role = await self.roles_service.get_roles_by_id(role_id)
-        group = await self.get_group_with_all_users_and_scopes(group_id)
+        group = await self.get_group_by_id(group_id)
 
         # Single transaction so that a user is never created without being added to the group
         async with self.db_session.transaction():
@@ -308,7 +281,7 @@ class GroupsService:
             else:
                 user = await self.users_service.get_user_by_id(user_id)
 
-            if self.is_user_in_group(group, user.id):
+            if await self.users_service.get_role_in_group(user.id, group.id):
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
                     detail=f"User with ID {user.id} is already in group {group_id}",
@@ -319,8 +292,12 @@ class GroupsService:
             )
 
         if send_email:
+            # The user just added may be an admin themselves, and should not be
+            # named as the one to turn to in their own email
             await self.send_nouveau_groupe_email(
-                user.email, group.name, self.get_first_admin_email(group)
+                user.email,
+                group.name,
+                await self.get_first_admin_email(group.id, excluded_user_id=user.id),
             )
 
         role = await self.roles_service.get_roles_by_id(role.id)
@@ -353,7 +330,11 @@ class GroupsService:
         roles_by_id = {}
         for role_id in dict.fromkeys(user.role_id for user in users_in_group):
             roles_by_id[role_id] = await self.roles_service.get_roles_by_id(role_id)
-        group = await self.get_group_with_all_users_and_scopes(group_id)
+        group = await self.get_group_by_id(group_id)
+
+        # Look the admin up before the new users are added, as some of them may
+        # be admins themselves
+        group_admin_email = await self.get_first_admin_email(group.id)
 
         # Single transaction so that a user is never created without being added to the group
         async with self.db_session.transaction():
@@ -361,8 +342,11 @@ class GroupsService:
                 [UserCreate(email=email) for email in emails]
             )
 
+            user_ids_in_group = await self.users_service.get_user_ids_in_group(
+                group.id, [user.id for user in users]
+            )
             users_already_in_group = [
-                user.id for user in users if self.is_user_in_group(group, user.id)
+                user.id for user in users if user.id in user_ids_in_group
             ]
             if users_already_in_group:
                 raise HTTPException(
@@ -379,7 +363,6 @@ class GroupsService:
             )
 
         # One email per user so that members are not disclosed to each other
-        group_admin_email = self.get_first_admin_email(group)
         for user in users:
             await self.send_nouveau_groupe_email(
                 user.email, group.name, group_admin_email
@@ -416,10 +399,11 @@ class GroupsService:
 
     async def remove_user_from_group(self, group_id: int, user_id: int):
         user = await self.users_service.get_user_by_id(user_id)
-        group = await self.get_group_with_all_users_and_scopes(group_id)
+        group = await self.get_group_by_id(group_id)
 
-        if self.is_user_admin(group, user_id):
-            if self.has_only_one_admin(group):
+        role_in_group = await self.users_service.get_role_in_group(user_id, group_id)
+        if role_in_group and role_in_group.is_admin:
+            if await self.has_only_one_admin(group_id):
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail=f"Impossible to remove user {user_id} from group {group_id} as it is the only admin of the group.",
@@ -436,8 +420,8 @@ class GroupsService:
             group_name=group.name,
             service_provider_name=service_provider.name,
             service_provider_url=service_provider.url,
-            group_admin_email=self.get_first_admin_email(
-                group, excluded_user_id=user.id
+            group_admin_email=await self.get_first_admin_email(
+                group.id, excluded_user_id=user.id
             ),
         )
 
@@ -447,21 +431,21 @@ class GroupsService:
         # check if the user, is in the group
         role = await self.roles_service.get_roles_by_id(role_id)
         user = await self.users_service.get_user_by_id(user_id)
-        group = await self.get_group_with_all_users_and_scopes(group_id)
+        group = await self.get_group_by_id(group_id)
 
-        if not self.is_user_in_group(group, user_id):
+        role_in_group = await self.users_service.get_role_in_group(user_id, group_id)
+        if not role_in_group:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"User with ID {user_id} not found in group {group_id}",
             )
 
-        if not role.is_admin:
-            if self.has_only_one_admin(group):
-                if self.is_user_admin(group, user_id):
-                    raise HTTPException(
-                        status_code=status.HTTP_403_FORBIDDEN,
-                        detail=f"Impossible to update user {user_id} role in group {group_id} as it is the only admin of the group.",
-                    )
+        if not role.is_admin and role_in_group.is_admin:
+            if await self.has_only_one_admin(group_id):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"Impossible to update user {user_id} role in group {group_id} as it is the only admin of the group.",
+                )
 
         await self.users_in_group_repository.update_user_role(
             group.id, user_id, role.id
@@ -495,41 +479,21 @@ class GroupsService:
             service_provider.id, group_id, scopes, contract_description, contract_url
         )
 
-    def is_user_in_group(
-        self, group: GroupWithUsersAndScopesResponse, user_id: int
-    ) -> bool:
-        """
-        Check if a user is in a group.
-        """
-        return user_id in [u.id for u in group.users]
-
-    def is_user_admin(
-        self, group: GroupWithUsersAndScopesResponse, user_id: int
-    ) -> bool:
-        """
-        Check if a user is an admin of a group.
-        """
-        return next((u.is_admin for u in group.users if u.id == user_id), False)
-
-    def has_only_one_admin(self, group: GroupWithUsersAndScopesResponse) -> bool:
+    async def has_only_one_admin(self, group_id: int) -> bool:
         """
         Check if a group has only one admin.
         """
-        return len([u.id for u in group.users if u.is_admin]) == 1
+        return await self.users_service.count_admins_by_group_id(group_id) == 1
 
-    def get_first_admin_email(
-        self,
-        group: GroupWithUsersAndScopesResponse,
-        excluded_user_id: int | None = None,
+    async def get_first_admin_email(
+        self, group_id: int, excluded_user_id: int | None = None
     ) -> str | None:
         """
         Return the first admin email found for a group.
+
+        excluded_user_id leaves one user out, to name an admin other than them.
         """
-        return next(
-            (
-                str(user.email)
-                for user in group.users
-                if user.is_admin and user.id != excluded_user_id
-            ),
-            None,
+        admin = await self.users_service.get_first_admin_by_group_id(
+            group_id, excluded_user_id
         )
+        return str(admin.email) if admin else None

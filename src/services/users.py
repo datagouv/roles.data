@@ -35,24 +35,6 @@ class UsersService:
             )
         return user
 
-    async def get_users_by_group_ids(
-        self, group_ids: list[int]
-    ) -> dict[int, list[UserWithRoleResponse]]:
-        """
-        Retrieve all users for multiple group IDs in a single query
-        Returns a dictionary mapping group_id -> list of users
-        """
-        return await self.user_repository.get_all_by_group_ids(group_ids)
-
-    async def get_users_by_group_id(self, group_id: int) -> list[UserWithRoleResponse]:
-        """
-        Retrieve all user for a given group ID
-        """
-        usersByGroupId = await self.get_users_by_group_ids([group_id])
-        if group_id not in usersByGroupId:
-            return []
-        return usersByGroupId[group_id]
-
     async def get_admins_by_group_ids(
         self, group_ids: list[int], limit: int
     ) -> dict[int, list[UserResponse]]:
@@ -69,6 +51,30 @@ class UsersService:
         Retrieve the role a user holds in a group, or None when they are not in it
         """
         return await self.user_repository.get_role_in_group(user_id, group_id)
+
+    async def get_user_ids_in_group(
+        self, group_id: int, user_ids: list[int]
+    ) -> set[int]:
+        """
+        Retrieve which of the given users belong to a group
+        """
+        return await self.user_repository.get_user_ids_in_group(group_id, user_ids)
+
+    async def get_first_admin_by_group_id(
+        self, group_id: int, excluded_user_id: int | None = None
+    ) -> UserResponse | None:
+        """
+        Retrieve the oldest admin of a group, or None when it has none
+        """
+        return await self.user_repository.get_first_admin_by_group_id(
+            group_id, excluded_user_id
+        )
+
+    async def count_admins_by_group_id(self, group_id: int) -> int:
+        """
+        Count the admins of a group
+        """
+        return await self.user_repository.count_admins_by_group_id(group_id)
 
     async def get_users_page_by_group_ids(
         self, group_ids: list[int], page: int, size: int

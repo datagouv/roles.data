@@ -47,16 +47,19 @@ class GroupsRepository:
                 },
             )
 
-    async def search_by_user(
-        self, user_id: int, service_provider_id: int
-    ) -> list[GroupWithUsersAndScopesResponse]:
+    async def search_by_user(self, user_id: int, service_provider_id: int):
+        """
+        Retrieve the groups a user belongs to, with the role they hold in each
+        """
         async with self.db_session.transaction():
             query = """
-            SELECT G.id, G.name, O.siret as organisation_siret, GSPR.scopes, GSPR.contract_description, GSPR.contract_url
+            SELECT G.id, G.name, O.siret as organisation_siret, GSPR.scopes, GSPR.contract_description, GSPR.contract_url,
+                R.id as current_user_role_id, R.role_name as current_user_role_name, R.is_admin as current_user_is_admin
             FROM groups as G
             INNER JOIN organisations AS O ON G.orga_id = O.id
             INNER JOIN group_user_relations AS GUR ON GUR.group_id = G.id
             INNER JOIN users AS U ON U.id = GUR.user_id
+            INNER JOIN roles AS R ON R.id = GUR.role_id
             INNER JOIN group_service_provider_relations AS GSPR ON GSPR.group_id = G.id AND GSPR.service_provider_id = :service_provider_id
             WHERE U.id = :user_id
             ORDER BY G.id

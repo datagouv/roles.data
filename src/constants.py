@@ -16,3 +16,6 @@ MAX_PAGE_SIZE = 200
 
 MAX_USERS_PER_BATCH = 10_000
 """Maximum number of users accepted in a single batch request."""
+
+MAX_LISTED_ADMINS = 3
+"""Maximum number of a group's admins returned when listing groups."""

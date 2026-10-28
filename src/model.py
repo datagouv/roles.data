@@ -107,6 +107,18 @@ class UserWithRoleResponse(UserBase):
     model_config = ConfigDict(from_attributes=True)
 
 
+# --- Role ---
+class RoleBase(BaseModel):
+    role_name: str
+    is_admin: bool
+
+
+class RoleResponse(RoleBase):
+    id: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 # --- Group ---
 class GroupBase(BaseModel):
     name: str
@@ -156,6 +168,20 @@ class GroupWithUsersAndScopesResponse(GroupWithScopesResponse):
     users_pagination: Pagination
 
 
+class GroupWithAdminsAndScopesResponse(GroupWithScopesResponse):
+    """
+    A group as one of its own users sees it in a listing.
+
+    It carries the group's first admins and the role of the user asking, rather
+    than the group's users: a group can hold far more users than a listing
+    should ever return.
+    """
+
+    organisation_siret: Siret
+    admins: list[UserResponse]
+    current_user_role: RoleResponse
+
+
 class OrganisationGroupResponse(GroupResponse):
     organisation_siret: Siret
     scopes: str
@@ -172,18 +198,6 @@ class ParentChildResponse(BaseModel):
     parent_group_id: int
     child_group_id: int
     inherit_scopes: bool
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-# --- Role ---
-class RoleBase(BaseModel):
-    role_name: str
-    is_admin: bool
-
-
-class RoleResponse(RoleBase):
-    id: int
 
     model_config = ConfigDict(from_attributes=True)
 

@@ -8,6 +8,7 @@ from src.dependencies.auth.pro_connect_resource_server import (
 )
 from src.model import (
     GroupResponse,
+    GroupWithAdminsAndScopesResponse,
     GroupWithUsersAndScopesResponse,
     UserInGroupCreate,
     UserInGroupResponse,
@@ -22,9 +23,25 @@ router = APIRouter(
 )
 
 
-@router.get("/", response_model=list[GroupWithUsersAndScopesResponse])
+@router.get("/", response_model=list[GroupWithAdminsAndScopesResponse])
 async def get_my_groups(
     acting_user_sub: UUID4 = Depends(get_acting_user_sub_from_proconnect_token),
+    groups_service: GroupsService = Depends(get_groups_service),
+):
+    """
+    Recherche les groupes d’un utilisateur, avec son adresse e-mail et son sub ProConnect.
+
+    Chaque groupe contient `admins`, au plus trois de ses administrateurs, et
+    `current_user_role`, le rôle qu’y tient l’utilisateur qui appelle. La liste
+    des utilisateurs d’un groupe est servie page par page par
+    `GET /resource-server/groups/{group_id}`.
+    """
+    return await groups_service.search_groups(user_sub=acting_user_sub)
+
+
+@router.get("/{group_id}", response_model=GroupWithUsersAndScopesResponse)
+async def get_group(
+    group_id: int = Path(..., description="ID du groupe"),
     users_page: int = Query(
         1, ge=1, alias="usersPage", description="Page d'utilisateurs à récupérer"
     ),
@@ -35,16 +52,22 @@ async def get_my_groups(
         alias="usersSize",
         description="Nombre d'utilisateurs par page",
     ),
+    acting_user_sub: UUID4 = Depends(get_acting_user_sub_from_proconnect_token),
     groups_service: GroupsService = Depends(get_groups_service),
 ):
     """
-    Recherche les groupes d’un utilisateur, avec son adresse e-mail et son sub ProConnect.
+    Récupère un groupe de l’utilisateur, avec ses droits sur le fournisseur de
+    service et ses utilisateurs.
 
-    Les utilisateurs de chaque groupe sont paginés : `users` contient la page demandée
-    du groupe et `users_pagination` décrit la pagination de ce groupe.
+    L’utilisateur qui appelle doit faire partie du groupe, sinon une erreur 403
+    sera levée.
+
+    Les utilisateurs sont paginés : `users` contient la page demandée et
+    `users_pagination` décrit la pagination.
     """
-    return await groups_service.search_groups(
-        user_sub=acting_user_sub, users_page=users_page, users_size=users_size
+    await groups_service.is_member(acting_user_sub, group_id)
+    return await groups_service.get_group_with_users_and_scopes(
+        group_id, users_page, users_size
     )
 
 

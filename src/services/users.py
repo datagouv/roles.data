@@ -2,7 +2,7 @@
 from fastapi import HTTPException, status
 from pydantic import UUID4
 
-from src.model import UserCreate, UserResponse, UserWithRoleResponse
+from src.model import RoleResponse, UserCreate, UserResponse, UserWithRoleResponse
 from src.repositories.users import UsersRepository
 
 
@@ -52,6 +52,23 @@ class UsersService:
         if group_id not in usersByGroupId:
             return []
         return usersByGroupId[group_id]
+
+    async def get_admins_by_group_ids(
+        self, group_ids: list[int], limit: int
+    ) -> dict[int, list[UserResponse]]:
+        """
+        Retrieve at most `limit` admins for each of the given group IDs
+        Returns a dictionary mapping group_id -> list of admins
+        """
+        return await self.user_repository.get_admins_by_group_ids(group_ids, limit)
+
+    async def get_role_in_group(
+        self, user_id: int, group_id: int
+    ) -> RoleResponse | None:
+        """
+        Retrieve the role a user holds in a group, or None when they are not in it
+        """
+        return await self.user_repository.get_role_in_group(user_id, group_id)
 
     async def get_users_page_by_group_ids(
         self, group_ids: list[int], page: int, size: int

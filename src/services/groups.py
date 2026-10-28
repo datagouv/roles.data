@@ -3,15 +3,17 @@ from uuid import UUID
 from fastapi import HTTPException, status
 from pydantic import UUID4, EmailStr, HttpUrl
 
-from src.constants import DEFAULT_PAGE_SIZE
+from src.constants import DEFAULT_PAGE_SIZE, MAX_LISTED_ADMINS
 from src.model import (
     GroupCreate,
     GroupResponse,
+    GroupWithAdminsAndScopesResponse,
     GroupWithScopesResponse,
     GroupWithUsersAndScopesResponse,
     OrganisationCreate,
     OrganisationGroupResponse,
     Pagination,
+    RoleResponse,
     Siret,
     UserCreate,
     UserInGroupCreate,
@@ -83,6 +85,20 @@ class GroupsService:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="User is not admin of the group.",
+            )
+
+    async def is_member(self, acting_user_sub: UUID4, group_id: int) -> None:
+        """
+        Verify if the user belongs to the group, whatever their role.
+        """
+        # verify user exists and group exists
+        acting_user = await self.users_service.get_user_by_sub(acting_user_sub)
+        await self.get_group_by_id(group_id)
+
+        if not await self.users_service.get_role_in_group(acting_user.id, group_id):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="User is not member of the group.",
             )
 
     async def get_group_by_id(self, group_id: int) -> GroupResponse:
@@ -164,18 +180,17 @@ class GroupsService:
         return [OrganisationGroupResponse(**dict(group)) for group in groups_by_siret]
 
     async def search_groups(
-        self,
-        user_sub: UUID,
-        users_page: int = 1,
-        users_size: int = DEFAULT_PAGE_SIZE,
-    ) -> list[GroupWithUsersAndScopesResponse]:
+        self, user_sub: UUID
+    ) -> list[GroupWithAdminsAndScopesResponse]:
         """
         Search for groups by user email.
 
         This method will return all groups that the user is a member of, regardless of their role.
 
-        Each group carries one page of its own users, as a group can hold far
-        more users than a response should ever return.
+        Each group carries its first admins and the role the user holds in it,
+        rather than its users: a group can hold far more users than a listing
+        should ever return. Use get_group_with_users_and_scopes to walk through
+        the users of one group.
         """
 
         user = await self.users_service.get_user_by_sub(user_sub)
@@ -183,26 +198,24 @@ class GroupsService:
             user.id, self.service_provider_id
         )
 
-        # Batch fetch users for all groups
-        group_ids = [g.id for g in groups]
-        (
-            users_by_group,
-            totals_by_group,
-        ) = await self.users_service.get_users_page_by_group_ids(
-            group_ids, users_page, users_size
+        # Batch fetch the admins of all groups
+        admins_by_group = await self.users_service.get_admins_by_group_ids(
+            [g.id for g in groups], MAX_LISTED_ADMINS
         )
 
-        groupsWithUsers = []
+        groupsWithAdmins = []
         for g in groups:
             # Python's dict() function does not include dynamically added attributes
             # so we have to manually create a dict then a new object
             g_dict = dict(g)
-            g_dict["users"] = users_by_group.get(g.id, [])
-            g_dict["users_pagination"] = build_pagination(
-                users_page, users_size, totals_by_group.get(g.id, 0)
+            g_dict["admins"] = admins_by_group.get(g.id, [])
+            g_dict["current_user_role"] = RoleResponse(
+                id=g_dict.pop("current_user_role_id"),
+                role_name=g_dict.pop("current_user_role_name"),
+                is_admin=g_dict.pop("current_user_is_admin"),
             )
-            groupsWithUsers.append(GroupWithUsersAndScopesResponse(**g_dict))
-        return groupsWithUsers
+            groupsWithAdmins.append(GroupWithAdminsAndScopesResponse(**g_dict))
+        return groupsWithAdmins
 
     async def get_group_with_users_and_scopes(
         self,

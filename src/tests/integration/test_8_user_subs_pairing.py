@@ -6,11 +6,20 @@ from being changed after initial pairing. Tests use resource server endpoints to
 the pairing logic.
 """
 
+from src.dependencies.auth.pro_connect import pro_connect_provider
+from src.dependencies.auth.pro_connect_resource_server import (
+    get_claims_from_proconnect_token,
+)
+from src.dependencies.context import get_context
+from src.main import app
 from src.tests.helpers import (
     create_group,
     random_user,
     resource_server_auth_headers,
 )
+
+# As seeded in db/seed/seed.sql for service provider 1
+SEEDED_PROCONNECT_CLIENT_ID = "test_proconnect_client_id"
 
 
 def test_first_pairing_allows_group_access(client):
@@ -85,3 +94,42 @@ def test_nonexistent_user_fails_pairing(client):
 
     assert response.status_code == 404
     assert "not found" in response.json()["detail"].lower()
+
+
+def test_token_is_introspected_once_per_request(client, monkeypatch):
+    """
+    A request reads its ProConnect claims once, whatever asks for them.
+
+    Both the route dependencies and get_context need them, and get_context
+    calls get_claims_from_proconnect_token directly rather than through
+    Depends, so FastAPI's own dependency cache does not cover that call.
+    Without a cache of its own the request would introspect its token twice,
+    and introspection takes the best part of a second.
+    """
+    user = random_user()
+    group = create_group(client, admin_email=user["email"])
+    headers = resource_server_auth_headers(user["sub_pro_connect"], user["email"])
+
+    # Pair the sub first, through the test suite's own auth override, so that
+    # the real claims function finds the email without asking ProConnect for it
+    assert client.get("/resource-server/groups/", headers=headers).status_code == 200
+
+    introspected_tokens = []
+
+    async def count_introspection(access_token: str) -> dict:
+        introspected_tokens.append(access_token)
+        return {
+            "sub": str(user["sub_pro_connect"]),
+            "client_id": SEEDED_PROCONNECT_CLIENT_ID,
+        }
+
+    monkeypatch.setattr(pro_connect_provider, "introspect_token", count_introspection)
+    # Drop the overrides, so that this one request goes through the real
+    # authentication dependencies rather than the test doubles
+    monkeypatch.delitem(app.dependency_overrides, get_claims_from_proconnect_token)
+    monkeypatch.delitem(app.dependency_overrides, get_context)
+
+    response = client.get(f"/resource-server/groups/{group['id']}", headers=headers)
+
+    assert response.status_code == 200
+    assert len(introspected_tokens) == 1

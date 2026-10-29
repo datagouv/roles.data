@@ -904,6 +904,60 @@ def test_get_group_users_page_size(client):
     }
 
 
+def test_get_group_users_can_be_searched(client):
+    """Test that a group's users can be narrowed down by email."""
+    admin = random_user()
+    # 3 members and the admin
+    group = create_group(client, admin_email=admin["email"], member_count=3)
+    headers = resource_server_auth_headers(admin["sub_pro_connect"], admin["email"])
+    url = f"/resource-server/groups/{group['id']}"
+    member_email = group["members"][0]["email"]
+
+    response = client.get(url, params={"usersSearch": member_email}, headers=headers)
+
+    assert response.status_code == 200
+    searched_group = response.json()
+    assert [user["email"] for user in searched_group["users"]] == [member_email]
+    # The pagination describes the users the search matches, not the whole group
+    assert searched_group["users_pagination"]["total"] == 1
+
+    # A fragment of an email is enough, and the case does not matter
+    response = client.get(
+        url, params={"usersSearch": member_email.upper()[:12]}, headers=headers
+    )
+
+    assert response.status_code == 200
+    assert [user["email"] for user in response.json()["users"]] == [member_email]
+
+    # The group comes back whole when nothing is searched
+    response = client.get(url, params={"usersSearch": ""}, headers=headers)
+
+    assert response.status_code == 200
+    assert response.json()["users_pagination"]["total"] == 4
+
+
+def test_get_group_users_search_has_no_wildcards(client):
+    """Test that a search is matched literally, rather than as a SQL pattern."""
+    admin = random_user()
+    group = create_group(client, admin_email=admin["email"], member_count=3)
+    headers = resource_server_auth_headers(admin["sub_pro_connect"], admin["email"])
+    url = f"/resource-server/groups/{group['id']}"
+
+    # A SQL wildcard is searched for as the character it is, so it finds nothing
+    for wildcard in ("%", "%@%", "\\"):
+        response = client.get(url, params={"usersSearch": wildcard}, headers=headers)
+
+        assert response.status_code == 200
+        assert response.json()["users"] == []
+        assert response.json()["users_pagination"]["total"] == 0
+
+    # The underscore these emails do carry is found, as an underscore
+    response = client.get(url, params={"usersSearch": "member_"}, headers=headers)
+
+    assert response.status_code == 200
+    assert response.json()["users_pagination"]["total"] == 3
+
+
 @pytest.mark.parametrize(
     "params", [{"usersPage": 0}, {"usersSize": 0}, {"usersSize": 201}]
 )

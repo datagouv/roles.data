@@ -52,6 +52,11 @@ async def get_group(
         alias="usersSize",
         description="Nombre d'utilisateurs par page",
     ),
+    users_search: str = Query(
+        "",
+        alias="usersSearch",
+        description="Recherche sur l'adresse e-mail des utilisateurs du groupe",
+    ),
     acting_user_sub: UUID4 = Depends(get_acting_user_sub_from_proconnect_token),
     groups_service: GroupsService = Depends(get_groups_service),
 ):
@@ -65,10 +70,14 @@ async def get_group(
     Les utilisateurs sont paginés : `users` contient la page demandée et
     `users_pagination` décrit la pagination. `current_user_role` porte le rôle
     qu’y tient l’utilisateur qui appelle.
+
+    `usersSearch` ne garde que les utilisateurs dont l’adresse e-mail contient
+    la recherche, sans tenir compte de la casse ; `users_pagination` décrit
+    alors ces utilisateurs et non l’ensemble du groupe.
     """
     current_user_role = await groups_service.is_member(acting_user_sub, group_id)
     return await groups_service.get_group_with_users_and_role(
-        group_id, current_user_role, users_page, users_size
+        group_id, current_user_role, users_page, users_size, users_search
     )
 
 

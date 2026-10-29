@@ -1,11 +1,16 @@
-{% macro list_search(action, label, search, sort_by, sort_direction) %}
-    <form method="get" action="{{ action }}" role="search" class="fr-mb-4w">
-        <label class="fr-label fr-mb-1w" for="list-search">{{ label }}</label>
+{% macro list_search(action, label, search, sort_by=none, sort_direction=none, anchor=none, input_id='list-search') %}
+    {# anchor keeps the reader on the list they are searching, instead of at the top of the page #}
+    <form method="get" action="{{ action }}{{ '#' ~ anchor if anchor else '' }}" role="search" class="fr-mb-4w">
+        <label class="fr-label fr-mb-1w" for="{{ input_id }}">{{ label }}</label>
         <div class="fr-search-bar">
-            <input class="fr-input" type="search" id="list-search" name="search" value="{{ search }}">
+            <input class="fr-input" type="search" id="{{ input_id }}" name="search" value="{{ search }}">
             <button class="fr-btn" type="submit">Rechercher</button>
         </div>
-        <input type="hidden" name="sortBy" value="{{ sort_by }}">
-        <input type="hidden" name="sortDirection" value="{{ sort_direction }}">
+        {% if sort_by is not none %}
+            <input type="hidden" name="sortBy" value="{{ sort_by }}">
+        {% endif %}
+        {% if sort_direction is not none %}
+            <input type="hidden" name="sortDirection" value="{{ sort_direction }}">
+        {% endif %}
     </form>
 {% endmacro %}

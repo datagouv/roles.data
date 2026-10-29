@@ -2,6 +2,7 @@
 from fastapi import HTTPException, status
 from pydantic import EmailStr
 
+from src.repositories.users import email_search_clause
 from src.utils.admin_permissions import get_web_admin_permissions
 
 
@@ -102,18 +103,23 @@ class AdminReadRepository:
             return await self.db_session.fetch_all(query, values)
 
     async def read_group_users(
-        self, group_id: int, limit: int | None = None, offset: int = 0
+        self,
+        group_id: int,
+        limit: int | None = None,
+        offset: int = 0,
+        search: str = "",
     ) -> list[dict]:
         async with self.db_session.transaction():
-            query = """
+            values = {"group_id": group_id}
+            query = f"""
                 SELECT U.id, U.email, R.role_name as role, GUR.created_at
                 FROM group_user_relations AS GUR
                 INNER JOIN users as U ON U.id = GUR.user_id
                 INNER JOIN roles AS R ON R.id = GUR.role_id
                 WHERE GUR.group_id = :group_id
+                {email_search_clause(search, values)}
                 ORDER BY R.id ASC, U.id ASC
             """
-            values = {"group_id": group_id}
 
             if limit is not None:
                 query += " LIMIT :limit OFFSET :offset"
@@ -122,14 +128,17 @@ class AdminReadRepository:
 
             return await self.db_session.fetch_all(query, values=values)
 
-    async def count_group_users(self, group_id: int) -> int:
+    async def count_group_users(self, group_id: int, search: str = "") -> int:
         async with self.db_session.transaction():
-            query = """
+            values = {"group_id": group_id}
+            query = f"""
                 SELECT COUNT(*) AS user_count
                 FROM group_user_relations AS GUR
+                INNER JOIN users as U ON U.id = GUR.user_id
                 WHERE GUR.group_id = :group_id
+                {email_search_clause(search, values)}
             """
-            row = await self.db_session.fetch_one(query, values={"group_id": group_id})
+            row = await self.db_session.fetch_one(query, values=values)
             return row["user_count"] if row else 0
 
     async def read_group_scopes(self, group_id: int) -> list[dict]:

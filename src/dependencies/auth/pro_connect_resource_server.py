@@ -74,7 +74,9 @@ async def get_claims_from_proconnect_token(
     )
 
     if not service_provider:
-        raise Exception("No service provider matching proconnect client id")
+        raise Exception(
+            f"No service provider matching proconnect client id: {client_id}"
+        )
 
     request.state.proconnect_claims = (
         proconnect_sub,

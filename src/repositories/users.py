@@ -12,6 +12,26 @@ from src.model import (
 from src.services.logs import LogsService
 
 
+def email_search_clause(search: str, values: dict) -> str:
+    """
+    Build the SQL fragment matching the `U.email` column against a search term.
+
+    The term is looked for anywhere in the email, case-insensitively. The LIKE
+    wildcards it may itself contain are escaped, so they are searched for as the
+    characters they are rather than as wildcards. `values` is filled in place
+    with the bind parameter the fragment uses.
+
+    Returns an empty string for an empty search, which leaves the query as it is.
+    """
+    search = search.strip()
+    if not search:
+        return ""
+
+    escaped = search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    values["email_search"] = f"%{escaped}%"
+    return " AND U.email ILIKE :email_search ESCAPE '\\'"
+
+
 class UsersRepository:
     """
     This repository handles the user
@@ -57,25 +77,27 @@ class UsersRepository:
             )
 
     async def get_page_by_group_id(
-        self, group_id: int, limit: int, offset: int
+        self, group_id: int, limit: int, offset: int, search: str = ""
     ) -> list[UserWithRoleResponse]:
         """
         Retrieve one page of a group's users, admins first then by creation order
+
+        `search` keeps only the users whose email matches it.
         """
         async with self.db_session.transaction():
-            query = """
+            values = {"group_id": group_id, "limit": limit, "offset": offset}
+            query = f"""
                 SELECT U.id, U.email, R.role_name, R.id as role_id, R.is_admin
                 FROM users as U
                 INNER JOIN group_user_relations as TUR ON TUR.user_id = U.id
                 INNER JOIN roles as R ON TUR.role_id = R.id
                 WHERE TUR.group_id = :group_id
+                {email_search_clause(search, values)}
                 ORDER BY R.id ASC, U.id ASC
                 LIMIT :limit OFFSET :offset
                 """
 
-            rows = await self.db_session.fetch_all(
-                query, {"group_id": group_id, "limit": limit, "offset": offset}
-            )
+            rows = await self.db_session.fetch_all(query, values)
             return [UserWithRoleResponse(**dict(row)) for row in rows]
 
     async def get_admins_by_group_ids(
@@ -203,17 +225,20 @@ class UsersRepository:
             row = await self.db_session.fetch_one(query, {"group_id": group_id})
             return row["admin_count"]
 
-    async def count_by_group_id(self, group_id: int) -> int:
+    async def count_by_group_id(self, group_id: int, search: str = "") -> int:
         """
-        Count the users of a group
+        Count the users of a group, or those of them a search matches
         """
         async with self.db_session.transaction():
-            query = """
+            values = {"group_id": group_id}
+            query = f"""
                 SELECT COUNT(*) AS user_count
                 FROM group_user_relations as TUR
+                INNER JOIN users as U ON U.id = TUR.user_id
                 WHERE TUR.group_id = :group_id
+                {email_search_clause(search, values)}
                 """
-            row = await self.db_session.fetch_one(query, {"group_id": group_id})
+            row = await self.db_session.fetch_one(query, values)
             return row["user_count"]
 
     async def create_many(self, users: list[UserCreate]) -> list[UserResponse]:

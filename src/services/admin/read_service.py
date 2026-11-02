@@ -92,6 +92,7 @@ class AdminReadService:
         include_logs: bool = True,
         users_page: int = 1,
         users_size: int = DEFAULT_PAGE_SIZE,
+        users_search: str = "",
     ):
         matching_groups = await self.admin_read_repository.read_groups([group_id])
 
@@ -103,9 +104,14 @@ class AdminReadService:
 
         group_details = matching_groups[0]
         users = await self.admin_read_repository.read_group_users(
-            group_id, limit=users_size, offset=(users_page - 1) * users_size
+            group_id,
+            limit=users_size,
+            offset=(users_page - 1) * users_size,
+            search=users_search,
         )
-        users_total = await self.admin_read_repository.count_group_users(group_id)
+        users_total = await self.admin_read_repository.count_group_users(
+            group_id, users_search
+        )
         scopes = await self.admin_read_repository.read_group_scopes(group_id)
         logs = await self.get_logs(group_id=group_id) if include_logs else []
 
@@ -113,6 +119,7 @@ class AdminReadService:
             "details": group_details,
             "users": users,
             "users_pagination": build_pagination(users_page, users_size, users_total),
+            "users_search": users_search,
             "scopes": scopes,
             "logs": logs,
         }

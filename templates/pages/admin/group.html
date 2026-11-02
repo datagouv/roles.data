@@ -2,6 +2,7 @@
 {% from "components/logs_table.html" import logs_table %}
 {% from "components/table.html" import data_table %}
 {% from "components/pagination.html" import pagination_nav %}
+{% from "components/list_search.html" import list_search %}
 
 {% set users_headers = ['Date d’ajout', 'id', 'Role', 'Email'] %}
 {% if can_write_admin %}
@@ -190,6 +191,7 @@
     </div>
   {% endif %}
   <div id="liste-utilisateurs">
+    {{ list_search('/admin/groups/' ~ details.id, 'Rechercher un utilisateur du groupe par email', users_search, anchor='liste-utilisateurs', input_id='users-search') }}
     {{ data_table(users_headers, users, user_formatter, total=users_pagination.total) }}
     {{ pagination_nav(users_pagination, request, 'Pagination des utilisateurs du groupe', 'liste-utilisateurs') }}
   </div>

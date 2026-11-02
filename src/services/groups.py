@@ -227,13 +227,17 @@ class GroupsService:
         group_id: int,
         users_page: int = 1,
         users_size: int = DEFAULT_PAGE_SIZE,
+        users_search: str = "",
     ) -> GroupWithUsersAndScopesResponse:
         """
         Fetch a group with one page of its users.
+
+        users_search keeps only the users whose email matches it, and the
+        pagination then describes those users rather than the whole group.
         """
         group = await self.get_group_by_id(group_id)
         users, total = await self.users_service.get_users_page_by_group_id(
-            group_id, users_page, users_size
+            group_id, users_page, users_size, users_search
         )
 
         # Python's dict() function does not include dynamically added attributes
@@ -258,12 +262,13 @@ class GroupsService:
         current_user_role: RoleResponse,
         users_page: int = 1,
         users_size: int = DEFAULT_PAGE_SIZE,
+        users_search: str = "",
     ) -> GroupWithUsersAndRoleResponse:
         """
         Fetch a group with one page of its users and the role of the user asking.
         """
         group = await self.get_group_with_users_and_scopes(
-            group_id, users_page, users_size
+            group_id, users_page, users_size, users_search
         )
         return GroupWithUsersAndRoleResponse(
             **dict(group), current_user_role=current_user_role

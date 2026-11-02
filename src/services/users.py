@@ -77,16 +77,19 @@ class UsersService:
         return await self.user_repository.count_admins_by_group_id(group_id)
 
     async def get_users_page_by_group_id(
-        self, group_id: int, page: int, size: int
+        self, group_id: int, page: int, size: int, search: str = ""
     ) -> tuple[list[UserWithRoleResponse], int]:
         """
         Retrieve one page of users for a given group ID, and the group's total
         number of users
+
+        `search` keeps only the users whose email matches it, and the total then
+        counts those users rather than the whole group.
         """
         users = await self.user_repository.get_page_by_group_id(
-            group_id, limit=size, offset=(page - 1) * size
+            group_id, limit=size, offset=(page - 1) * size, search=search
         )
-        total = await self.user_repository.count_by_group_id(group_id)
+        total = await self.user_repository.count_by_group_id(group_id, search)
         return users, total
 
     async def create_user_if_doesnt_exist(self, user_data: UserCreate) -> UserResponse:

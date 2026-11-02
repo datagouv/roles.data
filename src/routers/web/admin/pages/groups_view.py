@@ -45,6 +45,7 @@ async def groups_explorer(
 async def group_explorer(
     request: Request,
     group_id: int,
+    search: str = "",
     page: int = Query(1, ge=1),
     size: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
     admin_service=Depends(get_admin_read_service),
@@ -54,13 +55,14 @@ async def group_explorer(
     Allow admin to explore the detail of one specific group
 
     The group's users are paginated, as a group can hold far more users than a
-    page should ever show.
+    page should ever show, and `search` narrows them down by email.
     """
     group = await admin_service.get_group_details(
         group_id,
         include_logs=request.session.get("is_admin", False),
         users_page=page,
         users_size=size,
+        users_search=search,
     )
     roles = await roles_service.get_all_roles()
     group["roles"] = roles

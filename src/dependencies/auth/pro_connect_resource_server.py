@@ -19,6 +19,7 @@ ALLOWED_PATHS_FOR_NO_EMAIL_PAIRING = [
     "/resource-server/organizations/groups",
 ]
 
+
 async def get_claims_from_proconnect_token(
     request: Request,
     proconnect_access_token=Depends(decode_proconnect_bearer_token),
@@ -34,6 +35,10 @@ async def get_claims_from_proconnect_token(
         As dependency: Depends(get_claims_from_proconnect_token)
         Direct call: await get_claims_from_proconnect_token(credentials=token_string)
     """
+    cached_claims = getattr(request.state, "proconnect_claims", None)
+    if cached_claims:
+        return cached_claims
+
     introspection_data = await pro_connect_provider.introspect_token(
         proconnect_access_token
     )
@@ -71,7 +76,12 @@ async def get_claims_from_proconnect_token(
     if not service_provider:
         raise Exception("No service provider matching proconnect client id")
 
-    return (proconnect_sub, proconnect_email, service_provider.id)
+    request.state.proconnect_claims = (
+        proconnect_sub,
+        proconnect_email,
+        service_provider.id,
+    )
+    return request.state.proconnect_claims
 
 
 async def get_acting_user_sub_from_proconnect_token(
@@ -80,8 +90,9 @@ async def get_acting_user_sub_from_proconnect_token(
     acting_user_sub, _, _ = proconnect_claims
     return acting_user_sub
 
+
 async def get_acting_user_organization_siret_from_proconnect_token(
-    proconnect_access_token=Depends(decode_proconnect_bearer_token)
+    proconnect_access_token=Depends(decode_proconnect_bearer_token),
 ):
     """
     Retrieve the acting user's organization SIRET from the ProConnect access token.

@@ -493,6 +493,52 @@ def test_admin_group_page_users_are_paginated(client):
     )
 
 
+def test_admin_group_page_users_can_be_searched(client):
+    """The group's users can be narrowed down by email, from the group page."""
+    admin_email = settings.SUPER_ADMIN_EMAILS.split(" ")[0]
+    # 3 members and the admin
+    group = create_group(client, admin_email=admin_email, member_count=3)
+    member_email = group["members"][0]["email"]
+    session = {"user_email": admin_email, "is_admin": True, "is_super_admin": True}
+
+    with mock_session(session):
+        response = client.get(
+            f"/admin/groups/{group['id']}", params={"search": member_email}
+        )
+
+    assert response.status_code == 200
+    assert [user["email"] for user in response.context["users"]] == [member_email]
+    # The pagination describes the users the search matches, not the whole group
+    assert response.context["users_pagination"].total == 1
+    assert member_email in response.text
+    # The search keeps its term, and sends the admin back to the users list
+    assert f'value="{member_email}"' in response.text
+    assert f'action="/admin/groups/{group["id"]}#liste-utilisateurs"' in response.text
+
+    with mock_session(session):
+        response = client.get(f"/admin/groups/{group['id']}")
+
+    assert response.context["users_pagination"].total == 4
+
+
+def test_admin_user_lists_are_searched_from_a_button(client):
+    """Both user listings carry a search field and the button that submits it."""
+    admin_email = settings.SUPER_ADMIN_EMAILS.split(" ")[0]
+    group = create_group(client, admin_email=admin_email)
+    session = {"user_email": admin_email, "is_admin": True, "is_super_admin": True}
+
+    with mock_session(session):
+        users_response = client.get("/admin/users/")
+        group_response = client.get(f"/admin/groups/{group['id']}")
+
+    for response in (users_response, group_response):
+        assert response.status_code == 200
+        assert 'type="search"' in response.text
+        assert (
+            '<button class="fr-btn" type="submit">Rechercher</button>' in response.text
+        )
+
+
 @pytest.mark.parametrize("params", [{"page": 0}, {"size": 0}, {"size": 201}])
 def test_admin_lists_reject_invalid_pagination(client, params):
     """Out of range pagination parameters are rejected before the group is read."""

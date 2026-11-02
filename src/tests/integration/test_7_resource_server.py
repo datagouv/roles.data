@@ -6,9 +6,11 @@ and that users can only access and modify their own groups.
 """
 
 from unittest.mock import patch
+from uuid import uuid4
 
 import pytest
 
+from src.constants import MAX_USERS_PER_BATCH
 from src.repositories.users_in_group import UsersInGroupRepository
 from src.tests.helpers import (
     create_group,
@@ -559,6 +561,69 @@ def test_remove_user_from_group_as_admin(client):
     assert not any(u["email"] == member["email"] for u in group_check["users"])
 
 
+def test_remove_or_demote_the_only_admin_is_forbidden(client):
+    """Test that a group is never left without an admin."""
+    admin = random_user()
+    group = create_group(client, admin_email=admin["email"])
+    group_id = group["id"]
+    headers = resource_server_auth_headers(admin["sub_pro_connect"], admin["email"])
+
+    admin_id = next(
+        user["id"]
+        for user in get_group(client, group_id)["users"]
+        if user["email"] == admin["email"]
+    )
+
+    response = client.delete(
+        f"/resource-server/groups/{group_id}/users/{admin_id}", headers=headers
+    )
+
+    assert response.status_code == 403
+    assert response.json() == {
+        "detail": f"Impossible to remove user {admin_id} from group {group_id} "
+        "as it is the only admin of the group."
+    }
+
+    response = client.patch(
+        f"/resource-server/groups/{group_id}/users/{admin_id}",
+        params={"role_id": 2},
+        headers=headers,
+    )
+
+    assert response.status_code == 403
+    assert response.json() == {
+        "detail": f"Impossible to update user {admin_id} role in group {group_id} "
+        "as it is the only admin of the group."
+    }
+
+
+def test_remove_an_admin_the_group_can_spare(client):
+    """Test that an admin can be removed as long as another one remains."""
+    admin = random_user()
+    second_admin = random_user()
+    group = create_group(client, admin_email=admin["email"])
+    group_id = group["id"]
+    headers = resource_server_auth_headers(admin["sub_pro_connect"], admin["email"])
+
+    response = client.post(
+        f"/resource-server/groups/{group_id}/users",
+        json={"email": second_admin["email"], "role_id": 1},
+        headers=headers,
+    )
+    assert response.status_code == 201
+    second_admin_id = response.json()["id"]
+
+    response = client.delete(
+        f"/resource-server/groups/{group_id}/users/{second_admin_id}",
+        headers=headers,
+    )
+
+    assert response.status_code == 204
+    assert not any(
+        user["id"] == second_admin_id for user in get_group(client, group_id)["users"]
+    )
+
+
 def test_remove_user_from_group_unauthorized(client):
     """Test that non-admin cannot remove users from a group."""
     admin = random_user()
@@ -661,8 +726,6 @@ def test_list_organization_groups_different_siret(client):
     """Test that different SIRETs return different groups."""
     from unittest.mock import AsyncMock, patch
 
-    from src.tests.helpers import DINUM_SIRET
-
     # Create a group with DINUM_SIRET
     admin1 = random_user()
     group1 = create_group(client, admin_email=admin1["email"])
@@ -686,3 +749,242 @@ def test_list_organization_groups_different_siret(client):
         # Should not return groups from DINUM_SIRET
         group_ids = [g["id"] for g in groups]
         assert group1["id"] not in group_ids
+
+
+def test_add_users_to_group_above_batch_limit(client):
+    """Test that a batch holding more than the allowed number of users is rejected."""
+    admin = random_user()
+    group = create_group(client, admin_email=admin["email"])
+    headers = resource_server_auth_headers(admin["sub_pro_connect"], admin["email"])
+
+    response = client.post(
+        f"/resource-server/groups/{group['id']}/users/batch",
+        json={
+            "users": [
+                {"email": f"member_{i}@beta.gouv.fr", "role_id": 2}
+                for i in range(MAX_USERS_PER_BATCH + 1)
+            ]
+        },
+        headers=headers,
+    )
+
+    assert response.status_code == 422
+
+
+def test_list_groups_carries_admins_and_the_asking_user_role(client):
+    """Test that a listed group carries its admins and the role of the caller."""
+    admin = random_user()
+    group = create_group(client, admin_email=admin["email"], member_count=60)
+    member_email = group["members"][0]["email"]
+
+    admin_headers = resource_server_auth_headers(
+        admin["sub_pro_connect"], admin["email"]
+    )
+    response = client.get("/resource-server/groups/", headers=admin_headers)
+
+    assert response.status_code == 200
+    listed_group = next(g for g in response.json() if g["id"] == group["id"])
+    # A listing never carries the users of a group, however many there are
+    assert "users" not in listed_group
+    assert [a["email"] for a in listed_group["admins"]] == [admin["email"]]
+    assert listed_group["current_user_role"]["role_name"] == "administrateur"
+    assert listed_group["current_user_role"]["is_admin"] is True
+
+    member_headers = resource_server_auth_headers(uuid4(), member_email)
+    response = client.get("/resource-server/groups/", headers=member_headers)
+
+    assert response.status_code == 200
+    listed_group = next(g for g in response.json() if g["id"] == group["id"])
+    # A member sees who to ask for a role change, and their own role
+    assert [a["email"] for a in listed_group["admins"]] == [admin["email"]]
+    assert listed_group["current_user_role"]["role_name"] == "utilisateur"
+    assert listed_group["current_user_role"]["is_admin"] is False
+
+
+def test_list_groups_carries_at_most_three_admins(client):
+    """Test that a listed group never carries more than three of its admins."""
+    admin = random_user()
+    group = create_group(client, admin_email=admin["email"])
+    headers = resource_server_auth_headers(admin["sub_pro_connect"], admin["email"])
+
+    new_admins = [random_user() for _ in range(4)]
+    response = client.post(
+        f"/resource-server/groups/{group['id']}/users/batch",
+        json={"users": [{"email": a["email"], "role_id": 1} for a in new_admins]},
+        headers=headers,
+    )
+    assert response.status_code == 201
+
+    response = client.get("/resource-server/groups/", headers=headers)
+
+    assert response.status_code == 200
+    listed_group = next(g for g in response.json() if g["id"] == group["id"])
+    assert len(listed_group["admins"]) == 3
+    # The oldest admins first, the group's own admin among them
+    assert listed_group["admins"][0]["email"] == admin["email"]
+
+
+def test_get_group_carries_the_asking_user_role(client):
+    """Test that a group carries the role of the user reading it."""
+    admin = random_user()
+    group = create_group(client, admin_email=admin["email"])
+    member_email = group["members"][0]["email"]
+    url = f"/resource-server/groups/{group['id']}"
+
+    admin_headers = resource_server_auth_headers(
+        admin["sub_pro_connect"], admin["email"]
+    )
+    response = client.get(url, headers=admin_headers)
+
+    assert response.status_code == 200
+    assert response.json()["current_user_role"]["role_name"] == "administrateur"
+    assert response.json()["current_user_role"]["is_admin"] is True
+
+    member_headers = resource_server_auth_headers(uuid4(), member_email)
+    response = client.get(url, headers=member_headers)
+
+    assert response.status_code == 200
+    assert response.json()["current_user_role"]["role_name"] == "utilisateur"
+    assert response.json()["current_user_role"]["is_admin"] is False
+
+
+def test_get_group_users_are_paginated(client):
+    """Test that a group's users come back one page at a time, 50 by default."""
+    admin = random_user()
+    # 60 members and the admin
+    group = create_group(client, admin_email=admin["email"], member_count=60)
+    headers = resource_server_auth_headers(admin["sub_pro_connect"], admin["email"])
+    url = f"/resource-server/groups/{group['id']}"
+
+    response = client.get(url, headers=headers)
+
+    assert response.status_code == 200
+    first_page = response.json()
+    assert len(first_page["users"]) == 50
+    assert first_page["users_pagination"] == {
+        "page": 1,
+        "size": 50,
+        "total": 61,
+        "total_pages": 2,
+    }
+
+    response = client.get(url, params={"usersPage": 2}, headers=headers)
+
+    assert response.status_code == 200
+    second_page = response.json()
+    assert len(second_page["users"]) == 11
+    assert second_page["users_pagination"]["page"] == 2
+
+    # Every user of the group is reachable, and none is served twice
+    page_user_ids = [user["id"] for user in first_page["users"] + second_page["users"]]
+    assert len(set(page_user_ids)) == 61
+
+
+def test_get_group_users_page_size(client):
+    """Test that the caller can choose how many users a page holds."""
+    admin = random_user()
+    # 3 members and the admin
+    group = create_group(client, admin_email=admin["email"], member_count=3)
+    headers = resource_server_auth_headers(admin["sub_pro_connect"], admin["email"])
+
+    response = client.get(
+        f"/resource-server/groups/{group['id']}",
+        params={"usersSize": 2, "usersPage": 2},
+        headers=headers,
+    )
+
+    assert response.status_code == 200
+    page = response.json()
+    assert len(page["users"]) == 2
+    assert page["users_pagination"] == {
+        "page": 2,
+        "size": 2,
+        "total": 4,
+        "total_pages": 2,
+    }
+
+
+@pytest.mark.parametrize(
+    "params", [{"usersPage": 0}, {"usersSize": 0}, {"usersSize": 201}]
+)
+def test_get_group_rejects_invalid_pagination(client, params):
+    """Test that out of range pagination parameters are rejected."""
+    admin = random_user()
+    group = create_group(client, admin_email=admin["email"])
+    headers = resource_server_auth_headers(admin["sub_pro_connect"], admin["email"])
+
+    response = client.get(
+        f"/resource-server/groups/{group['id']}", params=params, headers=headers
+    )
+
+    assert response.status_code == 422
+
+
+def test_get_group_as_member_and_as_stranger(client):
+    """Test that only the users of a group can read it."""
+    admin = random_user()
+    stranger = random_user()
+    group = create_group(client, admin_email=admin["email"])
+    member_email = group["members"][0]["email"]
+
+    member_headers = resource_server_auth_headers(uuid4(), member_email)
+    response = client.get(
+        f"/resource-server/groups/{group['id']}", headers=member_headers
+    )
+
+    assert response.status_code == 200
+    assert response.json()["name"] == group["name"]
+
+    # The stranger has a group of their own, so they are a known user
+    create_group(client, admin_email=stranger["email"])
+    stranger_headers = resource_server_auth_headers(
+        stranger["sub_pro_connect"], stranger["email"]
+    )
+    response = client.get(
+        f"/resource-server/groups/{group['id']}", headers=stranger_headers
+    )
+
+    assert response.status_code == 403
+    assert response.json() == {"detail": "User is not member of the group."}
+
+
+def test_get_group_not_found(client):
+    """Test reading a group that does not exist."""
+    user = random_user()
+    create_group(client, admin_email=user["email"])
+    headers = resource_server_auth_headers(user["sub_pro_connect"], user["email"])
+
+    response = client.get("/resource-server/groups/999999", headers=headers)
+
+    assert response.status_code == 404
+
+
+def test_group_membership_is_checked_beyond_the_first_page_of_users(client):
+    """Test that membership checks see the whole group, not just a page of users."""
+    admin = random_user()
+    # 60 members and the admin
+    group = create_group(client, admin_email=admin["email"], member_count=60)
+    headers = resource_server_auth_headers(admin["sub_pro_connect"], admin["email"])
+
+    second_page = client.get(
+        f"/resource-server/groups/{group['id']}",
+        params={"usersPage": 2},
+        headers=headers,
+    ).json()["users"]
+    user_beyond_first_page = second_page[-1]
+
+    # Adding them again is a conflict, although they are not on the first page
+    response = client.post(
+        f"/resource-server/groups/{group['id']}/users",
+        json={"email": user_beyond_first_page["email"], "role_id": 2},
+        headers=headers,
+    )
+    assert response.status_code == 409
+
+    # And their role can still be updated
+    response = client.patch(
+        f"/resource-server/groups/{group['id']}/users/{user_beyond_first_page['id']}",
+        params={"role_id": 1},
+        headers=headers,
+    )
+    assert response.status_code == 200

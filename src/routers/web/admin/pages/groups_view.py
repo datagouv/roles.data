@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Form, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
+from src.constants import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from src.dependencies import (
     get_admin_read_service,
     get_admin_write_service,
@@ -44,15 +45,22 @@ async def groups_explorer(
 async def group_explorer(
     request: Request,
     group_id: int,
+    page: int = Query(1, ge=1),
+    size: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
     admin_service=Depends(get_admin_read_service),
     roles_service=Depends(get_roles_service),
 ):
     """
     Allow admin to explore the detail of one specific group
+
+    The group's users are paginated, as a group can hold far more users than a
+    page should ever show.
     """
     group = await admin_service.get_group_details(
         group_id,
         include_logs=request.session.get("is_admin", False),
+        users_page=page,
+        users_size=size,
     )
     roles = await roles_service.get_all_roles()
     group["roles"] = roles

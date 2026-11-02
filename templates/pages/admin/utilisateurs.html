@@ -1,6 +1,7 @@
 {% extends "base_admin.html" %}
 {% from "components/table.html" import data_table %}
 {% from "components/list_search.html" import list_search %}
+{% from "components/pagination.html" import pagination_nav %}
 
 {% block content %}
 
@@ -28,7 +29,8 @@
 
 <div class="fr-container">
     {{ list_search('/admin/users/', 'Rechercher un utilisateur par ID ou email', search, sort_by, sort_direction) }}
-    {{ data_table(headers, users, formatter, sort_keys, sort_by, sort_direction, request) }}
+    {{ data_table(headers, users, formatter, sort_keys, sort_by, sort_direction, request, pagination.total) }}
+    {{ pagination_nav(pagination, request, 'Pagination des utilisateurs') }}
 </div>
 
 {% endblock %}

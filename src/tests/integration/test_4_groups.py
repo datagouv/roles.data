@@ -149,3 +149,77 @@ def test_get_group_not_found(client):
     # Test non-existent group
     response = client.get("/groups/999999")
     assert response.status_code == 404
+
+
+def test_get_group_users_are_paginated(client):
+    """Test that a group's users come back one page at a time, 50 by default."""
+    # 60 members and the admin
+    new_group_data = create_group(client, member_count=60)
+
+    response = client.get(f"/groups/{new_group_data['id']}")
+    assert response.status_code == 200
+    first_page = response.json()
+    assert len(first_page["users"]) == 50
+    assert first_page["users_pagination"] == {
+        "page": 1,
+        "size": 50,
+        "total": 61,
+        "total_pages": 2,
+    }
+
+    response = client.get(f"/groups/{new_group_data['id']}", params={"usersPage": 2})
+    assert response.status_code == 200
+    second_page = response.json()
+    assert len(second_page["users"]) == 11
+    assert second_page["users_pagination"] == {
+        "page": 2,
+        "size": 50,
+        "total": 61,
+        "total_pages": 2,
+    }
+
+    # Every user of the group is reachable, and none is served twice
+    page_user_ids = [user["id"] for user in first_page["users"] + second_page["users"]]
+    assert len(set(page_user_ids)) == 61
+
+
+def test_get_group_users_page_size(client):
+    """Test that the caller can choose how many users a page holds."""
+    # 3 members and the admin
+    new_group_data = create_group(client, member_count=3)
+
+    response = client.get(
+        f"/groups/{new_group_data['id']}", params={"usersSize": 2, "usersPage": 2}
+    )
+
+    assert response.status_code == 200
+    page = response.json()
+    assert len(page["users"]) == 2
+    assert page["users_pagination"] == {
+        "page": 2,
+        "size": 2,
+        "total": 4,
+        "total_pages": 2,
+    }
+
+
+def test_get_group_users_page_beyond_the_last_one(client):
+    """Test that asking for a page that does not exist returns no user."""
+    new_group_data = create_group(client)
+
+    response = client.get(f"/groups/{new_group_data['id']}", params={"usersPage": 500})
+
+    assert response.status_code == 200
+    assert response.json()["users"] == []
+
+
+@pytest.mark.parametrize(
+    "params", [{"usersPage": 0}, {"usersSize": 0}, {"usersSize": 201}]
+)
+def test_get_group_rejects_invalid_pagination(client, params):
+    """Test that out of range pagination parameters are rejected."""
+    new_group_data = create_group(client)
+
+    response = client.get(f"/groups/{new_group_data['id']}", params=params)
+
+    assert response.status_code == 422

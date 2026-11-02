@@ -2,6 +2,7 @@
 from fastapi import APIRouter, Depends, Path, Query
 from pydantic import HttpUrl
 
+from src.constants import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from src.dependencies import get_groups_service
 from src.dependencies.auth.o_auth import decode_access_token
 from src.model import (
@@ -33,12 +34,26 @@ async def list_service_provider_groups(
 @router.get("/{group_id}", response_model=GroupWithUsersAndScopesResponse)
 async def by_id(
     group_id: int = Path(..., description="ID du groupe à récupérer"),
+    users_page: int = Query(
+        1, ge=1, alias="usersPage", description="Page d'utilisateurs à récupérer"
+    ),
+    users_size: int = Query(
+        DEFAULT_PAGE_SIZE,
+        ge=1,
+        le=MAX_PAGE_SIZE,
+        alias="usersSize",
+        description="Nombre d'utilisateurs par page",
+    ),
     group_service: GroupsService = Depends(get_groups_service),
 ):
     """
     Récupère un groupe par son ID. Inclut les utilisateurs, leurs rôles et les droits du groupes sur le fournisseur de service.
+
+    Les utilisateurs sont paginés : `users` contient la page demandée et `users_pagination` décrit la pagination.
     """
-    return await group_service.get_group_with_users_and_scopes(group_id)
+    return await group_service.get_group_with_users_and_scopes(
+        group_id, users_page, users_size
+    )
 
 
 @router.post("/", response_model=GroupResponse, status_code=201)

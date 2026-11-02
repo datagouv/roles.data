@@ -108,6 +108,10 @@ class DatapassService:
         Create a new group under the DataPass service provider.
 
         We specifically do not send emails to user as datapass already did
+
+        An applicant address at a personal mail provider is accepted here, as a
+        400 answered to DataPass would lose a demande that DataPass has already
+        validated, with no way for the applicant to fix it.
         """
         group_data = GroupCreate(
             name=f"Groupe {payload.intitule_demande}",
@@ -120,4 +124,6 @@ class DatapassService:
             contract_url=payload.demande_url,
         )
 
-        return await self.datapass_groups_service.create_group(group_data)
+        return await self.datapass_groups_service.create_group(
+            group_data, refuse_personal_emails=False
+        )

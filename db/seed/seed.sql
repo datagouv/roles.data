@@ -13,6 +13,10 @@ VALUES (1, 'DINUM', '13002526500013') ON CONFLICT (id) DO NOTHING;
 INSERT INTO :schema_name.groups (id, name, orga_id)
 VALUES (1, 'stack technique', 1) ON CONFLICT (id) DO NOTHING;
 
+-- Create the "paginated group" group (many users, to exercise pagination)
+INSERT INTO :schema_name.groups (id, name, orga_id)
+VALUES (2, 'paginated group', 1) ON CONFLICT (id) DO NOTHING;
+
 -- Create users with different emails
 INSERT INTO :schema_name.users (id, email)
 VALUES
@@ -22,6 +26,13 @@ VALUES
   (5, 'amandine.audras@beta.gouv.fr'),
   (6, 'user-not-in-group@beta.gouv.fr')
   ON CONFLICT (id) DO NOTHING;
+
+-- Create 50 more users using email aliases (ids 7 to 56)
+INSERT INTO :schema_name.users (id, email)
+SELECT 6 + n, 'alan.chauchet.ext+' || n || '@numerique.gouv.fr' FROM generate_series(1, 25) AS n
+UNION ALL
+SELECT 31 + n, 'hajar.ait-el-kadi+' || n || '@beta.gouv.fr' FROM generate_series(1, 25) AS n
+ON CONFLICT (id) DO NOTHING;
 
 
 -- Create the service provider "test"
@@ -38,9 +49,28 @@ VALUES
   (1, 4, 2),
   (1, 5, 2) ON CONFLICT (group_id, user_id) DO NOTHING;
 
+-- Add every user except user-not-in-group to the "paginated group"
+-- User 1 is an admin (role_id = 1), others are agents (role_id = 2)
+INSERT INTO :schema_name.group_user_relations (group_id, user_id, role_id)
+SELECT 2, id, CASE WHEN id = 1 THEN 1 ELSE 2 END
+FROM :schema_name.users
+WHERE email IN (
+    'user@yopmail.com',
+    'alan.chauchet.ext@numerique.gouv.fr',
+    'hajar.ait-el-kadi@beta.gouv.fr',
+    'amandine.audras@beta.gouv.fr'
+  )
+  OR email LIKE 'alan.chauchet.ext+%@numerique.gouv.fr'
+  OR email LIKE 'hajar.ait-el-kadi+%@beta.gouv.fr'
+ON CONFLICT (group_id, user_id) DO NOTHING;
+
 -- Add the "read" scope for the group on the service provider "test"
 INSERT INTO :schema_name.group_service_provider_relations (service_provider_id, group_id, scopes, contract_description, contract_url)
 VALUES (1, 1, 'administrateur rne nonDiffusible conformite_fiscale conformite_sociale beneficiaires agent pseudo_opendata effectifs chiffre_affaires travaux_publics liens_capitalistiques liasses_fiscales bilans_bdf', 'Habilitation de test', 'https://datapass_48') ON CONFLICT (service_provider_id, group_id) DO NOTHING;
+
+-- Add a restricted set of scopes for the "paginated group" on the service provider "test"
+INSERT INTO :schema_name.group_service_provider_relations (service_provider_id, group_id, scopes, contract_description, contract_url)
+VALUES (1, 2, 'administrateur rne nonDiffusible agent', 'Habilitation de test', 'https://datapass_48') ON CONFLICT (service_provider_id, group_id) DO NOTHING;
 
 -- Insert a service account for a service provider
 INSERT INTO :schema_name.service_accounts (

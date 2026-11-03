@@ -19,7 +19,7 @@ from src.tests.helpers import (
 )
 
 # As seeded in db/seed/seed.sql for service provider 1
-SEEDED_PROCONNECT_CLIENT_ID = "test_proconnect_client_id"
+SEEDED_PROCONNECT_CLIENT_ID = "15f851b3-5235-415d-b0bf-a04c5954ff46"
 
 
 def test_first_pairing_allows_group_access(client):

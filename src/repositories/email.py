@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from pathlib import Path
 
 from fastapi_mail import (
@@ -11,6 +12,8 @@ from fastapi_mail import (
 from jinja2 import Environment, FileSystemLoader
 
 from src.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 class EmailRepository:
@@ -70,20 +73,27 @@ class EmailRepository:
             else None,
         )
 
-        message = MessageSchema(
-            subject=subject,
-            recipients=recipients,
-            body=html_content,
-            subtype=MessageType.html,
-            multipart_subtype=MultipartSubtypeEnum.related,
-            attachments=self._get_logo_ade_attachments(),
-        )
-
         for attempt in range(retry):
+            # fastapi_mail closes attachment files once read, so a message
+            # cannot be sent twice: build a new one for every attempt
+            message = MessageSchema(
+                subject=subject,
+                recipients=recipients,
+                body=html_content,
+                subtype=MessageType.html,
+                multipart_subtype=MultipartSubtypeEnum.related,
+                attachments=self._get_logo_ade_attachments(),
+            )
             try:
                 return await self.fastmail.send_message(message)
             except Exception as e:
                 if attempt < retry - 1:
+                    logger.warning(
+                        "Failed to send email (attempt %s/%s): %s",
+                        attempt + 1,
+                        retry,
+                        e,
+                    )
                     await asyncio.sleep(retry_delay)
                 else:
                     raise e

@@ -1,3 +1,4 @@
+import logging
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -29,6 +30,8 @@ from src.repositories import groups, users_in_group
 from src.services import organisations, roles, scopes, users
 from src.services.email.main import EmailService
 from src.services.service_providers import ServiceProvidersService
+
+logger = logging.getLogger(__name__)
 
 
 class GroupsService:
@@ -343,6 +346,9 @@ class GroupsService:
         # Validate role and group before creating anything
         role = await self.roles_service.get_roles_by_id(role_id)
         group = await self.get_group_by_id(group_id)
+        group_admin_email = (
+            await self.get_first_admin_email(group.id) if send_email else None
+        )
 
         # Single transaction so that a user is never created without being added to the group
         async with self.db_session.transaction():
@@ -364,12 +370,8 @@ class GroupsService:
             )
 
         if send_email:
-            # The user just added may be an admin themselves, and should not be
-            # named as the one to turn to in their own email
             await self.send_nouveau_groupe_email(
-                user.email,
-                group.name,
-                await self.get_first_admin_email(group.id, excluded_user_id=user.id),
+                user.email, group.name, group_admin_email
             )
 
         role = await self.roles_service.get_roles_by_id(role.id)
@@ -455,21 +457,28 @@ class GroupsService:
     async def send_nouveau_groupe_email(
         self, user_email: str, group_name: str, group_admin_email: str | None
     ):
+        """
+        Called once users are added to a group: a failure is logged but never
+        raised, so that it does not fail a request whose changes are already committed.
+        """
         if not self.should_send_emails:
             return
 
-        service_provider = (
-            await self.service_provider_service.get_service_provider_by_id(
-                self.service_provider_id
+        try:
+            service_provider = (
+                await self.service_provider_service.get_service_provider_by_id(
+                    self.service_provider_id
+                )
             )
-        )
-        self.email_service.nouveau_groupe_email(
-            recipients=[user_email],
-            group_name=group_name,
-            service_provider_name=service_provider.name,
-            service_provider_url=service_provider.url,
-            group_admin_email=group_admin_email,
-        )
+            self.email_service.nouveau_groupe_email(
+                recipients=[user_email],
+                group_name=group_name,
+                service_provider_name=service_provider.name,
+                service_provider_url=service_provider.url,
+                group_admin_email=group_admin_email,
+            )
+        except Exception:
+            logger.exception("Failed to send nouveau groupe email")
 
     async def remove_user_from_group(self, group_id: int, user_id: int):
         user = await self.users_service.get_user_by_id(user_id)

@@ -12,6 +12,7 @@ import pytest
 
 from src.constants import MAX_USERS_PER_BATCH
 from src.repositories.users_in_group import UsersInGroupRepository
+from src.services.email.main import EmailService
 from src.tests.helpers import (
     create_group,
     get_group,
@@ -290,6 +291,82 @@ def test_add_users_to_group_as_admin(client):
     assert any(
         u["email"] == new_member["email"] and u["role_id"] == 2 for u in group_users
     )
+
+
+def test_add_user_to_group_email_names_existing_admin(client):
+    """Test that a new admin's email names the existing admin, not themselves."""
+    admin = random_user()
+    new_admin = random_user()
+
+    group = create_group(client, admin_email=admin["email"])
+
+    headers = resource_server_auth_headers(admin["sub_pro_connect"], admin["email"])
+    with patch.object(EmailService, "nouveau_groupe_email") as mock_email:
+        response = client.post(
+            f"/resource-server/groups/{group['id']}/users",
+            json={"email": new_admin["email"], "role_id": 1},
+            headers=headers,
+        )
+
+    assert response.status_code == 201
+    mock_email.assert_called_once()
+    assert mock_email.call_args.kwargs["recipients"] == [new_admin["email"]]
+    assert mock_email.call_args.kwargs["group_admin_email"] == admin["email"]
+
+
+def test_add_user_to_group_email_failure_still_adds_user(client):
+    """Test that failing to send the email does not fail the request."""
+    admin = random_user()
+    new_member = random_user()
+
+    group = create_group(client, admin_email=admin["email"])
+
+    headers = resource_server_auth_headers(admin["sub_pro_connect"], admin["email"])
+    with patch.object(
+        EmailService,
+        "nouveau_groupe_email",
+        side_effect=ConnectionError("SMTP unavailable"),
+    ):
+        response = client.post(
+            f"/resource-server/groups/{group['id']}/users",
+            json={"email": new_member["email"], "role_id": 2},
+            headers=headers,
+        )
+
+    assert response.status_code == 201
+    assert any(
+        u["email"] == new_member["email"]
+        for u in get_group(client, group["id"])["users"]
+    )
+
+
+def test_add_users_to_group_email_failure_still_adds_users(client):
+    """Test that failing to send an email neither fails the request nor skips the others."""
+    admin = random_user()
+    new_members = [random_user(), random_user()]
+
+    group = create_group(client, admin_email=admin["email"])
+
+    headers = resource_server_auth_headers(admin["sub_pro_connect"], admin["email"])
+    with patch.object(
+        EmailService,
+        "nouveau_groupe_email",
+        side_effect=ConnectionError("SMTP unavailable"),
+    ) as mock_email:
+        response = client.post(
+            f"/resource-server/groups/{group['id']}/users/batch",
+            json={
+                "users": [
+                    {"email": member["email"], "role_id": 2} for member in new_members
+                ]
+            },
+            headers=headers,
+        )
+
+    assert response.status_code == 201
+    assert mock_email.call_count == len(new_members)
+    group_emails = {u["email"] for u in get_group(client, group["id"])["users"]}
+    assert {member["email"] for member in new_members} <= group_emails
 
 
 @pytest.mark.parametrize("uppercase_email", [False, True])

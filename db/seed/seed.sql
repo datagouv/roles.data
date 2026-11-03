@@ -17,7 +17,7 @@ VALUES (1, 'stack technique', 1) ON CONFLICT (id) DO NOTHING;
 INSERT INTO :schema_name.users (id, email)
 VALUES
   (1, 'user@yopmail.com'),
-  (2, 'xavier.jouppe@beta.gouv.fr'),
+  (2, 'alan.chauchet.ext@numerique.gouv.fr'),
   (4, 'hajar.ait-el-kadi@beta.gouv.fr'),
   (5, 'amandine.audras@beta.gouv.fr'),
   (6, 'user-not-in-group@beta.gouv.fr')
@@ -26,7 +26,7 @@ VALUES
 
 -- Create the service provider "test"
 INSERT INTO :schema_name.service_providers (id, name, url, proconnect_client_id)
-VALUES (1, 'droles-test', 'https://data.gouv.fr', 'test_proconnect_client_id') ON CONFLICT (id) DO NOTHING;
+VALUES (1, 'droles-test', 'https://data.gouv.fr', '15f851b3-5235-415d-b0bf-a04c5954ff46') ON CONFLICT (id) DO NOTHING;
 
 -- Add the users to the group with their respective roles
 -- User 1 is an admin (role_id = 1)

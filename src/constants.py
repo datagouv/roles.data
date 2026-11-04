@@ -109,3 +109,13 @@ It is an error code rather than a message: the consuming service knows which
 addresses it sent, branches on this code and writes its own wording for its
 users. It must therefore not change.
 """
+
+USERS_ALREADY_IN_GROUP_CODE = "USERS_ALREADY_IN_GROUP"
+"""
+`code` of the 409 raised when a batch holds users the group already has.
+
+The `detail` of that error is an object carrying this code and, under
+`emails`, the addresses of those users: the consuming service branches on the
+code and names the addresses it has to leave out of the batch. Neither the
+code nor the shape may therefore change.
+"""

@@ -129,7 +129,7 @@ async def add_user(
 @router.post(
     "/{group_id}/users/batch",
     status_code=201,
-    responses={409: {"description": "User already in group"}},
+    responses={409: {"description": "Some users are already in the group"}},
 )
 async def add_users(
     users_in_group: UsersInGroupCreate,
@@ -146,7 +146,9 @@ async def add_users(
 
     Si une adresse e-mail est présente plusieurs fois dans la requête, une erreur 400 sera levée.
 
-    Si l'un des utilisateurs est déjà dans le groupe, une erreur 409 sera levée.
+    Si l'un des utilisateurs est déjà dans le groupe, une erreur 409 est levée
+    et son `detail` vaut `{"code": "USERS_ALREADY_IN_GROUP", "emails": [...]}`,
+    où `emails` liste les adresses de la requête que le groupe contient déjà.
 
     Si l'une des adresses e-mail est hébergée par un fournisseur de messagerie
     personnelle (`gmail.com`, `orange.fr`, `outlook.com`…), une erreur 400 est

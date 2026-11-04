@@ -9,6 +9,7 @@ from src.constants import (
     MAX_LISTED_ADMINS,
     PERSONAL_EMAIL_DOMAINS,
     PERSONAL_EMAIL_REFUSED_CODE,
+    USERS_ALREADY_IN_GROUP_CODE,
 )
 from src.model import (
     GroupCreate,
@@ -388,7 +389,9 @@ class GroupsService:
         """
         Add several users to a group at once.
 
-        Either every user is added, or none is.
+        Either every user is added, or none is. When the group already holds
+        some of them, the conflict names their addresses: the caller sent
+        addresses, and cannot otherwise tell which ones clashed.
         """
         emails = [user.email.lower() for user in users_in_group]
         duplicated_emails = sorted(
@@ -421,13 +424,16 @@ class GroupsService:
             user_ids_in_group = await self.users_service.get_user_ids_in_group(
                 group.id, [user.id for user in users]
             )
-            users_already_in_group = [
-                user.id for user in users if user.id in user_ids_in_group
-            ]
-            if users_already_in_group:
+            emails_already_in_group = sorted(
+                str(user.email) for user in users if user.id in user_ids_in_group
+            )
+            if emails_already_in_group:
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
-                    detail=f"Users with ID {', '.join(str(user_id) for user_id in users_already_in_group)} are already in group {group_id}",
+                    detail={
+                        "code": USERS_ALREADY_IN_GROUP_CODE,
+                        "emails": emails_already_in_group,
+                    },
                 )
 
             await self.users_in_group_repository.add_users(

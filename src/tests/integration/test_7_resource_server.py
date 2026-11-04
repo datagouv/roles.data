@@ -416,7 +416,6 @@ def test_add_users_to_group_existing_member_returns_conflict(client, user_exists
         headers=headers,
     )
     assert response.status_code == 201
-    member_id = response.json()["id"]
     users_before = get_group(client, group_id)["users"]
 
     response = client.post(
@@ -432,10 +431,53 @@ def test_add_users_to_group_existing_member_returns_conflict(client, user_exists
 
     assert response.status_code == 409
     assert response.json() == {
-        "detail": f"Users with ID {member_id} are already in group {group_id}"
+        "detail": {
+            "code": "USERS_ALREADY_IN_GROUP",
+            "emails": [member["email"]],
+        }
     }
     assert get_group(client, group_id)["users"] == users_before
     assert not user_exists(new_member["email"])
+
+
+def test_add_users_to_group_conflict_names_every_existing_member(client):
+    """Test that the conflict names every address of the batch the group holds."""
+    admin = random_user()
+    first_member = random_user()
+    second_member = random_user()
+    new_member = random_user()
+    group = create_group(client, admin_email=admin["email"])
+    headers = resource_server_auth_headers(admin["sub_pro_connect"], admin["email"])
+
+    for member in (first_member, second_member):
+        response = client.post(
+            f"/resource-server/groups/{group['id']}/users",
+            json={"email": member["email"], "role_id": 2},
+            headers=headers,
+        )
+        assert response.status_code == 201
+
+    response = client.post(
+        f"/resource-server/groups/{group['id']}/users/batch",
+        json={
+            "users": [
+                {"email": new_member["email"], "role_id": 2},
+                # Sent in a case other than the one the group holds it in
+                {"email": second_member["email"].upper(), "role_id": 2},
+                {"email": first_member["email"], "role_id": 1},
+            ]
+        },
+        headers=headers,
+    )
+
+    assert response.status_code == 409
+    # The addresses as the group holds them, whatever case they were sent in
+    assert response.json() == {
+        "detail": {
+            "code": "USERS_ALREADY_IN_GROUP",
+            "emails": sorted([first_member["email"], second_member["email"]]),
+        }
+    }
 
 
 def test_add_users_to_group_unknown_role_does_not_create_users(client, user_exists):

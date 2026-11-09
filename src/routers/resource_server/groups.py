@@ -125,7 +125,7 @@ async def add_user(
         group_id,
         user_email=user_in_group.email,
         role_id=user_in_group.role_id,
-        added_by=acting_user.id,
+        added_by=acting_user,
     )
 
 
@@ -162,7 +162,7 @@ async def add_users(
     """
     acting_user = await groups_service.is_admin(acting_user_sub, group_id)
     return await groups_service.add_users_to_group(
-        group_id, users_in_group.users, added_by=acting_user.id
+        group_id, users_in_group.users, added_by=acting_user
     )
 
 

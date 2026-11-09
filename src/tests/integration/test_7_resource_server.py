@@ -314,6 +314,49 @@ def test_add_user_to_group_email_names_existing_admin(client):
     assert mock_email.call_args.kwargs["group_admin_email"] == admin["email"]
 
 
+def test_add_users_to_group_email_names_the_admin_adding_them(client):
+    """Test that the email names the admin who added the user, not the group's first one."""
+    first_admin = random_user()
+    second_admin = random_user()
+    added_alone = random_user()
+    added_in_batch = random_user()
+
+    group = create_group(client, admin_email=first_admin["email"])
+    url = f"/resource-server/groups/{group['id']}/users"
+    response = client.post(
+        url,
+        json={"email": second_admin["email"], "role_id": 1},
+        headers=resource_server_auth_headers(
+            first_admin["sub_pro_connect"], first_admin["email"]
+        ),
+    )
+    assert response.status_code == 201
+
+    headers = resource_server_auth_headers(uuid4(), second_admin["email"])
+    with patch.object(EmailService, "nouveau_groupe_email") as mock_email:
+        response = client.post(
+            url,
+            json={"email": added_alone["email"], "role_id": 2},
+            headers=headers,
+        )
+        assert response.status_code == 201
+        response = client.post(
+            f"{url}/batch",
+            json={"users": [{"email": added_in_batch["email"], "role_id": 2}]},
+            headers=headers,
+        )
+        assert response.status_code == 201
+
+    assert [call.kwargs["recipients"] for call in mock_email.call_args_list] == [
+        [added_alone["email"]],
+        [added_in_batch["email"]],
+    ]
+    assert all(
+        call.kwargs["group_admin_email"] == second_admin["email"]
+        for call in mock_email.call_args_list
+    )
+
+
 def test_add_user_to_group_email_failure_still_adds_user(client):
     """Test that failing to send the email does not fail the request."""
     admin = random_user()

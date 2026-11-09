@@ -967,6 +967,45 @@ def test_get_group_carries_the_asking_user_role(client):
     assert response.json()["current_user_role"]["is_admin"] is False
 
 
+def test_get_group_users_carry_who_added_them(client):
+    """Test that a group's users carry the email of the user who added them."""
+    admin = random_user()
+    added_alone = random_user()
+    added_in_batch = random_user()
+    group = create_group(client, admin_email=admin["email"])
+    member_email = group["members"][0]["email"]
+    url = f"/resource-server/groups/{group['id']}"
+    headers = resource_server_auth_headers(admin["sub_pro_connect"], admin["email"])
+
+    response = client.post(
+        f"{url}/users",
+        json={"email": added_alone["email"], "role_id": 2},
+        headers=headers,
+    )
+    assert response.status_code == 201
+    response = client.post(
+        f"{url}/users/batch",
+        json={"users": [{"email": added_in_batch["email"], "role_id": 2}]},
+        headers=headers,
+    )
+    assert response.status_code == 201
+
+    response = client.get(url, headers=headers)
+
+    assert response.status_code == 200
+    added_by = {u["email"]: u["added_by_email"] for u in response.json()["users"]}
+    # The service provider created the group, no user of ours added these ones
+    assert added_by[admin["email"]] is None
+    assert added_by[member_email] is None
+    assert added_by[added_alone["email"]] == admin["email"]
+    assert added_by[added_in_batch["email"]] == admin["email"]
+
+    # The service provider's own view of the group does not carry it
+    assert all(
+        "added_by_email" not in u for u in get_group(client, group["id"])["users"]
+    )
+
+
 def test_get_group_users_are_paginated(client):
     """Test that a group's users come back one page at a time, 50 by default."""
     admin = random_user()

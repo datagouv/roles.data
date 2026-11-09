@@ -25,6 +25,7 @@ from src.model import (
     UserCreate,
     UserInGroupCreate,
     UserInGroupResponse,
+    UserResponse,
     build_pagination,
 )
 from src.repositories import groups, users_in_group
@@ -108,9 +109,11 @@ class GroupsService:
                 detail=PERSONAL_EMAIL_REFUSED_CODE,
             )
 
-    async def is_admin(self, acting_user_sub: UUID4, group_id: int) -> None:
+    async def is_admin(self, acting_user_sub: UUID4, group_id: int) -> UserResponse:
         """
         Verify if the user is an admin of the group.
+
+        Returns the acting user, which the caller often needs anyway.
         """
         # verify user exists and group exists
         acting_user = await self.users_service.get_user_by_sub(acting_user_sub)
@@ -123,6 +126,8 @@ class GroupsService:
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="User is not admin of the group.",
             )
+
+        return acting_user
 
     async def is_member(self, acting_user_sub: UUID4, group_id: int) -> RoleResponse:
         """
@@ -330,10 +335,13 @@ class GroupsService:
         user_email: EmailStr | None = None,
         user_id: int | None = None,
         send_email: bool = True,
+        added_by: int | None = None,
     ):
         """
         send_email=False lets a caller wrapping this in its own transaction
         send the email once that transaction is committed.
+
+        added_by is the id of the user adding them, None when not a user of ours.
         """
         if user_email is None and user_id is None:
             raise HTTPException(
@@ -367,7 +375,7 @@ class GroupsService:
                 )
 
             await self.users_in_group_repository.add_users(
-                group.id, [(user.id, role.id)]
+                group.id, [(user.id, role.id)], added_by=added_by
             )
 
         if send_email:
@@ -384,10 +392,15 @@ class GroupsService:
         )
 
     async def add_users_to_group(
-        self, group_id: int, users_in_group: list[UserInGroupCreate]
+        self,
+        group_id: int,
+        users_in_group: list[UserInGroupCreate],
+        added_by: int | None = None,
     ) -> list[UserInGroupResponse]:
         """
         Add several users to a group at once.
+
+        added_by is the id of the user adding them, None when not a user of ours.
 
         Either every user is added, or none is. When the group already holds
         some of them, the conflict names their addresses: the caller sent
@@ -442,6 +455,7 @@ class GroupsService:
                     (user.id, user_in_group.role_id)
                     for user, user_in_group in zip(users, users_in_group)
                 ],
+                added_by=added_by,
             )
 
         # One email per user so that members are not disclosed to each other

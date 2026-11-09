@@ -120,9 +120,12 @@ async def add_user(
     levée, son `detail` vaut `PERSONAL_EMAIL_REFUSED` et l'utilisateur n'est
     pas créé.
     """
-    await groups_service.is_admin(acting_user_sub, group_id)
+    acting_user = await groups_service.is_admin(acting_user_sub, group_id)
     return await groups_service.add_user_to_group(
-        group_id, user_email=user_in_group.email, role_id=user_in_group.role_id
+        group_id,
+        user_email=user_in_group.email,
+        role_id=user_in_group.role_id,
+        added_by=acting_user.id,
     )
 
 
@@ -157,8 +160,10 @@ async def add_users(
 
     Soit tous les utilisateurs sont ajoutés, soit aucun ne l'est.
     """
-    await groups_service.is_admin(acting_user_sub, group_id)
-    return await groups_service.add_users_to_group(group_id, users_in_group.users)
+    acting_user = await groups_service.is_admin(acting_user_sub, group_id)
+    return await groups_service.add_users_to_group(
+        group_id, users_in_group.users, added_by=acting_user.id
+    )
 
 
 @router.patch("/{group_id}/users/{user_id}", status_code=200)

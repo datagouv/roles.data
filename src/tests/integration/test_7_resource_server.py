@@ -314,6 +314,49 @@ def test_add_user_to_group_email_names_existing_admin(client):
     assert mock_email.call_args.kwargs["group_admin_email"] == admin["email"]
 
 
+def test_add_users_to_group_email_names_the_admin_adding_them(client):
+    """Test that the email names the admin who added the user, not the group's first one."""
+    first_admin = random_user()
+    second_admin = random_user()
+    added_alone = random_user()
+    added_in_batch = random_user()
+
+    group = create_group(client, admin_email=first_admin["email"])
+    url = f"/resource-server/groups/{group['id']}/users"
+    response = client.post(
+        url,
+        json={"email": second_admin["email"], "role_id": 1},
+        headers=resource_server_auth_headers(
+            first_admin["sub_pro_connect"], first_admin["email"]
+        ),
+    )
+    assert response.status_code == 201
+
+    headers = resource_server_auth_headers(uuid4(), second_admin["email"])
+    with patch.object(EmailService, "nouveau_groupe_email") as mock_email:
+        response = client.post(
+            url,
+            json={"email": added_alone["email"], "role_id": 2},
+            headers=headers,
+        )
+        assert response.status_code == 201
+        response = client.post(
+            f"{url}/batch",
+            json={"users": [{"email": added_in_batch["email"], "role_id": 2}]},
+            headers=headers,
+        )
+        assert response.status_code == 201
+
+    assert [call.kwargs["recipients"] for call in mock_email.call_args_list] == [
+        [added_alone["email"]],
+        [added_in_batch["email"]],
+    ]
+    assert all(
+        call.kwargs["group_admin_email"] == second_admin["email"]
+        for call in mock_email.call_args_list
+    )
+
+
 def test_add_user_to_group_email_failure_still_adds_user(client):
     """Test that failing to send the email does not fail the request."""
     admin = random_user()
@@ -965,6 +1008,51 @@ def test_get_group_carries_the_asking_user_role(client):
     assert response.status_code == 200
     assert response.json()["current_user_role"]["role_name"] == "utilisateur"
     assert response.json()["current_user_role"]["is_admin"] is False
+
+
+def test_get_group_users_carry_who_added_them(client):
+    """Test that a group's users carry the email of the user who added them."""
+    admin = random_user()
+    added_alone = random_user()
+    added_in_batch = random_user()
+    group = create_group(client, admin_email=admin["email"])
+    member_email = group["members"][0]["email"]
+    url = f"/resource-server/groups/{group['id']}"
+    headers = resource_server_auth_headers(admin["sub_pro_connect"], admin["email"])
+
+    response = client.post(
+        f"{url}/users",
+        json={"email": added_alone["email"], "role_id": 2},
+        headers=headers,
+    )
+    assert response.status_code == 201
+    response = client.post(
+        f"{url}/users/batch",
+        json={"users": [{"email": added_in_batch["email"], "role_id": 2}]},
+        headers=headers,
+    )
+    assert response.status_code == 201
+
+    response = client.get(url, headers=headers)
+
+    assert response.status_code == 200
+    added_by = {u["email"]: u["added_by_email"] for u in response.json()["users"]}
+    # The service provider created the group, no user of ours added these ones
+    assert added_by[admin["email"]] is None
+    assert added_by[member_email] is None
+    assert added_by[added_alone["email"]] == admin["email"]
+    assert added_by[added_in_batch["email"]] == admin["email"]
+
+    # A user who is not an admin of the group does not learn who added anyone
+    member_headers = resource_server_auth_headers(uuid4(), added_alone["email"])
+    response = client.get(url, headers=member_headers)
+    assert response.status_code == 200
+    assert all(u["added_by_email"] is None for u in response.json()["users"])
+
+    # The service provider's own view of the group does not carry it
+    assert all(
+        "added_by_email" not in u for u in get_group(client, group["id"])["users"]
+    )
 
 
 def test_get_group_users_are_paginated(client):

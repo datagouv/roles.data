@@ -107,6 +107,18 @@ class UserWithRoleResponse(UserBase):
     model_config = ConfigDict(from_attributes=True)
 
 
+class UserWithRoleAndAddedByResponse(UserWithRoleResponse):
+    """
+    A user of a group, as the group's own users see it.
+
+    `added_by_email` is the email of the user who added them to the group, None
+    when unknown (added before it was recorded, by a service provider, or by
+    the admin interface).
+    """
+
+    added_by_email: EmailStr | None = None
+
+
 # --- Role ---
 class RoleBase(BaseModel):
     role_name: str
@@ -173,9 +185,10 @@ class GroupWithUsersAndRoleResponse(GroupWithUsersAndScopesResponse):
     A group as one of its own users sees it.
 
     It carries `current_user_role`, the role the user asking holds in the group,
-    next to the page of its users.
+    next to the page of its users, each with who added them to the group.
     """
 
+    users: list[UserWithRoleAndAddedByResponse]
     current_user_role: RoleResponse
 
 

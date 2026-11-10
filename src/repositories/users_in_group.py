@@ -12,11 +12,15 @@ class UsersInGroupRepository:
         self.logs_service = logs_service
 
     async def add_users(
-        self, group_id: int, user_role_pairs: list[tuple[int, int]]
+        self,
+        group_id: int,
+        user_role_pairs: list[tuple[int, int]],
+        added_by: int | None = None,
     ) -> None:
         """
         Add users to a group (batch)
         user_role_pairs: list of (user_id, role_id) tuples
+        added_by: id of the user adding them, None when not a user of ours
         """
         if not user_role_pairs:
             return
@@ -24,11 +28,13 @@ class UsersInGroupRepository:
         async with self.db_session.transaction():
             # Build single INSERT query for all users
             values_placeholders = []
-            query_values = {"group_id": group_id}
+            query_values = {"group_id": group_id, "added_by": added_by}
             log_entries = []
 
             for i, (user_id, role_id) in enumerate(user_role_pairs):
-                values_placeholders.append(f"(:group_id, :user_id_{i}, :role_id_{i})")
+                values_placeholders.append(
+                    f"(:group_id, :user_id_{i}, :role_id_{i}, :added_by)"
+                )
                 query_values[f"user_id_{i}"] = user_id
                 query_values[f"role_id_{i}"] = role_id
 
@@ -38,7 +44,7 @@ class UsersInGroupRepository:
                 )
 
             values_clause = ", ".join(values_placeholders)
-            query = f"INSERT INTO group_user_relations (group_id, user_id, role_id) VALUES {values_clause}"
+            query = f"INSERT INTO group_user_relations (group_id, user_id, role_id, added_by) VALUES {values_clause}"
 
             await self.db_session.execute(query, query_values)
 

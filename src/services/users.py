@@ -2,7 +2,12 @@
 from fastapi import HTTPException, status
 from pydantic import UUID4
 
-from src.model import RoleResponse, UserCreate, UserResponse, UserWithRoleResponse
+from src.model import (
+    RoleResponse,
+    UserCreate,
+    UserResponse,
+    UserWithRoleAndAddedByResponse,
+)
 from src.repositories.users import UsersRepository
 
 
@@ -78,7 +83,7 @@ class UsersService:
 
     async def get_users_page_by_group_id(
         self, group_id: int, page: int, size: int, search: str = ""
-    ) -> tuple[list[UserWithRoleResponse], int]:
+    ) -> tuple[list[UserWithRoleAndAddedByResponse], int]:
         """
         Retrieve one page of users for a given group ID, and the group's total
         number of users

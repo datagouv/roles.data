@@ -25,6 +25,7 @@ from src.model import (
     UserCreate,
     UserInGroupCreate,
     UserInGroupResponse,
+    UserResponse,
     build_pagination,
 )
 from src.repositories import groups, users_in_group
@@ -108,9 +109,11 @@ class GroupsService:
                 detail=PERSONAL_EMAIL_REFUSED_CODE,
             )
 
-    async def is_admin(self, acting_user_sub: UUID4, group_id: int) -> None:
+    async def is_admin(self, acting_user_sub: UUID4, group_id: int) -> UserResponse:
         """
         Verify if the user is an admin of the group.
+
+        Returns the acting user, which the caller often needs anyway.
         """
         # verify user exists and group exists
         acting_user = await self.users_service.get_user_by_sub(acting_user_sub)
@@ -123,6 +126,8 @@ class GroupsService:
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="User is not admin of the group.",
             )
+
+        return acting_user
 
     async def is_member(self, acting_user_sub: UUID4, group_id: int) -> RoleResponse:
         """
@@ -310,12 +315,20 @@ class GroupsService:
     ) -> GroupWithUsersAndRoleResponse:
         """
         Fetch a group with one page of its users and the role of the user asking.
+
+        Only an admin of the group learns who added its users: added_by_email is
+        None for everyone when the user asking is not admin.
         """
         group = await self.get_group_with_users_and_scopes(
             group_id, users_page, users_size, users_search
         )
+        group_dict = dict(group)
+        if not current_user_role.is_admin:
+            group_dict["users"] = [
+                user.model_copy(update={"added_by_email": None}) for user in group.users
+            ]
         return GroupWithUsersAndRoleResponse(
-            **dict(group), current_user_role=current_user_role
+            **group_dict, current_user_role=current_user_role
         )
 
     async def update_group(self, group_id: int, group_name: str) -> GroupResponse:
@@ -330,10 +343,14 @@ class GroupsService:
         user_email: EmailStr | None = None,
         user_id: int | None = None,
         send_email: bool = True,
+        added_by: UserResponse | None = None,
     ):
         """
         send_email=False lets a caller wrapping this in its own transaction
         send the email once that transaction is committed.
+
+        added_by is the admin of the group adding them, None when not a user of
+        ours. The email then names them, rather than any admin of the group.
         """
         if user_email is None and user_id is None:
             raise HTTPException(
@@ -348,7 +365,9 @@ class GroupsService:
         role = await self.roles_service.get_roles_by_id(role_id)
         group = await self.get_group_by_id(group_id)
         group_admin_email = (
-            await self.get_first_admin_email(group.id) if send_email else None
+            await self.get_adding_admin_email(group.id, added_by)
+            if send_email
+            else None
         )
 
         # Single transaction so that a user is never created without being added to the group
@@ -367,7 +386,9 @@ class GroupsService:
                 )
 
             await self.users_in_group_repository.add_users(
-                group.id, [(user.id, role.id)]
+                group.id,
+                [(user.id, role.id)],
+                added_by=added_by.id if added_by else None,
             )
 
         if send_email:
@@ -384,10 +405,16 @@ class GroupsService:
         )
 
     async def add_users_to_group(
-        self, group_id: int, users_in_group: list[UserInGroupCreate]
+        self,
+        group_id: int,
+        users_in_group: list[UserInGroupCreate],
+        added_by: UserResponse | None = None,
     ) -> list[UserInGroupResponse]:
         """
         Add several users to a group at once.
+
+        added_by is the admin of the group adding them, None when not a user of
+        ours. The email then names them, rather than any admin of the group.
 
         Either every user is added, or none is. When the group already holds
         some of them, the conflict names their addresses: the caller sent
@@ -413,7 +440,7 @@ class GroupsService:
 
         # Look the admin up before the new users are added, as some of them may
         # be admins themselves
-        group_admin_email = await self.get_first_admin_email(group.id)
+        group_admin_email = await self.get_adding_admin_email(group.id, added_by)
 
         # Single transaction so that a user is never created without being added to the group
         async with self.db_session.transaction():
@@ -442,6 +469,7 @@ class GroupsService:
                     (user.id, user_in_group.role_id)
                     for user, user_in_group in zip(users, users_in_group)
                 ],
+                added_by=added_by.id if added_by else None,
             )
 
         # One email per user so that members are not disclosed to each other
@@ -573,6 +601,19 @@ class GroupsService:
         Check if a group has only one admin.
         """
         return await self.users_service.count_admins_by_group_id(group_id) == 1
+
+    async def get_adding_admin_email(
+        self, group_id: int, added_by: UserResponse | None
+    ) -> str | None:
+        """
+        Return the email of the admin adding users to a group, to name them in
+        the email those users get.
+
+        When no user of ours is adding them, fall back on any admin of the group.
+        """
+        if added_by:
+            return str(added_by.email)
+        return await self.get_first_admin_email(group_id)
 
     async def get_first_admin_email(
         self, group_id: int, excluded_user_id: int | None = None

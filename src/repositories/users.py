@@ -7,7 +7,7 @@ from src.model import (
     RoleResponse,
     UserCreate,
     UserResponse,
-    UserWithRoleResponse,
+    UserWithRoleAndAddedByResponse,
 )
 from src.services.logs import LogsService
 
@@ -78,7 +78,7 @@ class UsersRepository:
 
     async def get_page_by_group_id(
         self, group_id: int, limit: int, offset: int, search: str = ""
-    ) -> list[UserWithRoleResponse]:
+    ) -> list[UserWithRoleAndAddedByResponse]:
         """
         Retrieve one page of a group's users, admins first then by creation order
 
@@ -87,10 +87,12 @@ class UsersRepository:
         async with self.db_session.transaction():
             values = {"group_id": group_id, "limit": limit, "offset": offset}
             query = f"""
-                SELECT U.id, U.email, R.role_name, R.id as role_id, R.is_admin
+                SELECT U.id, U.email, R.role_name, R.id as role_id, R.is_admin,
+                    AB.email as added_by_email
                 FROM users as U
                 INNER JOIN group_user_relations as TUR ON TUR.user_id = U.id
                 INNER JOIN roles as R ON TUR.role_id = R.id
+                LEFT JOIN users as AB ON AB.id = TUR.added_by
                 WHERE TUR.group_id = :group_id
                 {email_search_clause(search, values)}
                 ORDER BY R.id ASC, U.id ASC
@@ -98,7 +100,7 @@ class UsersRepository:
                 """
 
             rows = await self.db_session.fetch_all(query, values)
-            return [UserWithRoleResponse(**dict(row)) for row in rows]
+            return [UserWithRoleAndAddedByResponse(**dict(row)) for row in rows]
 
     async def get_admins_by_group_ids(
         self, group_ids: list[int], limit: int

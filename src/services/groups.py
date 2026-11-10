@@ -315,12 +315,20 @@ class GroupsService:
     ) -> GroupWithUsersAndRoleResponse:
         """
         Fetch a group with one page of its users and the role of the user asking.
+
+        Only an admin of the group learns who added its users: added_by_email is
+        None for everyone when the user asking is not admin.
         """
         group = await self.get_group_with_users_and_scopes(
             group_id, users_page, users_size, users_search
         )
+        group_dict = dict(group)
+        if not current_user_role.is_admin:
+            group_dict["users"] = [
+                user.model_copy(update={"added_by_email": None}) for user in group.users
+            ]
         return GroupWithUsersAndRoleResponse(
-            **dict(group), current_user_role=current_user_role
+            **group_dict, current_user_role=current_user_role
         )
 
     async def update_group(self, group_id: int, group_name: str) -> GroupResponse:

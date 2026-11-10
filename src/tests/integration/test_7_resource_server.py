@@ -1043,6 +1043,12 @@ def test_get_group_users_carry_who_added_them(client):
     assert added_by[added_alone["email"]] == admin["email"]
     assert added_by[added_in_batch["email"]] == admin["email"]
 
+    # A user who is not an admin of the group does not learn who added anyone
+    member_headers = resource_server_auth_headers(uuid4(), added_alone["email"])
+    response = client.get(url, headers=member_headers)
+    assert response.status_code == 200
+    assert all(u["added_by_email"] is None for u in response.json()["users"])
+
     # The service provider's own view of the group does not carry it
     assert all(
         "added_by_email" not in u for u in get_group(client, group["id"])["users"]

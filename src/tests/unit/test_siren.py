@@ -15,8 +15,9 @@ def valid_test_sirets():
 def invalid_test_sirets():
     """Fixture providing invalid SIRETs for testing."""
     return [
-        ("123456789000000", "fails Luhn checksum"),
-        ("000000000000000", "fails Luhn checksum"),
+        ("12345678900000", "fails Luhn checksum"),
+        ("44011762001531", "fails Luhn checksum"),  # valid SIRET, last digit altered
+        ("123456789000000", "14-digit string"),
         ("12345678000", "14-digit string"),
         ("12345678900000000", "14-digit string"),
         ("aaaaaaaaa00000", "14-digit string"),

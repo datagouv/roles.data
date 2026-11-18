@@ -12,7 +12,12 @@ pwd_context = CryptContext(
 
 def verify_password(plain_password, hashed_password):
     """Verify passwords match"""
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        return pwd_context.verify(plain_password, hashed_password)
+    except ValueError:
+        # bcrypt>=5 rejects secrets longer than 72 bytes instead of truncating them.
+        # Generated secrets are shorter, so such a secret can never be valid.
+        return False
 
 
 def hash_password(password):

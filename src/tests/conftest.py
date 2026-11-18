@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from uuid import UUID
 
 import pytest
@@ -37,6 +38,13 @@ async def test_db_startup():
 
 async def test_db_shutdown():
     await test_db.disconnect()
+
+
+@asynccontextmanager
+async def test_lifespan(_app):
+    await test_db_startup()
+    yield
+    await test_db_shutdown()
 
 
 # Create an override function with the same signature as get_db
@@ -127,17 +135,9 @@ def test_override_setup():
     if not settings.VIEWER_ADMIN_EMAILS.strip():
         settings.VIEWER_ADMIN_EMAILS = "viewer_ci@beta.gouv.fr"
 
-    # Save original handlers
-    original_startup_handlers = app.router.on_startup.copy()
-    original_shutdown_handlers = app.router.on_shutdown.copy()
-
-    # Clear original handlers
-    app.router.on_startup.clear()
-    app.router.on_shutdown.clear()
-
-    # Add test-specific handlers if needed
-    app.router.on_startup.append(test_db_startup)
-    app.router.on_shutdown.append(test_db_shutdown)
+    # Replace the app lifespan with a test-specific one
+    original_lifespan_context = app.router.lifespan_context
+    app.router.lifespan_context = test_lifespan
 
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_context] = override_get_context
@@ -168,8 +168,7 @@ def test_override_setup():
     settings.SUPER_ADMIN_EMAILS = original_super_admin_emails
     settings.VIEWER_ADMIN_EMAILS = original_viewer_admin_emails
     app.dependency_overrides.clear()
-    app.router.on_startup = original_startup_handlers
-    app.router.on_shutdown = original_shutdown_handlers
+    app.router.lifespan_context = original_lifespan_context
 
 
 @pytest.fixture(scope="session")

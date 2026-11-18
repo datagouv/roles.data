@@ -825,8 +825,8 @@ def test_resource_server_without_bearer_token(client):
     # Try to access resource server endpoint without bearer token
     response = client.get("/resource-server/groups/")
 
-    # Should fail with 403 Forbidden (missing bearer token)
-    assert response.status_code == 403
+    # Should fail with 401 Unauthorized (missing bearer token)
+    assert response.status_code == 401
 
 
 def test_list_organization_groups(client):

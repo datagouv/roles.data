@@ -1,6 +1,7 @@
 import logging
 import re
 import traceback
+from contextlib import asynccontextmanager
 from typing import Any
 
 import sentry_sdk
@@ -29,7 +30,16 @@ from src.routers.resource_server import resource_server
 from src.routers.web.admin import view as admin_home
 from src.routers.webhooks import datapass
 
-app = FastAPI(redirect_slashes=True, redoc_url="/")
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    # Open and close the DB connection pool with the app
+    await startup()
+    yield
+    await shutdown()
+
+
+app = FastAPI(redirect_slashes=True, redoc_url="/", lifespan=lifespan)
 
 # =================
 # ERROR and logging
@@ -171,9 +181,6 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 async def robots_txt():
     return FileResponse("static/robots.txt", media_type="text/plain")
 
-# Register startup and shutdown events (essentially DB connexion)
-app.add_event_handler("startup", startup)
-app.add_event_handler("shutdown", shutdown)
 
 # health/monitoring
 app.include_router(health.router)
@@ -239,6 +246,7 @@ async def prevent_docs_indexing_middleware(request: Request, call_next):
         response.headers["X-Robots-Tag"] = "noindex, nofollow, noarchive"
 
     return response
+
 
 def custom_openapi():
     if app.openapi_schema:

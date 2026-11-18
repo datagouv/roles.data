@@ -63,7 +63,7 @@ class TemplateManager:
             }
         )
 
-        return self.templates.TemplateResponse(template_name, context)
+        return self.templates.TemplateResponse(request, template_name, context)
 
 
 ui_template_manager = TemplateManager(

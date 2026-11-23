@@ -97,12 +97,17 @@ if settings.SENTRY_DSN != "":
         traces_sample_rate=0.1,
         # Capture more information
         attach_stacktrace=True,
-        send_default_pii=False,  # Set to True if you want user data
+        # Do not collect user data (equivalent of former send_default_pii=False)
+        data_collection={
+            "user_info": False,
+            "cookies": {"mode": "off"},
+            "http_bodies": [],
+        },
         # Environment information
         environment=settings.DB_ENV,
         # Capture specific integrations
         integrations=[
-            FastApiIntegration(transaction_style="endpoint"),
+            FastApiIntegration(),
             LoggingIntegration(
                 level=logging.INFO,  # Capture info and above as breadcrumbs
                 event_level=logging.ERROR,  # Send errors as events

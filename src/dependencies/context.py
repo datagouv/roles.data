@@ -11,7 +11,6 @@ from src.dependencies.auth.o_auth import decode_access_token
 from src.dependencies.auth.pro_connect_resource_server import (
     get_claims_from_proconnect_token,
 )
-from src.model import Siret
 from src.repositories.logs import LogsRepository
 from src.services.logs import LogsService
 

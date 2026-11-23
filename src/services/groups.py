@@ -96,17 +96,25 @@ class GroupsService:
         """
         Refuse the emails of users hosted by a personal mail provider.
 
-        The detail carries no address: it is an error code the consuming service
-        translates for its own users. Raised before anything is written, so no
-        user is created when an address is refused.
+        The detail carries the code the consuming service translates for its own
+        users, and every refused address at once, so that a caller adding several
+        users learns about all of them rather than one per request. Raised before
+        anything is written, so no user is created when an address is refused.
         """
-        if any(
-            email.rpartition("@")[2].lower() in PERSONAL_EMAIL_DOMAINS
-            for email in emails
-        ):
+        refused_emails = sorted(
+            {
+                email.lower()
+                for email in emails
+                if email.rpartition("@")[2].lower() in PERSONAL_EMAIL_DOMAINS
+            }
+        )
+        if refused_emails:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=PERSONAL_EMAIL_REFUSED_CODE,
+                detail={
+                    "code": PERSONAL_EMAIL_REFUSED_CODE,
+                    "emails": refused_emails,
+                },
             )
 
     async def is_admin(self, acting_user_sub: UUID4, group_id: int) -> UserResponse:

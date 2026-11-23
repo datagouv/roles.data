@@ -240,7 +240,12 @@ def test_create_group_personal_admin_email_is_refused(
     response = client.post("/groups/?no_acting_user=True", json=new_group_data)
 
     assert response.status_code == 400
-    assert response.json() == {"detail": "PERSONAL_EMAIL_REFUSED"}
+    assert response.json() == {
+        "detail": {
+            "code": "PERSONAL_EMAIL_REFUSED",
+            "emails": [personal_email.lower()],
+        }
+    }
     assert not user_exists(personal_email.lower())
     assert not user_exists(new_group_data["members"][0]["email"])
     groups = client.get("/groups/all").json()
@@ -262,7 +267,14 @@ def test_create_group_personal_member_email_is_refused(client, user_exists):
     response = client.post("/groups/?no_acting_user=True", json=new_group_data)
 
     assert response.status_code == 400
-    assert response.json() == {"detail": "PERSONAL_EMAIL_REFUSED"}
+    assert response.json() == {
+        "detail": {
+            "code": "PERSONAL_EMAIL_REFUSED",
+            "emails": sorted(
+                [first_personal_email.lower(), second_personal_email.lower()]
+            ),
+        }
+    }
     assert not user_exists(new_group_data["admin"]["email"])
     assert not user_exists(first_personal_email.lower())
     assert not user_exists(second_personal_email.lower())

@@ -103,11 +103,12 @@ a sub-domain such as `mail.gmail.com` is not one of these providers.
 
 PERSONAL_EMAIL_REFUSED_CODE = "PERSONAL_EMAIL_REFUSED"
 """
-`detail` of the 400 raised for an address at a personal mail provider.
+`code` of the 400 raised for an address at a personal mail provider.
 
-It is an error code rather than a message: the consuming service knows which
-addresses it sent, branches on this code and writes its own wording for its
-users. It must therefore not change.
+The `detail` of that error is an object carrying this code and, under
+`emails`, the refused addresses: the consuming service branches on the code,
+names those addresses and writes its own wording for its users. Neither the
+code nor the shape may therefore change.
 """
 
 USERS_ALREADY_IN_GROUP_CODE = "USERS_ALREADY_IN_GROUP"

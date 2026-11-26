@@ -68,8 +68,10 @@ async def create(
 
     Si l’adresse e-mail de l’administrateur ou de l’un des membres est hébergée
     par un fournisseur de messagerie personnelle (`gmail.com`, `orange.fr`,
-    `outlook.com`…), une erreur 400 est levée, son `detail` vaut
-    `PERSONAL_EMAIL_REFUSED` : ni le groupe ni ses utilisateurs ne sont créés.
+    `outlook.com`…), une erreur 400 est levée et son `detail` vaut
+    `{"code": "PERSONAL_EMAIL_REFUSED", "emails": [...]}`, où `emails` liste
+    toutes les adresses refusées : ni le groupe ni ses utilisateurs ne sont
+    créés.
     """
     return await groups_service.create_group(group)
 

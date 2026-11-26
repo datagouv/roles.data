@@ -1271,7 +1271,12 @@ def test_add_user_to_group_personal_email_is_refused(
     )
 
     assert response.status_code == 400
-    assert response.json() == {"detail": "PERSONAL_EMAIL_REFUSED"}
+    assert response.json() == {
+        "detail": {
+            "code": "PERSONAL_EMAIL_REFUSED",
+            "emails": [personal_email.lower()],
+        }
+    }
     assert not user_exists(personal_email)
     assert not user_exists(personal_email.lower())
     assert get_group(client, group["id"])["users"] == users_before
@@ -1316,7 +1321,14 @@ def test_add_users_to_group_personal_email_refuses_the_whole_batch(client, user_
     )
 
     assert response.status_code == 400
-    assert response.json() == {"detail": "PERSONAL_EMAIL_REFUSED"}
+    assert response.json() == {
+        "detail": {
+            "code": "PERSONAL_EMAIL_REFUSED",
+            "emails": sorted(
+                [first_personal_email.lower(), second_personal_email.lower()]
+            ),
+        }
+    }
     assert not user_exists(first_personal_email.lower())
     assert not user_exists(second_personal_email.lower())
     assert not user_exists(new_member["email"])

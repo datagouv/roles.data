@@ -117,8 +117,9 @@ async def add_user(
 
     Si l'adresse e-mail est hébergée par un fournisseur de messagerie
     personnelle (`gmail.com`, `orange.fr`, `outlook.com`…), une erreur 400 est
-    levée, son `detail` vaut `PERSONAL_EMAIL_REFUSED` et l'utilisateur n'est
-    pas créé.
+    levée, son `detail` vaut `{"code": "PERSONAL_EMAIL_REFUSED", "emails":
+    [...]}`, où `emails` contient l'adresse refusée, et l'utilisateur n'est pas
+    créé.
     """
     acting_user = await groups_service.is_admin(acting_user_sub, group_id)
     return await groups_service.add_user_to_group(
@@ -155,8 +156,9 @@ async def add_users(
 
     Si l'une des adresses e-mail est hébergée par un fournisseur de messagerie
     personnelle (`gmail.com`, `orange.fr`, `outlook.com`…), une erreur 400 est
-    levée, son `detail` vaut `PERSONAL_EMAIL_REFUSED` et aucun utilisateur
-    n'est créé.
+    levée et son `detail` vaut `{"code": "PERSONAL_EMAIL_REFUSED", "emails":
+    [...]}`, où `emails` liste toutes les adresses refusées de la requête :
+    aucun utilisateur n'est créé.
 
     Soit tous les utilisateurs sont ajoutés, soit aucun ne l'est.
     """
